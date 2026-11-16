@@ -468,7 +468,7 @@ Press SAVE: the KEEP THE SOUND page shows eight places, each FREE or USED. Turn 
 
 To load a kept sound, turn SELECT on the home page: the kept sounds come after the ready ones, as MY SOUND 1 to MY SOUND 8. With a track picked, it goes on that track alone. With ALL picked, it goes on track 1.
 
-A kept sound holds a track's sound: its instrument and its settings, the vibrato and the ornaments. It also holds the effects on the EFFECTS page's first three rows, and which sound each track plays. Those come back only when you pick it with ALL, and for a lead sound on another track, only its instrument comes back. A kept sound does not hold the loops, the steps, the rhythm or the maqam. To replace a kept sound, keep another one in its place.
+A kept sound holds a track's sound: its instrument and its settings, the vibrato and the ornaments. It also holds the effects on the EFFECTS page's first three rows, which come back only when you pick it with ALL. Picking a kept sound never changes another track's sound. A kept sound does not hold the loops, the steps, the rhythm or the maqam. To replace a kept sound, keep another one in its place.
 
 ---
 
