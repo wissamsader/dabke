@@ -2,7 +2,9 @@
 
 DABKE is a free firmware for the M-VAVE FM-1 that makes it an Arabic wedding keyboard. It has lead voices with quarter tones on any note, a drone, bass and backing from the left hand, and a rhythm box of darbuka, tabl, riq, daf, sagat, kick and claps. Eight tracks record what you play, and an Akai MIDImix can work as its mixer.
 
-**Status.** This is version 0.16, a free public beta from STUDIOMORPHIK. It has been tested on one FM-1.
+**Status.** This is version 0.17, a free public beta from STUDIOMORPHIK. It has been tested on one FM-1.
+
+**New in 0.17.** Each of the eight tracks keeps its own sound, so SAZ on track 2 and BUZUQ TREMOLO on track 3 play at the same time. SELECT on a picked track offers the 22 ready sounds and your MY SOUNDs, and the SOUND and ORNAMENTS pages edit the picked track's sound. The effects, the tempo, the maqam and the rhythm are still shared by the whole song. Saves from 0.16 load and sound as they did.
 
 ![The home page with the rhythm running: the singer on stage, the eight tracks as lanes under him, the rhythm's name at the bottom](img/screen-home.png "The home page, the rhythm running")
 
@@ -44,6 +46,8 @@ You can also install DABKE with any FM-1 installer that takes a `.fwsc` package.
 
 To go back to another firmware, install that one the same way. When an installer starts writing over USB while DABKE runs, DABKE first saves anything it had not saved yet.
 
+DABKE 0.17 loads what 0.16 saved, and it sounds as it did. Going back to 0.16 after 0.17 has saved starts 0.16's settings fresh. The kept sounds stay.
+
 > Some other FM-1 firmwares keep their saves in the same part of the flash as DABKE. After you install one of them, DABKE can start fresh when you come back to it, as on its first start.
 
 ---
@@ -66,7 +70,7 @@ To go back to another firmware, install that one the same way. When an installer
 | FX | The EFFECTS page. Again: the next row. |
 | GLO | The RHYTHM page. Again: the next row. |
 | EDIT | Tap it: HOLD. Hold it and press a key: that note goes a quarter tone flat, or back. In step mode, with a step held: that step's locks go. |
-| SAVE | Keeps the sound in one of eight places (see Saving). |
+| SAVE | Keeps a track's sound in one of eight places (see Saving). |
 | ARP | Tap it: the arpeggio on or off. Hold it: the arpeggio's panel. |
 | SEQ | Tap it: step mode on or off. Hold it a second: every recording, every written step and every lock is cleared. |
 | PLAY | Starts the rhythm and every track. Tap it again to stop. While it runs, hold it for 0.4 s: a fill-in. |
@@ -84,10 +88,10 @@ After most actions, a short message takes the place of the top line for a moment
 
 | Part | What it shows |
 | --- | --- |
-| Top line | The picked track's sound in a white box, with a small sign for its kind. With ALL picked, the name of the whole sound. Then the maqam and its root, and CHANGED if you retuned a note by hand. At the right, the tempo, with a metronome that swings on the beats while the rhythm runs. |
+| Top line | The picked track's sound in a white box, with a small sign for its kind. With ALL picked, track 1's sound. Then the maqam and its root, and CHANGED if you retuned a note by hand. At the right, the tempo, with a metronome that swings on the beats while the rhythm runs. |
 | The singer | The singer claps on the beat and dances while the rhythm runs. HOME SCENE on the ORNAMENTS page picks the picture. |
 | Lanes | The eight tracks, a lane each, numbered 1 to 8. A yellow number is the picked track, a red one is recording. A small yellow bar by the number: the track plays something of yours. Along the lane, the track's steps: a block where something of yours begins, a low grey block where the rhythm plays, a blue line for a lock, amber for the step playing now. The number at the right is the track's length in steps. A muted track is dimmed. |
-| Bottom line | The rhythm, and the one added to it. While a track records: its number and bar, in red. At the right: the HOLD mark while notes are held, how the lead plays (LEGATO, MONO or POLY), the ornament (lit while one is on), ARP (lit while on, with a small padlock when ARP LATCH is on), REC while recording, and SYNC (lit when SYNC START is on). |
+| Bottom line | The rhythm, and the one added to it. While a track records: its number and bar, in red. At the right: the HOLD mark while notes are held, how the sound on the SOUND page plays (LEGATO, MONO or POLY) and its ornament (lit while one is on), ARP (lit while on, with a small padlock when ARP LATCH is on), REC while recording, and SYNC (lit when SYNC START is on). |
 
 HOME SCENE (the ORNAMENTS page, row 4, K1) has four pictures: PORTRAIT, STAGE (as DABKE starts), DANCERS and CASSETTE.
 
@@ -129,7 +133,11 @@ With SPLIT or BASS, those twelve keys are lit dim.
 
 ### Any sound on any track
 
-With a track picked, turn SELECT on the home page to change its sound. It goes through the track's own family first, then the others in this order: LEAD, DRONE, LEFT HAND, BASS, KICK, DARBUKA, CLAPS, RIQ. A note sound makes the track a track of notes: its keys play notes and it records loops. A drum sound makes it a drum track: its keys play drums and it records steps. Where two families have a sound of the same name, the screen puts the family in front, as in LEAD ORGAN.
+With a track picked, turn SELECT on the home page to change its sound. It goes through the track's own family first, then the others in this order: LEAD, DRONE, LEFT HAND, BASS, KICK, DARBUKA, CLAPS, RIQ. LEAD's sounds are the 22 ready sounds, then the MY SOUNDs you kept (see Sounds). A note sound makes the track a track of notes: its keys play notes and it records loops. A drum sound makes it a drum track: its keys play drums and it records steps.
+
+Each track keeps its own sound. SAZ on track 2 and BUZUQ TREMOLO on track 3 play at the same time, each with its own settings. The screen names a lead sound by its own name, as in TRACK 2: SAZ. A sound of another family whose name is shared gets its family in front, as in TRACK 2: DRONE ORGAN.
+
+![SELECT just turned on track 2: TRACK 2: SAZ in the top line, lane 2 marked yellow](img/home-track2-saz.png "SAZ picked on track 2")
 
 ### Yours and the rhythm's
 
@@ -139,13 +147,15 @@ The rhythm plays tracks 5 to 8, and with LEFT KEYS on BASS also the bass line (t
 
 ## 5. Sounds
 
-With ALL picked, SELECT on the home page goes through the ready sounds, then the sounds you kept (MY SOUND 1 to MY SOUND 8). The ready sounds are MIJWIZ, MIJWIZ BUZZ, ZURNA, KEY LEAD, FAST LEAD, WHISTLE LEAD, SQUARE LEAD, VIOLIN, STRINGS, NEY, ACCORDION, ORGAN, BUZUQ, BUZUQ TREMOLO, SAZ, OUD, QANUN, QANUN TREMOLO, BRASS, WEDDING ZURNA, CASSETTE MIJWIZ and SHAABI LEAD.
+The ready sounds are MIJWIZ, MIJWIZ BUZZ, ZURNA, KEY LEAD, FAST LEAD, WHISTLE LEAD, SQUARE LEAD, VIOLIN, STRINGS, NEY, ACCORDION, ORGAN, BUZUQ, BUZUQ TREMOLO, SAZ, OUD, QANUN, QANUN TREMOLO, BRASS, WEDDING ZURNA, CASSETTE MIJWIZ and SHAABI LEAD. After them come the sounds you kept, MY SOUND 1 to MY SOUND 8. With ALL picked, SELECT on the home page goes through them for track 1. With a track picked, they are its LEAD sounds (see Any sound on any track).
 
-A sound sets the lead's instrument and the SOUND page's knobs (apart from VEL AMOUNT and the arpeggio), the vibrato and the ornaments, and the first three rows of the EFFECTS page. A kept sound also brings back every track's sound. The drone, the volumes, the mixer, the rhythm, the arpeggio and the maqam stay as they are.
+Each track keeps its own full sound: its instrument, the SOUND page's knobs (apart from VEL AMOUNT and the arpeggio), the vibrato and the ornaments. The effects (the EFFECTS page's first three rows), the tempo, the maqam, the rhythm, the mixer, KEY TOUCH, PRESSURE, VEL AMOUNT and the arpeggio are shared by all the tracks.
+
+Picked with ALL, a ready sound goes on track 1 and also sets the effects: WEDDING ZURNA brings its PA and drive, CASSETTE MIJWIZ its tape wobble and hiss. Picked on a track, it sets that track's sound alone and never the effects, because the effects work on the whole song. With ALL picked, a kept sound also brings back the effects and which sound each track plays (see Keep a sound). The drone, the volumes, the mixer, the rhythm, the arpeggio and the maqam stay as they are.
 
 ### The lead's instruments
 
-INSTRUMENT on the SOUND page (row 1, K1) is the lead's instrument, and track 1's sound. There are thirteen:
+INSTRUMENT on the SOUND page (row 1, K1) is the instrument of the sound the page shows (see The SOUND page). Each ready sound is built on one of them: BUZUQ TREMOLO and SAZ on BUZUQ, for example. There are thirteen:
 
 | Instrument | What it is |
 | --- | --- |
@@ -161,13 +171,14 @@ INSTRUMENT on the SOUND page (row 1, K1) is the lead's instrument, and track 1's
 | BRASS | Brass, its filter opening as each note starts. |
 | SQUARE | A square-wave lead. |
 
-Each instrument brings its own TONE, BUZZ, PIPES APART, BREATH, BODY, ATTACK, RELEASE, GLIDE and PLAY. The SOUND page shapes the instrument chosen there. Another track with a lead sound, the left hand and the drone play their instruments with their own settings.
+Each instrument brings its own TONE, BUZZ, PIPES APART, BREATH, BODY, ATTACK, RELEASE, GLIDE and PLAY. The SOUND page shapes one track's sound at a time (see The SOUND page). The left hand and the drone play their instruments with their own settings, and follow track 1's TRANSPOSE, TUNE and vibrato.
 
 ### Every family's sounds
 
 | Family | Sounds |
 | --- | --- |
-| LEAD, LEFT HAND | MIJWIZ, ZURNA, KEY LEAD, VIOLIN, NEY, ACCORDION, STRINGS, ORGAN, BUZUQ, OUD, QANUN, BRASS, SQUARE |
+| LEAD | The 22 ready sounds, then the MY SOUNDs you kept |
+| LEFT HAND | MIJWIZ, ZURNA, KEY LEAD, VIOLIN, NEY, ACCORDION, STRINGS, ORGAN, BUZUQ, OUD, QANUN, BRASS, SQUARE |
 | DRONE | MIJWIZ, ORGAN, STRINGS, ACCORDION, NEY, VIOLIN, BRASS |
 | BASS | ROUND, SYNTH, BUZZ, WOODY, PICKED |
 | KICK | MACHINE, BOOM, TIGHT, THUMP |
@@ -295,7 +306,7 @@ With SYNC START on (the RHYTHM page, row 3, K4), the first left key starts the r
 
 ![The ORNAMENTS page, row 3: DRONE, SOUND, DRONE VOL and DRONE PITCH](img/orn-3.png "The ORNAMENTS page, row 3: the drone")
 
-The drone holds the maqam's tonic, tuned as the maqam has it. It sounds while you play the lead (and 0.6 s after), while the rhythm runs, while the left hand holds a chord, and while you play its own track, even with DRONE on OFF. Its controls are on the ORNAMENTS page, row 3:
+The drone holds the maqam's tonic, tuned as the maqam has it. It sounds while you play the lead (and 0.6 s after), while the rhythm runs, while the left hand holds a chord, and while you play its own track, even with DRONE on OFF. Its controls are on the ORNAMENTS page, row 3, the same whichever track is picked:
 
 | Knob | What it does |
 | --- | --- |
@@ -304,9 +315,9 @@ The drone holds the maqam's tonic, tuned as the maqam has it. It sounds while yo
 | DRONE VOL | 0 to 100. Turned up while the drone is OFF, it switches the drone on, on the tonic. |
 | DRONE PITCH | LOW (C2 to B2) or MIDDLE (an octave up). |
 
-With ALL picked, K2 on the home page is the drone's volume. A ready sound leaves the drone as it is.
+With ALL picked, K2 on the home page is the drone's volume. A ready sound leaves the drone as it is. Track 1's TRANSPOSE, TUNE and vibrato move the drone too.
 
-The drone is track 2. With it picked, a key moves the drone to that note, in the drone's own octave. It goes back to the tonic when the rhythm starts or stops. Record on track 2 and the drone moves with the loop.
+The drone is track 2. With it picked, a key moves the drone to that note, in the drone's own octave. It goes back to the tonic when the rhythm starts or stops. Record on track 2 and the drone moves with the loop. With the drone's track picked, the SOUND and ORNAMENTS pages edit track 1's sound (see The SOUND page).
 
 ---
 
@@ -314,13 +325,13 @@ The drone is track 2. With it picked, a key moves the drone to that note, in the
 
 ### Velocity
 
-KEY TOUCH (the ORNAMENTS page, row 4, K4) has two choices. VELOCITY, as DABKE starts: each note lands as hard as you play it, on all 27 keys. PLAIN: every note lands the same, at 100. KEY TOUCH sets only how hard a note lands. VEL AMOUNT (the SOUND page, row 4, K2) sets how much that changes the loudness: at 0, every note is equally loud.
+KEY TOUCH (the ORNAMENTS page, row 4, K4) has two choices. VELOCITY, as DABKE starts: each note lands as hard as you play it, on all 27 keys. PLAIN: every note lands the same, at 100. KEY TOUCH sets only how hard a note lands. VEL AMOUNT (the SOUND page, row 4, K2) sets how much that changes the loudness: at 0, every note is equally loud. Both are shared by all the tracks.
 
 ### Pressure
 
 ![The ORNAMENTS page, row 2: ORN SPEED, HOW OFTEN, TRILL TO and PRESSURE](img/orn-2.png "The ORNAMENTS page, row 2: PRESSURE on K4")
 
-Press harder on a key you hold, and PRESSURE (the ORNAMENTS page, row 2, K4) says what happens. It works by itself, whatever KEY TOUCH says.
+Press harder on a key you hold, and PRESSURE (the ORNAMENTS page, row 2, K4) says what happens. It works by itself, whatever KEY TOUCH says, and it is the same for every track.
 
 | PRESSURE | What a harder press does |
 | --- | --- |
@@ -330,7 +341,7 @@ Press harder on a key you hold, and PRESSURE (the ORNAMENTS page, row 2, K4) say
 | VIBRATO | A vibrato that deepens as you press, at VIB SPEED. |
 | BRIGHTER | Opens the sound's tone. |
 
-BEND RANGE is on the SOUND page, row 4, K3: 1/4 TONE, 1/2 TONE (as DABKE starts), 1 TONE or 1 1/2 TONE.
+BEND RANGE is part of each track's sound, on the SOUND page, row 4, K3: 1/4 TONE, 1/2 TONE (as DABKE starts), 1 TONE or 1 1/2 TONE. A lead sound bends by its own BEND RANGE, the left hand and the bass line by track 1's.
 
 Only the 20 lowest keys sense pressure: F3 to C5. The top seven keys, C#5 to G5, sense velocity but not pressure.
 
@@ -397,7 +408,7 @@ A page is a bar: 16 steps, or as many whole bars of the rhythm as fit in 16 (12 
 
 Hold a step and turn a knob: that knob is locked on that step. From that step to the track's next step with a note or a hit, the knob holds the lock's value, then goes back. The top line names the step's locks, for example STEP 3: FILTER DARK 20, and the knob's value shows in blue. A small padlock by a knob's name means the track has a lock of that knob somewhere.
 
-Most knobs that turn through values can be locked: K1 to K4 of the step view, the knobs of the SOUND, ORNAMENTS, EFFECTS and RHYTHM pages, and the MIDImix's knobs and faders. On a knob page in step mode, the track's steps show under the knobs, so you can hold a step and lock that page's knob. When a control cannot be locked, the screen says so: the tempo, the rhythm, choices such as ORNAMENT, a track's mute and FADE are among them.
+Most knobs that turn through values can be locked: K1 to K4 of the step view, the knobs of the SOUND, ORNAMENTS, EFFECTS and RHYTHM pages, and the MIDImix's knobs and faders. On a knob page in step mode, the track's steps show under the knobs, so you can hold a step and lock that page's knob. A lock of one of a sound's knobs, such as TONE or VIB DEPTH, works on the sound the page shows and no other: VIB DEPTH locked on a step of track 2, with SAZ on it, changes track 2's vibrato, and the other tracks keep theirs. When a control cannot be locked, the screen says so: the tempo, the rhythm, choices such as ORNAMENT, a track's mute and FADE are among them.
 
 ![The EFFECTS page in step mode: TRACK, LENGTH, PITCH STEPS and DRUM, the kick's steps under them](img/fx-track.png "A knob page in step mode: the steps under the knobs")
 
@@ -453,19 +464,26 @@ Step mode, HOLD and the scene fader's place are not kept: DABKE starts with step
 
 ![The save page: KEEP THE SOUND, eight places, place 3 picked](img/save.png "SAVE: the eight places")
 
-Press SAVE: the KEEP THE SOUND page shows eight places, each FREE or USED. Turn SELECT to pick one and press SAVE again: the screen says KEPT IN 3. HOME leaves without keeping. Any other button leaves too, and does its own job.
+Press SAVE: the KEEP THE SOUND page shows eight places, each FREE or USED. Turn SELECT to pick one and press SAVE again: the screen says KEPT IN 3. HOME leaves without keeping. Any other button leaves too, and does its own job. SAVE keeps the sound the SOUND page shows: the picked track's, or track 1's (see The SOUND page).
 
-To load a kept sound, pick ALL and turn SELECT on the home page: the kept sounds come after the ready ones, as MY SOUND 1 to MY SOUND 8.
+To load a kept sound, turn SELECT on the home page: the kept sounds come after the ready ones, as MY SOUND 1 to MY SOUND 8. With a track picked, it goes on that track alone. With ALL picked, it goes on track 1.
 
-A kept sound holds the lead's instrument and its settings, the vibrato and the ornaments, the effects on the EFFECTS page's first three rows, and every track's sound. It does not hold the loops, the steps, the rhythm or the maqam. To replace a kept sound, keep another one in its place.
+A kept sound holds a track's sound: its instrument and its settings, the vibrato and the ornaments. It also holds the effects on the EFFECTS page's first three rows, and which sound each track plays. Those come back only when you pick it with ALL, and for a lead sound on another track, only its instrument comes back. A kept sound does not hold the loops, the steps, the rhythm or the maqam. To replace a kept sound, keep another one in its place.
 
 ---
 
 ## 16. The SOUND page
 
-Press ENV. The SOUND page shapes the lead instrument, and holds the arpeggio's controls. The header shows the row, for example 1 / 6. Under the knobs, the sound's wave.
+Press ENV. The SOUND page shapes one track's sound, and holds the arpeggio's controls. The title says whose sound it is:
 
-![The SOUND page, row 1: INSTRUMENT, PLAY, TONE and BUZZ](img/sound-1.png "The SOUND page, row 1")
+- With a track picked that plays a lead sound, that track's, as in SOUND: TRACK 3.
+- With ALL picked, track 1's. The title is SOUND.
+- With a track picked that plays a drum, drone, left-hand or bass sound, track 1's, and the title says SOUND: TRACK 1. INSTRUMENT there changes track 1. It never turns the picked track into a lead sound: SELECT on the home page does that (see Any sound on any track).
+
+VEL AMOUNT is shared by all the tracks, and so is the arpeggio on rows 5 and 6. The header shows the row, for example 1 / 6. Under the knobs, the sound's wave.
+
+![The SOUND page, row 1, with ALL picked: INSTRUMENT MIJWIZ, PLAY LEGATO, TONE 70, BUZZ 45](img/sound-1.png "ALL picked: track 1's sound")
+![The SOUND page, row 1, with track 3 picked: SOUND: TRACK 3 in the title, INSTRUMENT BUZUQ, PLAY POLY, TONE 75, BUZZ 35](img/sound-track3.png "Track 3 picked, playing BUZUQ TREMOLO")
 
 | Row | K1 | K2 | K3 | K4 |
 | --- | --- | --- | --- | --- |
@@ -478,7 +496,7 @@ Press ENV. The SOUND page shapes the lead instrument, and holds the arpeggio's c
 
 | Knob | What it does |
 | --- | --- |
-| INSTRUMENT | The lead's instrument (see Sounds). Each comes with its own TONE, BUZZ, PIPES APART, BREATH, BODY, ATTACK, RELEASE, GLIDE and PLAY. |
+| INSTRUMENT | The sound's instrument (see Sounds). Each comes with its own TONE, BUZZ, PIPES APART, BREATH, BODY, ATTACK, RELEASE, GLIDE and PLAY. |
 | PLAY | LEGATO: one note at a time; a key pressed while another is held moves the note there without starting it again (the plucked instruments start again). MONO: one note at a time, each key starts it again. POLY: chords. |
 | TONE | 0 to 100: darker to brighter. |
 | BUZZ | 0 to 100: the reed's buzz. |
@@ -489,18 +507,18 @@ Press ENV. The SOUND page shapes the lead instrument, and holds the arpeggio's c
 | ATTACK | 5 ms to 2.0 s. |
 | RELEASE | 10 ms to 4.0 s. |
 | GLIDE | 0 to 500 ms: how long each new lead note slides from the last one. |
-| TRANSPOSE | -12 to +12 semitones. It moves every note sound, the drone too. The drums stay. |
-| TUNE | -50 to +50 cents, for every note sound. |
+| TRANSPOSE | -12 to +12 semitones, for this sound. Track 1's also moves the drone, the left hand and the bass line. The drums stay. |
+| TUNE | -50 to +50 cents, for this sound. Track 1's also tunes the drone, the left hand and the bass line. |
 | VEL AMOUNT | 0 to 100: how much the velocity changes the loudness. |
-| BEND RANGE | 1/4 TONE, 1/2 TONE, 1 TONE, 1 1/2 TONE: how far key pressure and a MIDI pitch wheel bend. |
-| PICKING | SINGLE or TREMOLO. With TREMOLO, a BUZUQ, OUD or QANUN lead is struck again and again while the key is held, at ORN SPEED. |
+| BEND RANGE | 1/4 TONE, 1/2 TONE, 1 TONE, 1 1/2 TONE: how far key pressure and a MIDI pitch wheel bend this sound. Track 1's is also how far key pressure bends the left hand and the bass line. |
+| PICKING | SINGLE or TREMOLO. With TREMOLO, a BUZUQ, OUD or QANUN sound is struck again and again while the key is held, at its ORN SPEED. |
 | Rows 5 and 6 | The arpeggio (see The arpeggio). |
 
 ---
 
 ## 17. The ORNAMENTS page
 
-Press LFO. The vibrato and the ornaments, the drone, and a few settings.
+Press LFO. The vibrato and the ornaments, the drone, and a few settings. Rows 1 and 2 edit the same track's sound as the SOUND page, and the title says whose, as in ORNAMENTS: TRACK 3 (see The SOUND page). PRESSURE, the drone and row 4 are shared by all the tracks.
 
 | Row | K1 | K2 | K3 | K4 |
 | --- | --- | --- | --- | --- |
@@ -513,7 +531,7 @@ Press LFO. The vibrato and the ornaments, the drone, and a few settings.
 | --- | --- |
 | VIB SPEED | 2.0 to 9.0 Hz. |
 | VIB DEPTH | 0 to 100. |
-| VIB DELAY | 0 to 1.5 s: the lead's vibrato comes in after this long. The other note sounds, the bass apart, get a lighter vibrato. |
+| VIB DELAY | 0 to 1.5 s: the sound's vibrato comes in after this long. The drone and the left hand get a lighter vibrato, from track 1's. |
 | ORNAMENT | For lead sounds. OFF. MORDENT: a quick step up to the next note and back as each note starts. TURN: up, back, down, back. SCOOP: each note slides up into place. TRILL: the note and the next one in turn while the key is held. SHAKE: the pitch rocks up toward the next note and back while the key is held. AUTO, as DABKE starts: now and then, as HOW OFTEN says, a grace note, a scoop, a turn or two graces, and on some held notes a shake. |
 | ORN SPEED | 4.0 to 24.0 Hz: how fast the ornaments move, and the TREMOLO picking. |
 | HOW OFTEN | 0 to 100 %: how often AUTO ornaments a note. |
@@ -529,6 +547,8 @@ Press LFO. The vibrato and the ornaments, the drone, and a few settings.
 ## 18. The EFFECTS page
 
 Press FX. The effects, the picked track's controls, and the mixer, a track a row.
+
+The effects, rows 1 to 3, work on the whole song and are the same whichever track is picked. A ready sound picked with ALL sets them. Picked on a track, it leaves them as they are.
 
 ![The EFFECTS page, row 1: DELAY, DELAY TIME, REPEATS and REVERB](img/fx-1.png "The EFFECTS page, row 1")
 ![The EFFECTS page, row 6: MIX: TRACK 1, its VOLUME, FILTER, BASS and PART](img/fx-mix.png "Row 6: the mixer's first row, track 1")
@@ -662,7 +682,7 @@ Both BANK buttons together, or turning TOP SOUND on the EFFECTS page, clears the
 
 On a computer, the FM-1 shows up as DABKE FM-1. DABKE has no Bluetooth.
 
-MIDI comes in over USB and the FM-1's TRS MIDI jack. Notes on any channel play the picked track, as the keys would. With ALL picked and LEFT KEYS on SPLIT or BASS, notes under C4 go to the left hand. Notes under E1 do not play: on channel 1 they are the MIDImix's buttons. A pitch wheel bends the lead sounds by BEND RANGE, and a mod wheel adds vibrato. Notes from MIDI get the maqam's quarter tones too.
+MIDI comes in over USB and the FM-1's TRS MIDI jack. Notes on any channel play the picked track, as the keys would. With ALL picked and LEFT KEYS on SPLIT or BASS, notes under C4 go to the left hand. Notes under E1 do not play: on channel 1 they are the MIDImix's buttons. A pitch wheel bends the lead sounds, each by its own BEND RANGE, and a mod wheel adds vibrato. Notes from MIDI get the maqam's quarter tones too.
 
 The MIDImix's messages work from any MIDI input on channel 1, so a computer can send them: the strips' knobs and faders as control changes 16 to 31 and 46 to 61, the master fader as 62, and the buttons as notes 1 to 27.
 
