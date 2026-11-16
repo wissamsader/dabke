@@ -349,8 +349,9 @@ static const preset_t PRESETS[] = {
                                           * them, read and given the sounds the tracks start with) */
 #define KEPT_MAGIC1 0x314B4B44u
 #define NSK 30                           /* the knobs a sound changes (27 now), packed in P_* order */
-typedef struct {                         /* a MY SOUND: a track's sound, the effects and every track's sound as they were
-                                          * (picked on a track: the sound alone; with ALL: all of it, track 1 the sound) */
+typedef struct {                         /* a MY SOUND: a track's sound and the effects as they were (picked on a track: the
+                                          * sound alone; with ALL: track 1's sound and the effects). The tracks' sounds
+                                          * then are kept too, as 0.16 kept and gave them back: no longer given back */
     int16_t par[NSK];                    /* those knobs, in their own steps */
     uint8_t ch[NSCH];                    /* its choices */
     uint8_t tsnd[DAB_NTRK][2];           /* each track's sound */
@@ -1227,10 +1228,10 @@ static int step_lane(int t, int st, int lane)   /* a drum sound's step, one lane
 
 /* ------------------------------------------------------------------ sounds --- */
 /* A whole sound (sound_t: a MY SOUND, a ready sound, 0.16's one sound) is a track's sound and the effects. Each track
- * has its own sound (set.ts): the SOUND and ORNAMENTS pages show the picked track's (ALL: track 1's), in set.par and
- * set.ch as every page reads them, and what they change goes to that track alone. A ready sound or a MY SOUND picked
- * with ALL is track 1's and the effects with it (the whole instrument, as 0.16 had it); picked on a track, that
- * track's alone */
+ * has its own sound (set.ts): the SOUND and ORNAMENTS pages show the picked track's when it has a lead sound, else
+ * (and with ALL) track 1's (ed_trk), in set.par and set.ch as every page reads them, and what they change goes to that
+ * track alone. A ready sound or a MY SOUND picked with ALL is track 1's and the effects with it; picked on a track,
+ * that track's alone. Either way every other track keeps its own sound */
 #define SOUND_KNOB(i) (IS_KNOB(i) && !PAR[i].keep)
 #define DRONE_OWN(i) ((i) == C_DRONE || (i) == C_DRONESND || (i) == C_DRONEOCT)   /* the player's, not the sound's */
 static int16_t *sk_slot(sound_t *o, int id)  /* where knob id is in a sound (0: not one of its knobs) */
@@ -1290,7 +1291,7 @@ static void view_load(void)              /* the pages: ed_trk's sound (a lead tr
 }
 
 /* a whole sound given to track t: its own sound that sound's (and its instrument on it), named; effects: the effects
- * kept with it too (ALL: the whole instrument's; the drone is the player's) */
+ * kept with it too (ALL: the whole instrument's; the drone is the player's). Every other track keeps its own sound */
 static void sound_put(int t, sound_t *o, int name, int effects)
 {
     int i, k = 0;
@@ -1302,19 +1303,7 @@ static void sound_put(int t, sound_t *o, int name, int effects)
     else if (!effects)                   /* (a track's sound changed: what it played stops, as for any other sound) */
         dabke_track_sound(t, SF_LEAD, set.ts[t].ch[0] + DAB_AGAIN);
     view_load();
-    if (effects) {
-        for (i = 0; i < DAB_NTRK; i++) {     /* the other tracks' sounds as it has them (a MY SOUND: as they were kept;
-                                              * a ready sound: as they are) */
-            int f = o->tsnd[i][0] < SF_N ? o->tsnd[i][0] : i, x = clamp(o->tsnd[i][1], 0, fam_size(f) - 1);
-            if (i == t)
-                continue;
-            if (f == i && set.ch[HOME_CH[i]] != x) {   /* (its own family: its choice the same) */
-                set.ch[HOME_CH[i]] = (uint8_t)x;
-                choice_send(HOME_CH[i]);
-            }
-            if (set.tsnd[i][0] != f || set.tsnd[i][1] != x)
-                tsnd_put(i, f, x);
-        }
+    if (effects) {                       /* (the other tracks' sounds stay as they are: a sound is one track's) */
         for (i = 0; i < NSCH; i++)       /* (DELAY SYNC) */
             if (sc_of(i) < 0 && !DRONE_OWN(i)) {
                 int v = clamp(o->ch[i], 0, CHOICE[i].n - 1);

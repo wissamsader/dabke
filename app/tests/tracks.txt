@@ -339,9 +339,10 @@ expect tidx3 0
 expect tpat4_0_2 2
 expect trk_n5 1
 
-# ---- a kept sound keeps every track's sound: kept with ALL picked in place 2 (track 1's sound, the effects and
-# every track's sound); track 2 given the drone's own sound back; the kept sound chosen again (SELECT with all picked):
-# the kick on track 2 again. (0.17: SAVE keeps the picked track's sound, ALL: track 1's)
+# ---- a kept sound: kept with ALL picked in place 2 (track 1's sound and the effects); track 2 given the drone's own
+# sound back; the kept sound chosen again (SELECT with all picked): track 1's sound, and every other track keeps its
+# own: the drone on track 2 stays. (0.17: SAVE keeps the picked track's sound, ALL: track 1's; a sound is one track's,
+# so a kept sound no longer brings back the other tracks' sounds as 0.16's did)
 expect track 2
 tap SEL
 tap SEL
@@ -384,9 +385,26 @@ expect tfam1 1
 turn SELECT -1
 wait 30
 expect sound 101
-expect tfam1 4
+expect tfam1 1
 expect tfam2 6
 expect tfam3 4
+# (track 2 given the kick again by SELECT, for what follows: the drone silent, as the load's guard counts it)
+tap SEL
+tap SEL
+wait 30
+expect track 2
+turn SELECT 48
+wait 30
+expect tfam1 4
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 0
 
 # ---- the load's guard: the FM-1 as if 2.2 times as slow as first assumed: with the rhythm running, four notes at
 # once; ten keys held: the oldest let go for the newest, no render past its time

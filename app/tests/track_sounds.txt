@@ -320,6 +320,61 @@ expect sndp0_6 65
 expect tfam6 6
 expect par25 60
 
+# ---- MY SOUND 1 picked with ALL: track 1's sound and the effects kept with it; every other track keeps its own sound
+# as it is, settings and name: SAZ on track 2 (its tone turned down), BUZUQ TREMOLO on track 3 (its vibrato deeper, kept
+# as MY SOUND 1), MY SOUND 1 on track 5, the claps on track 7. First another ready sound with ALL, CASSETTE MIJWIZ (its
+# wobble, tape age and hiss, no PA), so the effects that come back are MY SOUND 1's (WEDDING ZURNA's PA 60, drive 25 and
+# reverb 40 when it was kept)
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 0
+turn SELECT 17
+wait 30
+expect sound 20
+expect par27 40
+expect par28 50
+expect par29 25
+expect par25 0
+expect par23 0
+expect par22 25
+turn SELECT 2
+wait 30
+expect sound 100
+expect tfam0 0
+expect tidx0 8
+expect sndp0_15 26
+expect esnd0_84 1000
+expect esnd0_15 260
+expect par25 60
+expect par23 25
+expect par22 40
+expect par27 0
+expect par28 0
+expect par29 0
+expect epar25 600
+expect tfam1 0
+expect tidx1 8
+expect sndn1 14
+expect sndp1_6 80
+expect esnd1_6 800
+expect esnd1_84 0
+expect esnd1_82 6000
+expect tfam2 0
+expect tidx2 8
+expect sndn2 100
+expect sndp2_15 26
+expect esnd2_84 1000
+expect tfam3 3
+expect tfam4 0
+expect sndn4 100
+expect tfam6 6
+
 # ---- his 0.16 flash (DKB7: MY SOUND 2 on track 1, the lead's organ on track 6): every track as it played. Track 6's
 # organ is its instrument's own tone with the sound's vibrato and ornaments; track 1 the sound itself. Nothing written
 # at the start (the record stays DKB7 until something changes); a change, and it is DKB8, the same sounds after a power
