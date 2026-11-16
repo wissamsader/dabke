@@ -1,0 +1,323 @@
+# Each track's own sound (0.17). A note track's sound is any of the 22 ready sounds or a MY SOUND kept, with its own copy
+# of everything a sound is: its instrument and its knobs, vibrato, ornaments, glide, TRANSPOSE, TUNE, PLAY, DOUBLE,
+# PICKING, TRILL TO and BEND RANGE. The effects (the EFFECTS page), the tempo, the maqam, the rhythm, the mixer and KEY
+# TOUCH stay the whole instrument's. The SOUND and ORNAMENTS pages edit the picked track's sound (ALL: track 1's). A
+# ready sound picked with ALL sets the effects too (the whole setup); picked on a track, that track's sound alone. From
+# the repository's root:
+#   app/build/host/dabke_host app/tests/track_sounds.txt OUTDIR
+# (sndpT_ID: knob ID of track T+1's own sound, in its steps; sndcT_C: its choice C; sndnT: its name, 0.. a ready sound,
+# 100 + i MY SOUND i+1, -1 its instrument's; sndxT: 1 its instrument's own tone; esndT_ID: knob or choice ID of it as
+# the engine has it, x 1000, 118 the plain tone. Knobs: 6 TONE, 15 VIB DEPTH, 17 ORN SPEED, 22 REVERB, 23 DRIVE, 25 PA;
+# choices: 3 ORNAMENT, 5 PICKING; the engine's: 82 ORNAMENT, 84 PICKING)
+wait 900
+expect track 0
+expect sound 0
+expect tfam0 0
+expect sndn0 0
+
+# ---- SELECT on track 2 (the drone's sounds first, its own seven, then the lead's: the 22 ready sounds): SAZ, the 15th
+listen
+press SEL
+tapkey w1
+release SEL
+wait 30
+expect track 2
+turn SELECT 21
+wait 30
+expect tfam1 0
+expect tidx1 8
+expect sndn1 14
+said TRACK 2: SAZ
+expect sndp1_6 90
+expect esnd1_6 900
+expect esnd1_84 0
+expect esnd1_82 6000
+# picked on a track, a ready sound leaves the effects as they are (SAZ's reverb is 30: the whole instrument's stays 25)
+expect par22 25
+expect epar22 250
+# ---- track 3 (the left hand's thirteen first, from its STRINGS): BUZUQ TREMOLO, the 14th ready sound. Both play at
+# once, each its own: SAZ's tone and automatic ornaments on 2, the tremolo picking at its own speed on 3
+press SEL
+tapkey w2
+release SEL
+wait 30
+expect track 3
+said KEYS PLAY TRACK 3: LEFT HAND STRINGS
+turn SELECT 20
+wait 30
+expect tfam2 0
+expect tidx2 8
+expect sndn2 13
+said TRACK 3: BUZUQ TREMOLO
+expect sndc2_5 1
+expect esnd2_84 1000
+expect esnd2_82 0
+expect esnd2_17 14000
+expect esnd2_6 750
+expect esnd1_6 900
+expect esnd1_84 0
+expect esnd0_84 0
+expect par22 25
+# the same note held 1.5 s on each: the single pluck of SAZ dies away, the tremolo goes on picking
+press SEL
+tapkey w1
+release SEL
+wait 30
+said KEYS PLAY TRACK 2: SAZ
+wav saz.wav
+key 12 down
+wait 1300
+peakreset
+wait 400
+expect peak_db_max -30
+key 12 up
+wait 800
+wavstop
+press SEL
+tapkey w2
+release SEL
+wait 30
+wav tremolo.wav
+key 12 down
+wait 1300
+peakreset
+wait 400
+expect peak_db_min -30
+key 12 up
+wait 800
+wavstop
+
+# ---- a SOUND knob on track 2 changes track 2's sound alone (the page: "SOUND: TRACK 2"); track 1's, track 3's as they were
+press SEL
+tapkey w1
+release SEL
+wait 30
+tap ENV
+wait 30
+expect page 3
+expect par6 90
+turn K3 -5
+wait 30
+expect par6 80
+expect sndp1_6 80
+expect esnd1_6 800
+expect sndp2_6 75
+expect esnd2_6 750
+expect sndp0_6 70
+expect esnd0_6 700
+# the page shows the picked track's sound: track 3's tone, then ALL's (track 1's)
+tap HOME
+wait 30
+press SEL
+tapkey w2
+release SEL
+wait 30
+tap ENV
+wait 30
+expect par6 75
+tap HOME
+wait 30
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 0
+tap ENV
+wait 30
+expect par6 70
+tap HOME
+wait 30
+
+# ---- with ALL picked, a ready sound is track 1's and the effects with it: WEDDING ZURNA (the PA, the drive, its reverb)
+expect par25 0
+turn SELECT 19
+wait 30
+expect sound 19
+expect sndn0 19
+expect tidx0 1
+expect par25 60
+expect par23 25
+expect par22 40
+expect epar25 600
+# on a track it sets that track's sound alone: SHAABI LEAD (its echo 30, chorus 30, PA 25) on track 4 (the bass's five
+# first): the effects stay as WEDDING ZURNA set them
+press SEL
+tapkey w3
+release SEL
+wait 30
+expect track 4
+expect tfam3 3
+turn SELECT 26
+wait 30
+expect tfam3 0
+expect sndn3 21
+said TRACK 4: SHAABI LEAD
+expect par25 60
+expect par19 0
+expect par24 0
+expect par22 40
+turn SELECT -26
+wait 30
+expect tfam3 3
+
+# ---- MY SOUND kept from track 3 (its tremolo, its vibrato deeper: the ORNAMENTS page) and put on track 5
+press SEL
+tapkey w2
+release SEL
+wait 30
+tap LFO
+wait 30
+expect page 4
+turn K2 3
+wait 30
+expect sndp2_15 26
+expect sndp1_15 20
+tap HOME
+wait 30
+tap SAVE
+wait 30
+expect save 1
+expect slot 0
+tap SAVE
+wait 30
+expect save 0
+expect kept 1
+expect sndn2 100
+expect sound 19
+# track 5 (the kick's four first, then the 22 ready sounds, then MY SOUND 1)
+press SEL
+tapkey w4
+release SEL
+wait 30
+expect track 5
+turn SELECT 26
+wait 30
+expect tfam4 0
+expect tidx4 8
+expect sndn4 100
+said TRACK 5: MY SOUND 1
+expect sndp4_15 26
+expect esnd4_84 1000
+expect esnd4_15 260
+expect esnd2_15 260
+expect esnd1_15 200
+
+# ---- a lock of a sound's knob holds its own track's: VIB DEPTH locked on track 2's first step; tracks 3 and 1 as set
+press SEL
+tapkey w1
+release SEL
+wait 30
+tap SEQ
+wait 30
+expect seq 1
+key w0 down
+wait 30
+tap LFO
+wait 30
+turn K2 4
+wait 30
+key w0 up
+wait 60
+expect lock1_0_15 28
+expect par15 20
+tap HOME
+wait 30
+tap PLAY
+wait 100
+expect esnd1_15 280
+expect esnd2_15 260
+expect esnd0_15 200
+expect epar15 200
+tap PLAY
+wait 60
+expect esnd1_15 200
+tap SEQ
+wait 30
+expect seq 0
+
+# ---- INSTRUMENT on a picked track with a drum sound: that instrument on it, its own knobs (track 7, the claps')
+press SEL
+tapkey w6
+release SEL
+wait 30
+expect track 7
+tap ENV
+wait 30
+turn K1 1
+wait 30
+expect tfam6 0
+expect tidx6 1
+expect sndn6 -1
+expect sndp6_6 85
+tap HOME
+wait 30
+turn SELECT -6
+wait 30
+expect tfam6 6
+
+# ---- saved, and after a power cycle every track's sound is as it was
+wait 6000
+expect dirty 0
+hash_keep
+reboot
+wait 900
+expect hash_same 1
+expect tfam1 0
+expect sndn1 14
+expect sndp1_6 80
+expect esnd1_6 800
+expect tfam2 0
+expect sndn2 100
+expect esnd2_84 1000
+expect esnd2_15 260
+expect tfam3 3
+expect tfam4 0
+expect sndn4 100
+expect esnd4_84 1000
+expect sound 19
+expect par25 60
+
+# ---- his 0.16 flash (DKB7: MY SOUND 2 on track 1, the lead's organ on track 6): every track as it played. Track 6's
+# organ is its instrument's own tone with the sound's vibrato and ornaments; track 1 the sound itself. Nothing written
+# at the start (the record stays DKB7 until something changes); a change, and it is DKB8, the same sounds after a power
+# cycle. (The same flash plays sample for sample as 0.16 played it: the render compared against the 0.16 build.)
+flash_load app/tests/dkb7.bin
+reboot
+wait 900
+expect sound 101
+expect sndn0 101
+expect sndx0 0
+expect tfam5 0
+expect tidx5 7
+expect sndx5 1
+expect esnd5_118 1
+expect sndn5 -1
+expect sndp5_6 60
+expect esnd5_15 200
+expect esnd0_15 200
+expect epar15 200
+listen
+press SEL
+tapkey w5
+release SEL
+wait 30
+said KEYS PLAY TRACK 6: LEAD ORGAN
+tap ENV
+wait 30
+turn K4 1
+wait 30
+expect sndx5 0
+expect esnd5_118 0
+tap HOME
+wait 6000
+expect dirty 0
+reboot
+wait 900
+expect sndx5 0
+expect tidx5 7
+expect sound 101
+expect sndn0 101
+expect sndx0 0

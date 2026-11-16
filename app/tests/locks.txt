@@ -220,10 +220,12 @@ wait 700
 expect epar22 250
 wait 300
 expect epar22 350
-expect epar14 6000
-expect epar15 300
+expect esnd4_14 6000
+expect esnd4_15 300
+expect epar14 5500
 wait 420
 expect epar22 250
+expect esnd4_14 5500
 expect epar14 5500
 tap PLAY
 wait 60

@@ -5640,8 +5640,8 @@ int app_expect(const char *what, int *got)
                                               * (its steps), sndcT_C its choice C, sndnT its name (sound's numbers),
                                               * sndxT 1: its instrument's own tone; esndT_ID knob or choice ID (P_*) of
                                               * it as the engine has it now, x 1000 (DAB_PLAIN: P_COUNT) */
-        int e = what[0] == 'e', t = atoi(what + 4 + e) & 7, k = 4 + e, id;
-        char w = what[3 + e];
+        int e = what[0] == 'e', t = atoi(what + 4) & 7, k = 4, id;   /* (sndp4_14, esnd4_14: the track at 4) */
+        char w = what[3];
         while (what[k] && what[k] != '_')
             k++;
         id = what[k] ? atoi(what + k + 1) : 0;

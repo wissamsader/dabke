@@ -33,7 +33,7 @@ expect track 8
 tap SEL
 wait 30
 expect track 1
-said TRACK 1: LEAD MIJWIZ
+said TRACK 1: MIJWIZ
 # SEQ again: step mode off, the track stays picked, the keys play it
 tap SEQ
 wait 30
