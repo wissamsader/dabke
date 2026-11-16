@@ -7,7 +7,7 @@ An Arabic wedding keyboard for the M-VAVE FM-1. Free, open source, public beta.
 DABKE plays maqam scales with quarter tones on any note over dabke and shaabi rhythms: maqsum, baladi, saidi, dabke,
 khaliji, chobi and more. Its voices are mijwiz, zurna, keyboard lead, violin, ney, accordion, strings, organ, buzuq,
 oud, qanun, brass and square, with a drone, trills, glides and automatic ornaments. Lean on a key and the note bends. It has eight
-tracks with loops and a step sequencer, bass and backing from the left hand, an arpeggio, delay, reverb and a wedding
+tracks with loops and a step sequencer, each track with its own sound, bass and backing from the left hand, an arpeggio, delay, reverb and a wedding
 PA. An Akai MIDImix plugged into the FM-1's USB port works as its mixer.
 
 Made by [STUDIOMORPHIK](https://studiomorphik.com).
@@ -46,7 +46,7 @@ on the `dabke` branch of [wissamsader/fm1-base](https://github.com/wissamsader/f
     python3 base/tools/build.py app --host            # the host simulator
     ./run_tests.sh                                    # its tests: every one must say ok
     python3 base/tools/build.py app --web             # the browser version (needs Emscripten): app/build/emu/
-    python3 base/tools/build.py app --release 0.16    # the FM-1 package: app/build/dabke-0.16.fwsc
+    python3 base/tools/build.py app --release 0.17    # the FM-1 package: app/build/dabke-0.17.fwsc
 
 The FM-1 package needs JieLi's toolchain and AC79 SDK in a container; fm1-base's README explains the setup. The
 simulator and its tests need only a C compiler and Python 3.
