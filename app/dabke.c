@@ -710,7 +710,12 @@ static void kn_to(int k, float v)       /* a knob (DAB_LKK) to a value: the whol
     tpar[t][s] = v; dirty = 1;
     if (!t) par_to(sp_id(s), v);
 }
-static int lk_knob(uint32_t l) { return DAB_LKK(DAB_LK_TRK(l), DAB_LK_ID(l)); }   /* the knob a lock holds */
+static int lk_knob(uint32_t l)          /* the knob a lock holds: one of a sound's on a track without a lead sound, track
+                                         * 1's (what the pages show there; 0.16's lead) */
+{
+    int t = DAB_LK_TRK(l);
+    return DAB_LKK(tfam[t] == SF_LEAD ? t : 0, DAB_LK_ID(l));
+}
 static void lock_free(int k)            /* a knob no lock holds any more: its normal value again */
 {
     int i = lkAt[k];
@@ -762,11 +767,9 @@ static void lock_clear(int t, int take) /* a track's locks gone (t < 0: every tr
 static void lk_step(int t, int s, int trig)   /* track t comes to its step s (trig: a hit or a note begins there) */
 {
     int i;
-    if (trig && lkHeld[t]) {            /* what it held ends here (a lock of the same knob here: that value, below): the
-                                         * whole instrument's knobs, its own sound's */
-        for (i = 0; i < DAB_NLK; i++) if (lkAt[i] && DAB_LK_TRK(lk[lkAt[i] - 1]) == t) lock_free(i);
-        for (i = DAB_NLK + t * DAB_NSK; i < DAB_NLK + (t + 1) * DAB_NSK; i++) if (lkAt[i]) lock_free(i);
-    }
+    if (trig && lkHeld[t])              /* what it held ends here (a lock of the same knob here: that value, below): the
+                                         * whole instrument's knobs, a sound's */
+        for (i = 0; i < DAB_NLKS; i++) if (lkAt[i] && DAB_LK_TRK(lk[lkAt[i] - 1]) == t) lock_free(i);
     if (lkN[t])
         for (i = 0; i < DAB_NLOCK; i++) {
             uint32_t l = lk[i];
@@ -2305,6 +2308,9 @@ static void track_sound(int t, int f, int x, int again)   /* (again: the same, a
     if (t < 0 || t >= DAB_NTRK || f < 0 || f >= SF_N) return;
     if (x < 0 || x >= dabke_family_size(f)) x = 0;
     if (tfam[t] == f && tidx[t] == x && !again) return;
+    for (i = DAB_NLK; i < DAB_NLKS; i++)  /* (a sound's knobs it holds: let go, as the knob a lock of its holds may change
+                                         * with its sound; held again from their next step) */
+        if (lkAt[i] && DAB_LK_TRK(lk[lkAt[i] - 1]) == t) lock_free(i);
     if (recTrk == t && !SF_DRUM(tfam[t]) != !SF_DRUM(f))   /* recording, and its sound of the other kind now (notes, drums):
                                                              * the recording ends here as REC would end it, what was played
                                                              * kept. (Ended later, it ended as the other kind: a note left

@@ -238,25 +238,62 @@ tap SEQ
 wait 30
 expect seq 0
 
-# ---- INSTRUMENT on a picked track with a drum sound: that instrument on it, its own knobs (track 7, the claps')
+# ---- a track without a lead sound picked (track 7, the claps'): the SOUND and ORNAMENTS pages show and change track
+# 1's sound, as 0.16 had the lead's there, and say so ("SOUND: TRACK 1"). A knob there changes track 1's sound, not the
+# claps' track; INSTRUMENT there is track 1's instrument; the claps' track keeps its claps and plays them
 press SEL
 tapkey w6
 release SEL
 wait 30
 expect track 7
+expect tfam6 6
 tap ENV
 wait 30
+listen
+where
+said SOUND: TRACK 1
+expect par6 85
+expect sndp6_6 70
+turn K3 -1
+wait 30
+expect par6 83
+expect sndp0_6 83
+expect esnd0_6 830
+expect sndp6_6 70
+expect esnd6_6 700
 turn K1 1
 wait 30
-expect tfam6 0
-expect tidx6 1
-expect sndn6 -1
-expect sndp6_6 85
+expect tidx0 2
+expect tfam0 0
+expect sndc0_0 2
+expect sound -1
+expect tfam6 6
+expect sndc6_0 0
+tap LFO
+wait 30
+where
+said ORNAMENTS: TRACK 1
+expect par15 20
 tap HOME
 wait 30
-turn SELECT -6
+expect starts6 0
+tapkey 0
+tapkey 2
+wait 60
+expect starts6 2
+expect voices6 0
+# a lead track picked: its own sound again (track 2's SAZ)
+press SEL
+tapkey w1
+release SEL
 wait 30
-expect tfam6 6
+tap ENV
+wait 30
+where
+said SOUND: TRACK 2
+expect par6 80
+tap HOME
+wait 30
 
 # ---- saved, and after a power cycle every track's sound is as it was
 wait 6000
@@ -277,7 +314,10 @@ expect tfam3 3
 expect tfam4 0
 expect sndn4 100
 expect esnd4_84 1000
-expect sound 19
+expect sound -1
+expect tidx0 2
+expect sndp0_6 65
+expect tfam6 6
 expect par25 60
 
 # ---- his 0.16 flash (DKB7: MY SOUND 2 on track 1, the lead's organ on track 6): every track as it played. Track 6's

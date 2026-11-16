@@ -118,9 +118,9 @@ enum { ORN_OFF, ORN_MORDENT, ORN_TURN, ORN_SCOOP, ORN_TRILL, ORN_SHAKE, ORN_AUTO
 /* Each track's own lead sound (dabke_tpar): a lead sound on a track plays with that track's own instrument knobs,
  * vibrato, ornaments, glide, TRANSPOSE, TUNE, PLAY, DOUBLE, PICKING, TRILL TO and BEND RANGE. The whole instrument's
  * knobs of those names (par) are track 1's, and the sounds that have none of their own follow them: the drone, the left
- * hand, the bass line. A lock of one of a sound's knobs holds its own track's. DAB_SK: a knob's number among a sound's
- * knobs (-1: not one); DAB_LKK: the knob a lock of knob id on track t holds, as dabke_status's lk_at counts them (the
- * whole instrument's, then each track's own) */
+ * hand, the bass line. A lock of one of a sound's knobs holds its own track's (on a track without a lead sound: track
+ * 1's, as the pages show there). DAB_SK: a knob's number among a sound's knobs (-1: not one); DAB_LKK: knob id of
+ * track t's sound as dabke_status's lk_at counts the knobs (the whole instrument's, then each track's own) */
 #define DAB_NSK 15
 #define DAB_SK(id) ((id) >= P_TONE && (id) <= P_ORNAMOUNT ? (id) - P_TONE : (id) == P_TRANSPOSE ? 13 : (id) == P_TUNE ? 14 : -1)
 #define DAB_NLKS (DAB_NLK + DAB_NTRK * DAB_NSK)

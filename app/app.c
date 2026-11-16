@@ -461,7 +461,7 @@ typedef struct {
 _Static_assert(sizeof(seq_t) <= PLAT_STORE_MAX, "the sequencer's part: one store object");
 static settings_t set;
 static kept_t kept;
-static int picked(void);                 /* the picked track (ALL: track 1): whose sound the SOUND and ORNAMENTS pages show */
+static int picked(void);                 /* the picked track (ALL: track 1) */
 static int sc_of(int c)                  /* a choice's place in a track's own sound, -1: not one of its */
 {
     int k;
@@ -469,6 +469,13 @@ static int sc_of(int c)                  /* a choice's place in a track's own so
         if (TSC[k] == c)
             return k;
     return -1;
+}
+static int ed_trk(void)                  /* whose sound the SOUND and ORNAMENTS pages show and change: the picked track's
+                                          * when it has a lead sound; else (a drum, drone, left hand or bass sound on it,
+                                          * or ALL) track 1's, as 0.16 had the lead's there */
+{
+    int t = picked();
+    return set.tsnd[t][0] == SF_LEAD ? t : PART_LEAD;
 }
 static seq_t sq PLAT_POOL;
 static uint8_t set_dirty, sq_dirty;      /* changed since the last save (the settings; the sequencer's part) */
@@ -644,15 +651,15 @@ static int32_t par_eff(int id)           /* a knob as it sounds: as set, or towa
 static const float PAR_SC[3] = {0.01f, 1.0f, 0.001f};
 static float par_eng(int id, int32_t steps) { return (float)(steps * (int32_t)PAR[id].step) * 0.01f * PAR_SC[PAR[id].scale]; }
 static void par_send(int id)             /* a knob's normal value (a track muted: dabke_mute, its volume left as it is). One
-                                          * of a sound's: the picked track's own (the pages show it) */
+                                          * of a sound's: the sound the pages show (ed_trk) */
 {
     if (DAB_SK(id) >= 0)
-        dabke_tpar(picked(), id, par_eng(id, set.par[id]));
+        dabke_tpar(ed_trk(), id, par_eng(id, set.par[id]));
     else
         dabke_par(id, par_eng(id, par_eff(id)));
 }
 
-static void set_par(int id, int32_t steps)   /* (one of a sound's knobs: the picked track's own sound's) */
+static void set_par(int id, int32_t steps)   /* (one of a sound's knobs: the sound the pages show, ed_trk's) */
 {
     int k = DAB_SK(id);
     if (!IS_KNOB(id))
@@ -663,11 +670,11 @@ static void set_par(int id, int32_t steps)   /* (one of a sound's knobs: the pic
     set.par[id] = (int16_t)steps;
     par_send(id);
     if (k >= 0) {
-        tsound_t *o = &set.ts[picked()];
+        tsound_t *o = &set.ts[ed_trk()];
         o->par[k] = (int16_t)steps;
         if (o->plain && k <= DAB_SK(P_RELEASE)) {   /* (a tone knob turned: its tone is its knobs' from now) */
             o->plain = 0;
-            dabke_tpar(picked(), DAB_PLAIN, 0.0f);
+            dabke_tpar(ed_trk(), DAB_PLAIN, 0.0f);
         }
     }
     changed();
@@ -815,8 +822,8 @@ static void lk_sounds_drop(int t)        /* track t's sound locks gone (a note s
 }
 static int32_t lk_now(int id, int *held) /* a knob as it sounds now: a lock's value while one holds it, else its own */
 {
-    int i = id >= 0 && id < DAB_NLK ? dabke_status()->lk_at[DAB_LKK(picked(), id)] : 0;   /* (a sound's knob: the
-                                              * picked track's own) */
+    int i = id >= 0 && id < DAB_NLK ? dabke_status()->lk_at[DAB_LKK(ed_trk(), id)] : 0;   /* (a sound's knob: the
+                                              * one the pages show) */
     uint32_t l = i ? sq.lock[(i - 1) % DAB_NLOCK] : 0;
     if (held)
         *held = l && DAB_LK_ID(l) == id;
@@ -900,10 +907,10 @@ static int same_text(const char *a, const char *b)   /* (the device has no strcm
     return *a == *b;
 }
 #define TOUCH_ON() (set.ch[C_TOUCH] != 0 || set.ch[C_PRESS] != 0)   /* the keys are sensed for the velocity or for the pressure */
-static void choice_send(int c)          /* (one of a sound's: the picked track's own, as the pages show it) */
+static void choice_send(int c)          /* (one of a sound's: the sound the pages show, ed_trk's) */
 {
     if (sc_of(c) >= 0)
-        dabke_tpar(picked(), CHOICE[c].eng, ch_engine(c, set.ch[c]));
+        dabke_tpar(ed_trk(), CHOICE[c].eng, ch_engine(c, set.ch[c]));
     else if (CHOICE[c].eng != NOENG)
         dabke_par(CHOICE[c].eng, ch_engine(c, set.ch[c]));
     else if (c == C_SYNC)
@@ -916,10 +923,10 @@ static void choice_send(int c)          /* (one of a sound's: the picked track's
         touch_on(TOUCH_ON());
 }
 
-static void model_defaults(int m)        /* an instrument chosen (the picked track's): its own knobs */
+static void model_defaults(int m)        /* an instrument chosen (the pages' sound's): its own knobs */
 {
     static const uint8_t ID[8] = {P_TONE, P_BUZZ, P_DETUNE, P_BREATH, P_BODY, P_ATTACK, P_RELEASE, P_GLIDE};
-    tsound_t *o = &set.ts[picked()];
+    tsound_t *o = &set.ts[ed_trk()];
     int i;
     for (i = 0; i < 8; i++)
         set_par(ID[i], MODEL_DEF[m][i]);
@@ -927,7 +934,7 @@ static void model_defaults(int m)        /* an instrument chosen (the picked tra
     choice_send(C_PLAY);
     if (o->plain) {                      /* (its knobs' tone, as 0.16 gave the sound's instrument) */
         o->plain = 0;
-        dabke_tpar(picked(), DAB_PLAIN, 0.0f);
+        dabke_tpar(ed_trk(), DAB_PLAIN, 0.0f);
     }
 }
 
@@ -980,23 +987,23 @@ static void tsnd_put(int t, int f, int x)   /* track t's sound now (its own fami
         o->plain = 1;
         o->name = NONAME;
         ts_send(t);
-        if (t == picked())
-            view_load();
     }
     tsnd_send(t);
+    view_load();                             /* (the pages: the sound they show now, ed_trk's) */
     if (!SF_DRUM(f))
         lk_sounds_drop(t);
     changed();
 }
 
-static void set_choice(int c, int v)     /* (one of a sound's choices: the picked track's own sound's) */
+static void set_choice(int c, int v)     /* (one of a sound's choices: the sound the pages show, ed_trk's) */
 {
     int n = ch_count(c), t;
     v = clamp(v, 0, n - 1);
-    if (c == C_MODEL) {                  /* INSTRUMENT: the picked track plays it (ALL: track 1), with its own knobs; its
-                                          * name is the instrument's */
+    if (c == C_MODEL) {                  /* INSTRUMENT: the instrument of the sound the pages show (ed_trk: a lead track
+                                          * picked, else track 1, which plays it), its own knobs with it; its name is the
+                                          * instrument's. A drum, drone, left hand or bass track keeps its sound */
         int was;
-        t = picked();
+        t = ed_trk();
         was = set.ts[t].ch[0];
         if (set.tsnd[t][0] != SF_LEAD || set.tsnd[t][1] != v)
             tsnd_put(t, SF_LEAD, v);
@@ -1016,7 +1023,7 @@ static void set_choice(int c, int v)     /* (one of a sound's choices: the picke
         return;
     set.ch[c] = (uint8_t)v;
     if (sc_of(c) >= 0)
-        set.ts[picked()].ch[sc_of(c)] = (uint8_t)v;
+        set.ts[ed_trk()].ch[sc_of(c)] = (uint8_t)v;
     choice_send(c);
     if (c == C_MAQAM) {
         set.ch[C_ROOT] = (uint8_t)dabke_maqam_root(v);
@@ -1271,9 +1278,10 @@ static void ts_send(int t)               /* track t's own sound, all of it, to t
         dabke_tpar(t, CHOICE[TSC[k]].eng, ch_engine(TSC[k], o->ch[k]));
     dabke_tpar(t, DAB_PLAIN, (float)o->plain);
 }
-static void view_load(void)              /* the pages: the picked track's own sound (ALL: track 1's). Nothing is sent */
+static void view_load(void)              /* the pages: ed_trk's sound (a lead track picked: its own; else track 1's).
+                                          * Nothing is sent */
 {
-    const tsound_t *o = &set.ts[picked()];
+    const tsound_t *o = &set.ts[ed_trk()];
     int k;
     for (k = 0; k < DAB_NSK; k++)
         set.par[sk_id(k)] = o->par[k];
@@ -1293,8 +1301,7 @@ static void sound_put(int t, sound_t *o, int name, int effects)
         tsnd_put(t, SF_LEAD, set.ts[t].ch[0]);
     else if (!effects)                   /* (a track's sound changed: what it played stops, as for any other sound) */
         dabke_track_sound(t, SF_LEAD, set.ts[t].ch[0] + DAB_AGAIN);
-    if (t == picked())
-        view_load();
+    view_load();
     if (effects) {
         for (i = 0; i < DAB_NTRK; i++) {     /* the other tracks' sounds as it has them (a MY SOUND: as they were kept;
                                               * a ready sound: as they are) */
@@ -2717,9 +2724,9 @@ static void knob_step(int id, int n)
 static void keep_sound(void)                 /* SAVE, the second time: the sound kept in its place */
 {
     char t[4] = {(char)('1' + ui.slot), 0};
-    whole_take(&kept.s[ui.slot]);            /* (the picked track's sound, as the pages show it, and the effects) */
+    whole_take(&kept.s[ui.slot]);            /* (the sound the pages show, ed_trk's, and the effects) */
     kept.used[ui.slot] = 1;
-    set.ts[picked()].name = (uint8_t)(SOUND_OWN + ui.slot);
+    set.ts[ed_trk()].name = (uint8_t)(SOUND_OWN + ui.slot);
     changed();
     ui.save = 0;
     if (plat_store_save(OBJ_KEPT, &kept, sizeof kept) == 0 && save_settings() == 0)
@@ -4002,10 +4009,10 @@ static void header(void)
             trk_name((ui.row[0] - MIX_ROW) % DAB_NPART, ttl + 5);
         } else
             text_cat(ttl, ui.save ? "KEEP THE SOUND" : PAGE_TITLE[ui.page]);
-        if (!ui.save && set.track && (ui.page == PG_ENV || ui.page == PG_LFO)) {   /* (the picked track's own sound:
-                                              * "SOUND: TRACK 3") */
+        if (!ui.save && set.track && (ui.page == PG_ENV || ui.page == PG_LFO)) {   /* (whose sound: "SOUND: TRACK 3";
+                                              * a track without a lead sound picked: "SOUND: TRACK 1") */
             char tn[12];
-            trk_name(set.track - 1, tn);
+            trk_name(ed_trk(), tn);
             text_cat(ttl, ": ");
             text_cat(ttl, tn);
         }
@@ -4836,7 +4843,7 @@ static int32_t knob_shown(int pid, int *locked)   /* the value a knob shows: the
         *locked = 1;
         return DAB_LK_VAL(sq.lock[i]);
     }
-    i = dabke_status()->lk_at[DAB_LKK(picked(), pid)];
+    i = dabke_status()->lk_at[DAB_LKK(ed_trk(), pid)];
     if (i && i <= DAB_NLOCK && sq.lock[i - 1] && DAB_LK_ID(sq.lock[i - 1]) == pid) {
         *locked = 1;
         return DAB_LK_VAL(sq.lock[i - 1]);
@@ -5268,6 +5275,11 @@ static void speak(void)
         t[0] = 0;
         text_cat(t, APP_NAME ". ");
         text_cat(t, ui.save ? "KEEP THE SOUND" : PAGE_TITLE[ui.page]);
+        if (!ui.save && set.track && (ui.page == PG_ENV || ui.page == PG_LFO)) {   /* (as its title: whose sound) */
+            trk_name(ed_trk(), b);
+            text_cat(t, ": ");
+            text_cat(t, b);
+        }
         text_cat(t, ". SOUND ");
         sound_name(b);
         text_cat(t, b);
@@ -5525,7 +5537,7 @@ int app_expect(const char *what, int *got)
         i = what[k] ? lk_find(t2, st2, atoi(what + k + 1)) : -1;
         *got = i >= 0 ? DAB_LK_VAL(sq.lock[i]) : -999;
     } else if (!strncmp(what, "lk_at", 5))   /* lk_atID: the lock holding knob ID now: its value (-999: none, its own) */
-        *got = s->lk_at[DAB_LKK(picked(), atoi(what + 5) % DAB_NLK)] ? DAB_LK_VAL(sq.lock[s->lk_at[DAB_LKK(picked(), atoi(what + 5) % DAB_NLK)] - 1]) : -999;
+        *got = s->lk_at[DAB_LKK(ed_trk(), atoi(what + 5) % DAB_NLK)] ? DAB_LK_VAL(sq.lock[s->lk_at[DAB_LKK(ed_trk(), atoi(what + 5) % DAB_NLK)] - 1]) : -999;
     else if (!strncmp(what, "epar", 4))      /* eparID: knob ID as the engine has it now, x 1000 */
         *got = dabke_host_par(atoi(what + 4));
     else if (!strncmp(what, "played", 6))    /* playedN: track N's loop as long as it was played, ticks */
