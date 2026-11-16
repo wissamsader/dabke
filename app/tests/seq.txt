@@ -1,0 +1,1008 @@
+# The sequencer (fm1-organ/LOGIC.md): PLAY alone starts and stops everything; REC records when it is let go; SEQ is
+# step mode: the white keys are the steps of the picked track; a track is a bar long or two (LENGTH); what he wrote
+# or recorded is his, apart from the rhythm's; the same on every track, by the kind of its sound. From the repository's root:
+#   app/build/host/dabke_host app/tests/seq.txt OUTDIR
+# Dabke Syria at 140: a step 107 ms, the rhythm's bar 8 steps, a bar as LENGTH counts it 16 (1714 ms).
+# (trigT_S: something of track T+1 begins on its step S: 1 his, 2 the rhythm's; tpatT_L_S: a drum sound's step, lane L;
+# hisT: the track is his; tnT: its steps on the rhythm's clock; nsteps, pages, spage: the picked track's steps, its
+# pages of them, the page shown; startsT: its notes and hits so far; hitsN: drum N's hits: 0 dum, 1 tek, 2 ka, 9 kick)
+wait 900
+expect track 0
+expect seq 0
+expect running 0
+listen
+
+# ---- SEQ tapped: step mode. It starts nothing. With ALL picked it picks a track: track 1, the first time. The step
+# view is the home page now; SEL goes round the eight tracks only
+tap SEQ
+wait 30
+expect seq 1
+expect track 1
+expect page 0
+expect running 0
+said STEP MODE: WHITE KEYS ARE STEPS
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 8
+tap SEL
+wait 30
+expect track 1
+said TRACK 1: LEAD MIJWIZ
+# SEQ again: step mode off, the track stays picked, the keys play it
+tap SEQ
+wait 30
+expect seq 0
+expect track 1
+said STEP MODE OFF
+# track 4 picked and left picked a moment, then SEL on round to ALL; SEQ: the track picked last comes back (not
+# the ones SEL passed on its way)
+tap SEL
+tap SEL
+tap SEL
+wait 700
+expect track 4
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 0
+tap SEQ
+wait 30
+expect seq 1
+expect track 4
+# the pages stay reachable in step mode, and HOME is the step view again; SEL from another page is the maqam page
+tap FX
+wait 30
+expect page 2
+expect seq 1
+tap HOME
+wait 30
+expect page 0
+expect seq 1
+
+# the rhythm and the tempo, changed where the home page's lines are not there to show them, are said
+listen
+turn PRESET 1
+wait 30
+expect rhythm 1
+said DABKE LEBANON
+turn PRESET -1
+wait 30
+expect rhythm 0
+said DABKE SYRIA
+turn ALGO 1
+wait 30
+said TEMPO 142
+turn ALGO -1
+wait 30
+expect tempo 140
+
+# ---- a drum sound's steps: the kick (track 5). The rhythm drives it (Dabke Syria: the kick on steps 1 and 5 of its
+# bar: steps 1, 5, 9, 13 of sixteen); the white keys' lights show them
+tap SEL
+wait 30
+expect track 5
+expect his4 0
+expect nsteps 16
+expect pages 1
+expect trig4_0 2
+expect trig4_4 2
+expect trig4_8 2
+expect trig4_1 0
+expect lit_key0 1
+expect lit_key7 1
+expect lit_key2 0
+# a white key tapped on an empty step: a hit there. The track is his from now: the rhythm's own steps to begin with
+tapkey w1
+wait 60
+expect his4 1
+expect dedit 16
+expect tpat4_0_1 2
+expect trig4_1 1
+expect trig4_0 1
+expect trig4_8 1
+expect tn4 16
+expect lit_key2 1
+# tapped on a step that has something: it is removed (his own hit, then one that was the rhythm's)
+tapkey w1
+wait 60
+expect tpat4_0_1 0
+expect lit_key2 0
+tapkey w0
+wait 60
+expect tpat4_0_0 0
+# a key held longer than a tap (0.4 s) and let go with nothing pressed or turned: nothing added
+key w2 down
+wait 600
+key w2 up
+wait 60
+expect tpat4_0_2 0
+# the same on a step that has something (step 5), held 0.4 s, then longer: nothing is removed
+expect tpat4_0_4 2
+key w4 down
+wait 400
+key w4 up
+wait 60
+expect tpat4_0_4 2
+key w4 down
+wait 700
+key w4 up
+wait 60
+expect tpat4_0_4 2
+# PLAY: it plays his steps (5, 9, 13: three kicks in sixteen steps); the step playing shows dim on the keys
+expect hits9 0
+tap PLAY
+wait 1750
+expect hits9 3
+expect dim_keys >0
+tap PLAY
+wait 60
+expect running 0
+
+# ---- several drums on a track: the darbuka and tabl (track 6). The black keys play its drums (its second: the tek)
+# and choose what a tap adds; every step of this rhythm has something, so a first tap takes it away and a second adds
+# the tek
+tap SEL
+wait 30
+expect track 6
+expect his5 0
+expect hits1 4
+tapkey b1
+wait 60
+expect hits1 5
+expect his5 0
+tapkey w1
+wait 60
+expect his5 1
+expect trig5_1 0
+tapkey w1
+wait 60
+expect tpat5_1_1 2
+expect tpat5_2_1 0
+# a white key held and a black key pressed: that black key's drum (the first: the dum) is that step's, alone; the
+# hold is no tap
+key w3 down
+wait 30
+tapkey b0
+wait 30
+key w3 up
+wait 60
+expect tpat5_0_3 2
+expect tpat5_4_3 0
+expect trig5_3 1
+# a second white key while one is held, a drum sound: a step of its own (fast fingers lose no step)
+tapkey w1
+wait 60
+expect trig5_1 0
+key w1 down
+wait 30
+tapkey w9
+wait 30
+key w1 up
+wait 60
+expect trig5_1 1
+expect trig5_9 0
+
+# ---- a note sound's steps: the lead (track 1). Nothing played on it yet: a tap adds the maqam's tonic (D) as the
+# keys play it (D4), one step long; the loop it makes is a bar long, his
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 1
+expect his0 0
+expect tapn0 1
+expect tap0_0 62
+tapkey w4
+wait 60
+expect his0 1
+expect trk_n0 1
+expect trk_len0 96
+expect trk_key0_0 62
+expect trk_pos0_0 24
+expect trk_dur0_0 6
+expect trk_takes0 1
+expect trig0_4 1
+expect lit_key7 1
+# the black keys go on playing the track's sound, and what they play is what a tap adds: a chord of two
+key 8 down
+key 13 down
+wait 60
+expect voices0 >0
+key 8 up
+key 13 up
+wait 60
+expect tapn0 2
+tapkey w6
+wait 60
+expect trk_n0 3
+expect trig0_6 1
+expect trk_key0_1 61
+expect trk_key0_2 66
+# tapped again: what begins on that step is removed (both notes)
+tapkey w6
+wait 60
+expect trk_n0 1
+expect trig0_6 0
+# a white key held (180 ms and more) and other keys pressed (white or black): their notes become the step's, up to
+# four, in place of what was there; they are heard, and the hold is no tap
+key w4 down
+wait 250
+key 9 down
+wait 30
+key 12 down
+wait 30
+key 16 down
+wait 30
+key 19 down
+wait 30
+key 21 down
+wait 60
+key 9 up
+key 12 up
+key 16 up
+key 19 up
+key 21 up
+key w4 up
+wait 60
+expect trk_n0 4
+expect trig0_4 1
+expect trk_key0_0 62
+expect trk_key0_1 65
+expect trk_key0_2 69
+expect trk_key0_3 72
+expect trig0_5 0
+expect trig0_9 0
+# notes held by HOLD are what a tap adds (SOLO or EDIT with the black keys down): EDIT tapped in step mode with no
+# step held is HOLD
+key 3 down
+wait 30
+tap EDIT
+wait 60
+expect hold 1
+key 3 up
+wait 30
+expect tapn0 1
+expect tap0_0 56
+tapkey w8
+wait 60
+expect trk_n0 5
+expect trig0_8 1
+tap EDIT
+wait 60
+expect hold 0
+# PLAY: his notes play (5 a bar of sixteen steps)
+expect starts0 >0
+tap PLAY
+wait 1750
+expect loop_plays 5
+expect tstep0 <16
+tap PLAY
+wait 60
+
+# ---- REC in step mode: what the black keys play is recorded on its step (the rhythm stopped: the first key starts
+# it, on step 1). REC pressed: nothing records until it is let go
+press REC
+wait 200
+expect rec_track -1
+release REC
+wait 30
+expect rec_track 0
+expect rec_waiting 1
+expect overdub 1
+tapkey 10
+wait 30
+expect running 1
+tap REC
+wait 30
+expect rec_track -1
+expect trk_n0 6
+expect trk_key0_5 63
+expect trk_pos0_5 0
+expect trk_takes0 2
+expect trig0_0 1
+# REC held a second: that take gone (nothing records, RECORDING is never said); the steps written before stay
+listen
+press REC
+wait 1100
+release REC
+wait 60
+expect rec_track -1
+expect trk_n0 5
+expect trk_takes0 1
+said TRACK 1: LAST TAKE GONE
+unsaid RECORDING
+tap PLAY
+wait 60
+expect running 0
+
+# REC with the rhythm stopped waits; PLAY starts everything, the recording with it (no key needed)
+tap REC
+wait 30
+expect rec_track 0
+expect rec_waiting 1
+tap PLAY
+wait 30
+expect running 1
+expect rec_waiting 0
+expect rec_track 0
+tapkey 13
+wait 30
+tap REC
+wait 30
+expect rec_track -1
+expect trk_n0 6
+expect trk_takes0 2
+press REC
+wait 1100
+release REC
+wait 60
+expect trk_n0 5
+tap PLAY
+wait 60
+expect running 0
+
+# ---- LENGTH (the effects page's track row, K2): two bars. The first bar is copied into the second: nothing sounds
+# different. OCT+ and OCT- in step mode: the next and the previous bar of steps
+tap FX
+turn SELECT -20
+turn SELECT 3
+wait 30
+expect row 3
+listen
+turn K2 1
+wait 60
+expect nsteps 32
+expect pages 2
+expect trk_len0 192
+expect trk_n0 10
+expect trig0_20 1
+expect trig0_24 1
+said TRACK 1: 32 STEPS
+tap HOME
+wait 30
+tap OCT+
+wait 60
+expect spage 1
+expect octave 0
+said PAGE 2 OF 2
+expect lit_key7 1
+# its second bar edited (step 21 removed, step 18 added): the first bar as it was
+tapkey w4
+wait 60
+expect trig0_20 0
+expect trig0_4 1
+tapkey w1
+wait 60
+expect trig0_17 1
+expect trig0_1 0
+tap OCT+
+wait 30
+expect spage 1
+tap OCT-
+wait 30
+expect spage 0
+said PAGE 1 OF 2
+# back to one bar: the second bar is kept, silent; two bars again: it comes back as he left it (not copied again)
+tap FX
+wait 30
+turn K2 -1
+wait 60
+expect nsteps 16
+expect trk_len0 96
+expect trk_n0 7
+said TRACK 1: 16 STEPS
+expect trig0_17 0
+expect trig0_4 1
+turn K2 1
+wait 60
+expect nsteps 32
+expect trk_n0 7
+expect trig0_17 1
+expect trig0_20 0
+turn K2 -1
+wait 60
+# a drum sound the same: the kick two bars long: its first bar copied; one bar again
+tap HOME
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 5
+tap FX
+wait 30
+turn K2 1
+wait 60
+expect tn4 32
+expect nsteps 32
+expect tpat4_0_4 2
+expect tpat4_0_20 2
+expect tpat4_0_16 0
+turn K2 -1
+wait 60
+expect tn4 16
+expect tpat4_0_20 2
+tap HOME
+
+# ---- kept: his steps (the second bar too), each track's LENGTH and its loop come back after a power cycle; step
+# mode is off at the start, the track picked as it was
+tap FX
+wait 30
+turn K2 1
+wait 60
+expect tn4 32
+tap HOME
+tap OCT+
+wait 30
+tapkey w2
+wait 60
+expect tpat4_0_18 2
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 1
+tap FX
+wait 30
+turn K2 1
+wait 60
+expect trk_len0 192
+tap HOME
+wait 7000
+expect dirty 0
+reboot
+wait 900
+expect seq 0
+expect track 1
+expect his4 1
+expect tn4 32
+expect two 17
+expect tpat4_0_18 2
+expect tpat4_0_20 2
+expect tpat4_0_4 2
+expect tpat4_0_0 0
+expect his5 1
+expect tpat5_0_3 2
+expect trk_len0 192
+expect trk_n0 7
+expect trig0_17 1
+expect trig0_4 1
+expect played0 0
+
+# ---- a step written on the drone's track (track 2) while the drone is switched off (the ornaments page's row 3,
+# K1): the drone is on again, so its step is heard
+tap LFO
+turn SELECT -20
+turn SELECT 2
+wait 30
+turn K1 -1
+wait 30
+expect ch6 0
+tap HOME
+tap SEL
+wait 30
+expect track 2
+tap SEQ
+wait 30
+listen
+tapkey w2
+wait 60
+expect ch6 1
+expect his1 1
+said DRONE ON
+tapkey w2
+wait 60
+expect his1 0
+tap SEQ
+wait 30
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 1
+
+# ---- REC held a second: the last take gone. A track whose steps he wrote (no live take): they go, and it is the
+# rhythm's again, said so; a track the rhythm never drove: empty
+listen
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 5
+press REC
+wait 1100
+release REC
+wait 60
+expect his4 0
+expect dedit 32
+expect rec_track -1
+said TRACK 5: BACK TO THE RHYTHM
+expect trig4_0 2
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 0
+press REC
+wait 1100
+release REC
+wait 60
+expect trk_n0 0
+expect trk_len0 0
+expect his0 0
+said TRACK 1 EMPTY
+unsaid RECORDING
+# with nothing of his there (no take, no step, no lock): it says so, and nothing changes
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 7
+expect his6 0
+press REC
+wait 1100
+release REC
+wait 60
+said TRACK 7: NOTHING OF YOURS HERE
+unsaid RECORDING
+expect his6 0
+expect rec_track -1
+
+# ---- SEQ held a second: every recording and every track's own steps cleared (step mode as it was: off)
+tap SEQ
+wait 30
+expect seq 1
+tapkey w3
+wait 60
+expect his6 1
+press SEQ
+wait 1100
+release SEQ
+wait 60
+expect seq 1
+expect his6 0
+expect his5 0
+expect dedit 0
+said ALL RECORDINGS CLEARED
+tap SEQ
+wait 30
+expect seq 0
+
+# ---- a step written while the rhythm runs, in the second of its bars: the lead's new loop is in step with the drum
+# tracks' steps (its step 12 sounds with their step 12), not started afresh at the rhythm's bar (tracks 1 and 5 are
+# two bars long still: LENGTH was left at two)
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 1
+expect his0 0
+tap SEQ
+wait 30
+tap PLAY
+wait 1000
+expect tstep4 10
+tapkey w2
+wait 60
+expect his0 1
+expect tstep0 11
+expect tstep4 11
+wait 500
+expect tstep0 16
+expect tstep4 16
+wait 777
+expect tstep0 23
+expect tstep4 23
+tap PLAY
+wait 60
+expect running 0
+press SEQ
+wait 1100
+release SEQ
+wait 60
+expect his0 0
+tap SEQ
+wait 30
+expect seq 0
+
+# ---- direct pick: SEL held and one of the first eight white keys picks track 1 to 8, at once. That key plays nothing
+# and is no step, and SEL let go after it is no tap. While SEL is held the first eight white keys are lit at the second
+# level, the picked one fully, the other white keys dark. A SEL tap still goes round (ALL, 1 .. 8). (The white keys:
+# keys 0, 2, 4, 5, 7, 9, 11, 12, then 14 ...)
+expect track 1
+expect seq 0
+listen
+press SEL
+wait 60
+expect lit_key0 1
+expect mid_key0 0
+expect mid_key2 1
+expect mid_key12 1
+expect mid_key14 0
+expect lit_key14 0
+expect track 1
+key w2 down
+wait 60
+expect track 3
+expect voices0 0
+expect voices2 0
+expect lit_key4 1
+expect mid_key0 1
+key w2 up
+wait 30
+key 1 down
+wait 60
+expect voices2 0
+key 1 up
+release SEL
+wait 60
+expect track 3
+said KEYS PLAY TRACK 3
+expect mid_keys 0
+key w2 down
+wait 60
+expect voices2 1
+key w2 up
+wait 60
+# SEL held and let go with no key: a tap, the next track; in step mode the same pick, and the key adds no step
+tap SEL
+wait 30
+expect track 4
+tap SEQ
+wait 60
+expect seq 1
+expect track 4
+press SEL
+tapkey w4
+release SEL
+wait 60
+expect track 5
+expect his4 0
+expect his3 0
+expect trk_n3 0
+expect seq 1
+tap SEL
+wait 30
+expect track 6
+
+# ---- OCT+ on the only bar of a track a bar long gives it its second bar, as LENGTH does (the first bar again there, if
+# nothing is there), says so and shows it; again: nothing more. LENGTH (the effects page's track row, K2) is the way
+# back. Track 6 (the darbuka and tabl, the rhythm's): his from then, two bars
+expect nsteps 16
+expect pages 1
+expect his5 0
+listen
+tap OCT+
+wait 100
+expect nsteps 32
+expect pages 2
+expect spage 1
+expect octave 0
+said TRACK 6: 32 STEPS
+expect tn5 32
+listen
+tap OCT+
+wait 60
+expect spage 1
+expect nsteps 32
+unsaid PAGE
+unsaid STEPS
+tap OCT-
+wait 60
+expect spage 0
+tap FX
+turn SELECT -20
+turn SELECT 3
+wait 30
+turn K2 -1
+wait 60
+expect nsteps 16
+expect pages 1
+said TRACK 6: 16 STEPS
+# DRUM (the track row, K4): the drum a tapped step gets, the track's drums in turn; a tap adds that one
+turn K4 1
+wait 30
+said TRACK 6: A TAP ADDS TEK
+tap HOME
+wait 30
+expect his5 0
+expect trig5_1 2
+tapkey w1
+wait 60
+expect his5 1
+expect trig5_1 0
+tapkey w1
+wait 60
+expect tpat5_1_1 2
+expect tpat5_0_1 0
+tap FX
+wait 30
+turn K4 -1
+wait 30
+said TRACK 6: A TAP ADDS DUM
+tap HOME
+tapkey w1
+wait 60
+expect trig5_1 0
+tapkey w1
+wait 60
+expect tpat5_0_1 2
+expect tpat5_1_1 0
+
+# ---- what he writes by hand after a recording is a take of its own, for REC held (the last take gone). Track 6: its
+# steps written by hand so far are no take (before any recording they are what he made first). dtakesN: track N + 1's
+# drum takes that can be taken back; hand: the tracks whose last take he wrote by hand, a bit each
+expect track 6
+expect seq 1
+expect his5 1
+expect dtakes5 0
+expect hand 0
+expect tpat5_1_0 0
+# a recording that keeps a hit (REC, the second black key: its tek, on the step the rhythm starts with): a take
+listen
+tap REC
+wait 30
+expect rec_track 5
+key 3 down
+wait 60
+key 3 up
+wait 200
+tap REC
+wait 60
+expect rec_track -1
+expect tpat5_1_0 2
+expect dtakes5 1
+expect hand 0
+said TRACK 6: TAKE KEPT
+tap PLAY
+wait 60
+expect running 0
+# two steps tapped by hand now: one take of their own
+expect trig5_3 1
+tapkey w3
+wait 60
+expect trig5_3 0
+expect dtakes5 2
+expect hand 32
+tapkey w5
+wait 60
+expect dtakes5 2
+# REC held a second: what he wrote by hand since the recording goes, the recording stays
+listen
+press REC
+wait 1100
+release REC
+wait 60
+said TRACK 6: LAST TAKE GONE
+unsaid RECORDING
+expect dtakes5 1
+expect hand 0
+expect trig5_3 1
+expect tpat5_1_0 2
+# again: the recording goes, his first steps stay
+press REC
+wait 1100
+release REC
+wait 60
+said TRACK 6: LAST TAKE GONE
+expect dtakes5 0
+expect tpat5_1_0 0
+expect his5 1
+expect tpat5_0_1 2
+# again: no take is left: his own steps go, the rhythm's again; and again: nothing of his there, said, nothing changes
+press REC
+wait 1100
+release REC
+wait 60
+said TRACK 6: BACK TO THE RHYTHM
+expect his5 0
+press REC
+wait 1100
+release REC
+wait 60
+said TRACK 6: NOTHING OF YOURS HERE
+expect his5 0
+expect rec_track -1
+
+# ---- the same on a note sound. The lead: a recording of one note (a take); a lock made by hand after it is the last
+# take, and goes alone; then a step and a lock by hand: one take, gone together; then the recording; then nothing
+press SEL
+tapkey w0
+release SEL
+wait 30
+expect track 1
+tap SEQ
+wait 30
+expect seq 0
+expect trk_n0 0
+tap REC
+wait 30
+tapkey 7
+wait 200
+tap REC
+wait 60
+tap PLAY
+wait 60
+expect running 0
+expect trk_n0 1
+expect trk_takes0 1
+expect hand 0
+tap SEQ
+wait 60
+expect seq 1
+expect nsteps 8
+key w3 down
+wait 250
+turn K2 -5
+key w3 up
+wait 60
+expect locks0 1
+expect trig0_3 0
+listen
+press REC
+wait 1100
+release REC
+wait 60
+said TRACK 1: LAST TAKE GONE
+expect locks0 0
+expect trk_n0 1
+expect trk_takes0 1
+# two white keys pressed within 180 ms of each other: two steps tapped (each gets the note played last), the second no
+# note for the first
+key w4 down
+wait 60
+key w5 down
+wait 60
+key w4 up
+key w5 up
+wait 60
+expect trig0_4 1
+expect trig0_5 1
+expect trk_n0 3
+expect trk_takes0 2
+expect hand 1
+key w4 down
+wait 250
+turn K2 -5
+key w4 up
+wait 60
+expect locks0 1
+# a tap on a step with a note and a lock: both go together
+tapkey w4
+wait 60
+expect trig0_4 0
+expect locks0 0
+expect trk_n0 2
+key w5 down
+wait 250
+turn K2 -5
+key w5 up
+wait 60
+expect locks0 1
+expect trk_takes0 2
+listen
+press REC
+wait 1100
+release REC
+wait 60
+said TRACK 1: LAST TAKE GONE
+expect trk_n0 1
+expect trk_takes0 1
+expect locks0 0
+expect hand 0
+press REC
+wait 1100
+release REC
+wait 60
+said TRACK 1 EMPTY
+expect trk_n0 0
+press REC
+wait 1100
+release REC
+wait 60
+said TRACK 1: NOTHING OF YOURS HERE
+tap SEQ
+wait 30
+expect seq 0
+
+# ---- OCT+ on a loop played shorter than a page of steps (one bar of this eight-step rhythm: eight steps of the page's
+# sixteen): the page's sixteen first, what it played again in the new half, all in sight; OCT+ again: its second page
+expect track 1
+expect trk_n0 0
+tap REC
+wait 30
+tapkey 7
+wait 200
+tap REC
+wait 60
+tap PLAY
+wait 60
+expect running 0
+expect trk_n0 1
+tap SEQ
+wait 60
+expect nsteps 8
+expect pages 1
+listen
+tap OCT+
+wait 100
+expect nsteps 16
+expect pages 1
+expect spage 0
+expect trk_n0 2
+expect trig0_8 1
+said TRACK 1: 16 STEPS
+tap OCT+
+wait 100
+expect nsteps 32
+expect pages 2
+expect spage 1
+expect trk_n0 4
+said TRACK 1: 32 STEPS
+tap OCT+
+wait 60
+expect nsteps 32
+expect spage 1
+tap SEQ
+wait 30
+press SEQ
+wait 1100
+release SEQ
+wait 60
+expect trk_n0 0
+expect seq 0
+
+# ---- step numbers run on across the pages: the fifth white key on the second page is step 21, and its lock is named so
+# when EDIT takes it away. The pages of the step view are called pages ("PAGE 2 OF 2"), a recording's bars are bars
+tap SEQ
+wait 60
+expect seq 1
+expect track 1
+expect nsteps 32
+listen
+tap OCT+
+wait 60
+expect spage 1
+said PAGE 2 OF 2
+unsaid BAR
+key w4 down
+wait 250
+turn K2 -5
+wait 60
+expect lock0_20_47 -10
+expect lock0_4_47 -999
+tap EDIT
+wait 30
+key w4 up
+wait 60
+said STEP 21: LOCKS REMOVED
+expect locks0 0
+expect trig0_20 0
+tap OCT-
+wait 60
+expect spage 0
+said PAGE 1 OF 2
+tap SEQ
+wait 30
+expect seq 0

@@ -1,0 +1,267 @@
+# An update starts (the computer's upgrade command, from the phone's firmware switch): whatever DABKE has not saved yet
+# (the settings, the sequencer's part) is saved at that moment, whatever plays, so it is there when DABKE is put back.
+# (The save otherwise waits for a quiet moment, a few seconds after the last change.) "update" is the start of the
+# session, "reboot" the install's restart; "hash_keep" then "expect hash_same 1": everything kept came back the same.
+# From the repository's root:
+#   app/build/host/dabke_host app/tests/update_save.txt OUTDIR
+wait 900
+expect store_writes 0
+# nothing unsaved: nothing written
+update
+expect store_writes 0
+expect store_tries 0
+wait 300
+# a change made while the rhythm runs: saved at the update, and there after the restart
+tap PLAY
+wait 200
+expect running 1
+turn ALGO 2
+wait 5000
+expect tempo 144
+expect running 1
+expect dirty 1
+expect store_writes 0
+update
+expect running 0
+expect dirty 0
+expect store_writes 1
+hash_keep
+reboot
+wait 900
+expect tempo 144
+expect dirty 0
+expect store_writes 1
+expect hash_same 1
+# a change less than three seconds old, the rhythm stopped: saved at the update
+turn ALGO 1
+wait 500
+expect tempo 146
+expect dirty 1
+expect store_writes 1
+update
+expect dirty 0
+expect store_writes 2
+reboot
+wait 900
+expect tempo 146
+# a loop recorded while the rhythm runs (REC ended the take, the rhythm still running): saved at the update, its notes
+# with the settings and its length as it was played with the sequencer's part
+tap PLAY
+wait 20
+tap REC
+wait 30
+expect rec_track 0
+tapkey 7
+wait 600
+tap REC
+wait 30
+expect rec_track -1
+expect running 1
+expect trk_n0 1
+expect kept_n0 1
+expect dirty 1
+expect store_writes 2
+update
+expect running 0
+expect dirty 0
+expect store_writes 4
+hash_keep
+reboot
+wait 900
+expect trk_n0 1
+expect kept_n0 1
+expect trk_takes0 1
+expect hash_same 1
+# a take still recording when the update starts: ended as REC ends it, and kept. A new loop (track 3, the left hand's),
+# then one recorded over track 1's loop
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 3
+tap PLAY
+wait 20
+tap REC
+wait 30
+expect rec_track 2
+tapkey 14
+wait 200
+tapkey 16
+wait 300
+expect rec_track 2
+expect overdub 0
+expect store_writes 4
+update
+expect rec_track -1
+expect running 0
+expect trk_n2 2
+expect kept_n2 2
+expect trk_takes2 1
+expect dirty 0
+expect store_writes 6
+hash_keep
+reboot
+wait 900
+expect trk_n2 2
+expect trk_takes2 1
+expect trk_n0 1
+expect hash_same 1
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 1
+tap PLAY
+wait 20
+tap REC
+wait 30
+expect rec_track 0
+expect overdub 1
+tapkey 9
+wait 300
+expect rec_track 0
+expect store_writes 6
+update
+expect rec_track -1
+expect trk_n0 2
+expect kept_n0 2
+expect trk_takes0 2
+expect dirty 0
+expect store_writes 7
+hash_keep
+reboot
+wait 900
+expect trk_n0 2
+expect trk_takes0 2
+expect trk_n2 2
+expect hash_same 1
+# the sequencer's part alone (a lock: step mode, a step held, KNOB 2 turned), made while the rhythm runs: saved at the
+# update
+tap SEQ
+wait 30
+expect seq 1
+tap PLAY
+wait 100
+key w3 down
+wait 30
+turn K2 -3
+key w3 up
+wait 300
+expect locks 1
+expect running 1
+expect dirty 1
+expect store_writes 7
+update
+expect dirty 0
+expect store_writes 8
+hash_keep
+reboot
+wait 900
+expect locks 1
+expect hash_same 1
+# a drum track still recording when the update starts (track 6, the darbuka's): its hits so far are kept on their steps
+expect seq 0
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 6
+expect his5 0
+tap PLAY
+wait 20
+tap REC
+wait 30
+expect rec_track 5
+tapkey 14
+wait 200
+expect his5 1
+expect rec_track 5
+expect store_writes 8
+update
+expect rec_track -1
+expect running 0
+expect dirty 0
+expect store_writes 10
+hash_keep
+reboot
+wait 900
+expect his5 1
+expect hash_same 1
+# an update that installs nothing (no restart): DABKE goes on as before. The rhythm runs, a track records (track 4, the
+# bass line's: a new loop), and a change is saved in a quiet moment, not while the rhythm runs
+tap PLAY
+wait 200
+turn ALGO 1
+wait 300
+expect tempo 148
+update
+expect running 0
+expect dirty 0
+expect store_writes 11
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 4
+tap PLAY
+wait 20
+tap REC
+wait 30
+expect rec_track 3
+tapkey 3
+wait 600
+tap REC
+wait 30
+expect rec_track -1
+expect trk_n3 1
+expect kept_n3 1
+turn ALGO -1
+wait 4000
+expect running 1
+expect dirty 1
+expect store_writes 11
+tap PLAY
+wait 4000
+expect running 0
+expect dirty 0
+expect store_writes 13
+hash_keep
+reboot
+wait 900
+expect tempo 146
+expect trk_n3 1
+expect trk_n0 2
+expect trk_n2 2
+expect locks 1
+expect hash_same 1
+# a save that fails is tried once more, then left to the frame (a minute later, as before); never more. (First a quiet
+# moment: the simulator's reboot keeps the engine's counts, which can leave a copy of the same settings to save)
+wait 4000
+expect dirty 0
+turn ALGO 1
+wait 300
+expect tempo 148
+expect store_tries 13
+flash_fail 1
+update
+expect store_tries 15
+expect store_writes 13
+expect dirty 2
+flash_fail 0
+wait 61000
+expect store_tries 16
+expect store_writes 14
+expect dirty 0
+reboot
+wait 900
+expect tempo 148

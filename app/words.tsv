@@ -1,0 +1,70 @@
+# SPDX-License-Identifier: MPL-2.0
+# DABKE's words for a screen reader (fm1-reader): the text on the screen <TAB> what to say.
+# url: https://studiomorphik.com/dabke/words/
+DABKE	dabke
+OCT	octave
+K1	knob 1
+K2	knob 2
+K3	knob 3
+K4	knob 4
+SEL	select
+ST	semitones
+CT	cents
+HZ	hertz
+MS	milliseconds
+S	seconds
+ARP	arpeggio
+SEQ	sequence
+SYNC	synchro start
+SYNC START	synchro start
+VIB SPEED	vibrato speed
+VIB DEPTH	vibrato depth
+VIB DELAY	vibrato delay
+ORN SPEED	ornament speed
+VEL AMOUNT	velocity amount
+VEL + PRESS	velocity and pressure
+ARP LENGTH	arpeggio length
+ARP ORDER	arpeggio order
+ARP SPEED	arpeggio speed
+ARP OVER	arpeggio over
+8THS	eighths
+16THS	sixteenths
+DOTTED 8TH	dotted eighth
+5TH	fifth
+3RD	third
+TONIC + 5TH	tonic and fifth
+LOW / HIGH	low or high
+TABL, DAF	tabl and daf
+RIQ, SAGAT	riq and sagat
+DUM	doum
+TEK	tek
+KA	ka
+SLP	slap
+TBL	tabl
+TIK	tabl stick
+SAG	sagat
+KCK	kick
+CLP	clap
+SNR	snare
+SHK	shaker
+PA	P A
+WEDDING PA	wedding P A
+C#	C sharp
+Eb	E flat
+F#	F sharp
+Ab	A flat
+Bb	B flat
+VOL	volume
+DRONE VOL	drone volume
+1/4 TONE	quarter tone
+1/2 TONE	half tone
+1 TONE	whole tone
+1 1/2 TONE	tone and a half
+1/8	an eighth
+3/16	a dotted eighth
+1/4	a quarter
+OCT DOWN	octave down
+OCT UP	octave up
+VEL+PRESS	velocity and pressure
+LEFT: BASS	left keys play the bass
+LEFT: SPLIT	left keys play their own sound

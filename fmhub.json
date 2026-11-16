@@ -1,0 +1,9 @@
+{
+  "what": "An Arabic wedding keyboard. Maqam scales with quarter tones on any note, dabke and shaabi rhythms, mijwiz, zurna, oud and qanun voices, a drone, eight tracks with loops and steps. Lean on a key and the note bends. An Akai MIDImix works as its mixer.",
+  "author": "STUDIOMORPHIK",
+  "kinds": ["groove"],
+  "play": "https://studiomorphik.com/dabke/emu/",
+  "cheat": "https://studiomorphik.com/dabke/manual/",
+  "image": "docs/card.png",
+  "color": "#EE4031"
+}

@@ -1,0 +1,171 @@
+# The drone, a track of its own. SEL on the home page picks it (DRONE: its sound said), SELECT there changes its sound;
+# the ornaments page's row 3 has it all (K1 on or off and how, K2 its sound, K3 its volume, K4 its pitch); the
+# effects page's row 4 its pitch (K2). Recording, it moves: each key played sets its note. Each sound at its
+# pitch: the maqam Bayati on D, the drone on D (its key held, the drone picked), low (73.4 Hz) and middle (146.8 Hz);
+# the lead turned to nothing. No ready sound changes the drone. From the repository's root:
+#   app/build/host/dabke_host app/tests/drone.txt OUTDIR
+wait 900
+expect maqam 2
+expect root 2
+expect ch6 1
+# the lead silent (home K1 to nothing)
+turn K1 -30
+wait 30
+expect par0 0
+# SEL twice: the drone picked (the keys play it: D, its note)
+listen
+tap SEL
+tap SEL
+wait 30
+expect track 2
+said KEYS PLAY TRACK 2: DRONE MIJWIZ
+key 9 down
+wait 600
+# MIJWIZ
+expect ch7 0
+expect pitch_x10 >727
+expect pitch_x10 <741
+# SELECT: the next sound, ORGAN
+turn SELECT 1
+wait 400
+expect ch7 1
+said TRACK 2: DRONE ORGAN
+expect pitch_x10 >727
+expect pitch_x10 <741
+# SELECT: the next sound, STRINGS
+turn SELECT 1
+wait 400
+expect ch7 2
+expect pitch_x10 >727
+expect pitch_x10 <741
+# SELECT: the next sound, ACCORDION
+turn SELECT 1
+wait 400
+expect ch7 3
+expect pitch_x10 >727
+expect pitch_x10 <741
+# SELECT: the next sound, NEY
+turn SELECT 1
+wait 400
+expect ch7 4
+expect pitch_x10 >727
+expect pitch_x10 <741
+# SELECT: the next sound, VIOLIN
+turn SELECT 1
+wait 400
+expect ch7 5
+expect pitch_x10 >727
+expect pitch_x10 <741
+# SELECT: the next sound, BRASS
+turn SELECT 1
+wait 400
+expect ch7 6
+expect pitch_x10 >727
+expect pitch_x10 <741
+# the effects page, row 5: the drone's pitch, an octave up (K4, 12 semitones in FULL steps), and back
+tap FX
+tap FX
+tap FX
+tap FX
+tap FX
+wait 30
+expect row 4
+expect track 2
+turn K4 12
+wait 400
+expect par72 48
+expect pitch_x10 >1454
+expect pitch_x10 <1482
+turn K4 -12
+wait 400
+expect par72 0
+expect pitch_x10 >727
+expect pitch_x10 <741
+# the ornaments page, row 3: K4 its pitch, middle
+tap LFO
+tap LFO
+tap LFO
+wait 30
+expect page 4
+expect row 2
+turn K4 1
+wait 400
+expect ch8 1
+expect pitch_x10 >1454
+expect pitch_x10 <1482
+turn K4 -1
+# K2 turns the sound too (back to the mijwiz, round)
+turn K2 1
+wait 30
+expect ch7 0
+# K3 its volume; K1 off, and on again (the tonic)
+turn K3 -2
+wait 30
+expect par4 31
+turn K1 -1
+wait 30
+expect ch6 0
+turn K1 1
+wait 30
+expect ch6 1
+key 9 up
+wait 300
+# a ready sound leaves the drone as it is (the organ, its volume)
+turn K2 1
+wait 30
+expect ch7 1
+tap HOME
+wait 30
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 0
+turn SELECT 3
+wait 30
+expect sound 3
+expect ch7 1
+expect par4 31
+expect ch6 1
+# the drone recording moves: the drums silent (home K4), the drone picked, REC; G played: the drone on G (98 Hz),
+# then D: on D again
+turn K4 -40
+wait 30
+expect par3 0
+tap SEL
+tap SEL
+wait 30
+expect track 2
+tap REC
+wait 30
+expect rec_track 1
+key 14 down
+wait 500
+expect running 1
+expect pitch_x10 >970
+expect pitch_x10 <991
+key 14 up
+wait 300
+expect pitch_x10 >970
+expect pitch_x10 <991
+key 9 down
+wait 500
+expect pitch_x10 >727
+expect pitch_x10 <741
+key 9 up
+tap REC
+wait 30
+expect rec_track -1
+expect trk_n1 2
+expect trk_key1_0 67
+expect trk_key1_1 62
+# its loop plays the drone's notes: G again at the bar's start
+wait 2000
+expect loop_last_trk 1
+tap PLAY
+wait 60
+expect running 0

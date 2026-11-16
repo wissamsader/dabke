@@ -1,0 +1,5 @@
+app/build/
+app/web/words/
+options/
+.DS_Store
+__pycache__/

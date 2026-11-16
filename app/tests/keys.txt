@@ -1,0 +1,422 @@
+# The keys play the picked track, and HOLD. From the repository's root:
+#   app/build/host/dabke_host app/tests/keys.txt OUTDIR
+# The picked track (SEL on the home page; a MIDImix strip touched) is under the fingers, on the whole keyboard, the
+# rhythm stopped or running, recording or not: the lead, the drone (its sound, its note), the left hand's own sound,
+# the bass line, a drum track's drums (repeating up the keys). ALL: the keys as set (the left keys' mode).
+# HOLD (SOLO on the MIDImix, EDIT tapped on any page): pressed with keys down, their notes sound on after the keys
+# are let go, on the track they were played on; what is played meanwhile is not held; pressed with other keys down,
+# those are held instead; with none down, the held notes are let go.
+# (voicesN: track N+1's notes sounding by key or hold: 0 the lead's, 2 the left hand's, 3 the bass line's; hitsN: drum
+# N's hits)
+wait 900
+expect track 0
+expect running 0
+expect rec_track -1
+# the lead plays POLY here (sound page, row 1, K2), so its notes can be counted
+tap ENV
+wait 30
+turn K2 2
+wait 30
+expect ch1 2
+tap HOME
+wait 30
+
+# ---- ALL picked: the keys as set. ONE KEYBOARD: the lowest and the highest key both the lead
+key 0 down
+key 26 down
+wait 60
+expect voices0 2
+expect voices2 0
+key 0 up
+key 26 up
+wait 60
+expect voices0 0
+# SPLIT (rhythm page, row 4, K1): the lowest key the left hand, the highest the lead
+tap GLO
+turn SELECT -20
+turn SELECT 3
+turn K1 1
+wait 30
+expect left 1
+tap HOME
+wait 30
+key 0 down
+key 26 down
+wait 60
+expect voices2 1
+expect voices0 1
+key 0 up
+key 26 up
+wait 60
+
+# ---- the rhythm stopped, nothing recording: each track picked plays at once from the keys, all of them
+listen
+tap SEL
+wait 30
+expect track 1
+said KEYS PLAY TRACK 1
+key 0 down
+key 26 down
+wait 60
+expect voices0 2
+expect voices2 0
+expect running 0
+key 0 up
+key 26 up
+wait 60
+# the drone, switched off (ornaments page, row 3, K1): its keys sound it, each its note
+tap LFO
+tap LFO
+tap LFO
+wait 30
+expect row 2
+turn K1 -1
+wait 30
+expect ch6 0
+tap HOME
+wait 30
+tap SEL
+wait 30
+expect track 2
+said KEYS PLAY TRACK 2
+wait 1500
+expect drone_lvl 0
+key 0 down
+wait 300
+expect drone_lvl >500
+expect drone_note 53
+key 0 up
+key 26 down
+wait 100
+expect drone_note 79
+expect drone_lvl >500
+key 26 up
+expect running 0
+wait 1500
+expect drone_lvl 0
+# the left hand, its own sound, even with the left keys set to the bass and backing
+tap GLO
+turn K1 1
+wait 30
+expect left 2
+tap HOME
+wait 30
+tap SEL
+wait 30
+expect track 3
+said KEYS PLAY TRACK 3
+key 0 down
+key 26 down
+wait 60
+expect voices2 2
+expect voices0 0
+expect voices3 0
+expect running 0
+key 0 up
+key 26 up
+wait 60
+expect voices2 0
+# the bass line
+tap SEL
+wait 30
+expect track 4
+said KEYS PLAY TRACK 4
+key 0 down
+key 26 down
+wait 60
+expect voices3 2
+expect voices0 0
+expect running 0
+key 0 up
+key 26 up
+wait 60
+expect voices3 0
+# the kick: every key the kick
+tap SEL
+wait 30
+expect track 5
+said KEYS PLAY TRACK 5
+tapkey 0
+tapkey 26
+wait 60
+expect hits9 2
+expect running 0
+expect voices0 0
+# the darbuka and tabl: its seven drums up the keys (dum, tek, ka .. then dum again)
+tap SEL
+wait 30
+expect track 6
+tapkey 0
+tapkey 1
+tapkey 7
+wait 60
+expect hits0 2
+expect hits1 1
+expect running 0
+# the claps: its two up the keys
+tap SEL
+wait 30
+expect track 7
+tapkey 0
+tapkey 1
+tapkey 2
+wait 60
+expect hits10 2
+expect hits11 1
+# the riq and sagat: its three up the keys
+tap SEL
+wait 30
+expect track 8
+tapkey 0
+tapkey 1
+tapkey 2
+wait 60
+expect hits6 1
+expect hits8 1
+expect hits12 1
+expect running 0
+# a note from a MIDI keyboard plays the picked track too (the riq's first drum, then the bass line)
+midi 90 3C 64
+midi 80 3C 00
+wait 60
+expect hits6 >1
+tap SEL
+wait 30
+expect track 0
+said KEYS PLAY ALL, AS SET
+
+# ---- HOLD on the lead: a key down, EDIT tapped: held, said, its key lit; it sounds on when let go
+tap SEL
+wait 30
+expect track 1
+key 7 down
+wait 60
+tap EDIT
+wait 60
+expect hold 1
+expect held_n 1
+said HOLD: 1 NOTE
+key 7 up
+wait 100
+expect voices0 1
+expect lit_key7 1
+# played over it: not held
+key 11 down
+wait 60
+expect voices0 2
+key 11 up
+wait 100
+expect voices0 1
+expect held_n 1
+expect lit_key11 0
+# EDIT with two other keys down: those held instead
+key 11 down
+key 14 down
+wait 60
+tap EDIT
+wait 60
+said HOLD: 2 NOTES
+key 11 up
+key 14 up
+wait 100
+expect voices0 2
+expect held_n 2
+expect lit_key7 0
+expect lit_key14 1
+# EDIT with no key down: let go
+tap EDIT
+wait 100
+said HOLD OFF
+expect hold 0
+expect voices0 0
+
+# ---- a held bass note survives the pick: the bass held, the lead picked and played over it
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 4
+key 0 down
+wait 60
+tap EDIT
+wait 60
+key 0 up
+wait 100
+expect voices3 1
+tap FX
+wait 30
+turn SELECT -20
+turn SELECT 3
+wait 30
+expect row 3
+turn K1 -3
+wait 30
+expect track 1
+tap HOME
+wait 30
+shot home-hold.png
+key 14 down
+wait 60
+expect voices0 1
+expect voices3 1
+key 14 up
+wait 100
+expect voices0 0
+expect voices3 1
+expect held_n 1
+# EDIT is HOLD on every page: tapped on the effects page with no key down, the held note is let go
+tap FX
+wait 30
+expect page 2
+tap EDIT
+wait 100
+expect hold 0
+expect voices3 0
+expect page 2
+tap HOME
+wait 30
+
+# ---- the left hand's bass and backing (ALL picked, the left keys on BASS): a chord held, its root stays
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 0
+key 2 down
+wait 60
+tap EDIT
+wait 60
+key 2 up
+wait 100
+expect held_n 1
+expect left_root 7
+tap EDIT
+wait 100
+expect left_root -1
+# back to ONE KEYBOARD
+tap GLO
+turn K1 -2
+wait 30
+expect left 0
+tap HOME
+wait 30
+
+# ---- the arpeggio: a held lead note keeps arpeggiating
+tap ARP
+wait 30
+expect arp 1
+key 7 down
+wait 60
+tap EDIT
+wait 60
+key 7 up
+wait 60
+expect arp_n 1
+expect held_n 1
+wait 600
+expect arp_count >4
+tap EDIT
+wait 100
+expect arp_n 0
+tap ARP
+wait 30
+expect arp 0
+
+# ---- an ornament on a held note: once at its start, not for ever (the trill stops when its key is let go)
+tap LFO
+wait 30
+turn SELECT -5
+wait 30
+expect row 0
+turn K4 -2
+wait 30
+expect ch3 4
+tap HOME
+wait 30
+key 7 down
+wait 200
+expect orn_live 1
+tap EDIT
+wait 60
+key 7 up
+wait 60
+expect voices0 1
+expect orn_live 0
+tap EDIT
+wait 100
+tap LFO
+turn K4 2
+wait 30
+expect ch3 6
+tap HOME
+wait 30
+
+# ---- MONO: a held note is as a key still down: a key over it takes the voice, and when let go the held note again
+tap ENV
+wait 30
+turn K2 -1
+wait 30
+expect ch1 1
+tap HOME
+wait 30
+key 7 down
+wait 60
+tap EDIT
+wait 60
+key 7 up
+wait 100
+expect voices0 1
+key 9 down
+wait 100
+expect voices0 1
+key 9 up
+wait 100
+expect voices0 1
+expect held_n 1
+tap EDIT
+wait 100
+expect voices0 0
+
+# ---- recording: a held note is kept as long as it sounds (its end where the hold lets it go)
+tap PLAY
+wait 30
+tap REC
+wait 30
+expect rec_track 0
+key 7 down
+wait 100
+tap EDIT
+wait 60
+key 7 up
+wait 600
+tap EDIT
+wait 60
+tap REC
+wait 60
+expect trk_n0 1
+expect trk_dur0_0 >30
+tap PLAY
+wait 100
+expect running 0
+
+# ---- a save still happens while notes are held (a minute after the change); nothing held after a power cycle
+key 7 down
+wait 60
+tap EDIT
+wait 60
+key 7 up
+turn K1 -1
+wait 30
+expect dirty 1
+wait 61000
+expect held_n 1
+expect dirty 0
+reboot
+wait 900
+expect hold 0
+expect held_n 0

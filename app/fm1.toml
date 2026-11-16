@@ -1,0 +1,21 @@
+# DABKE's build settings (fm1-base tools/build.py)
+name = "DABKE"                 # APP_NAME is in app.h; this names the build's files
+id_prefix = "FM-1_65"          # package identity: dev FM-1_6500, releases FM-1_65XXYYZZ (FM-1_62 was Veffbox's on the hub; 65 checked free there 11-16)
+usb_manufacturer = "DABKE"
+usb_product = "DABKE FM-1"
+o2 = ["dabke.c"]               # the sound engine, compiled on its own at -O2
+words = "words.tsv"
+ble = false                    # no Bluetooth
+wifi = false                   # no WiFi
+usb_host = true                # the USB port as a MIDI host: the MIDImix
+licence = "MPL-2.0"
+repo = "https://github.com/wissamsader/dabke"
+tagline = "an Arabic wedding keyboard with dabke and shaabi rhythms"
+install = "https://studiomorphik.com/dabke/install/"   # the page that installs it
+screenshot = "docs/img/screen-home.png"       # for a hub's card, relative to the folder that holds app/
+# firmware.json, for firmware hubs (fm1-base docs/FIRMWARE-JSON.md)
+author = "STUDIOMORPHIK"   # who made it
+description = "An Arabic wedding keyboard. Mijwiz, zurna, keyboard lead, violin, ney, accordion, strings, organ, buzuq, oud and qanun voices with quarter tones on any note and maqam presets, glides, trills and automatic ornaments, a drone, a rhythm box of darbuka, tabl, riq, daf, sagat and claps playing maqsum, baladi, saidi, dabke, khaliji, chobi and more, bass and backing from the left hand, an arpeggio, a step sequence, delay, reverb and a wedding PA. An Akai MIDImix on the USB port works as its mixer."
+tags = ["synth", "drum-machine", "arranger"]
+site = "https://studiomorphik.com/dabke/"
+credits = "Built on fm1-base and felucca-bsp, from Felucca by Leo Kuroshita (Hügelton Instruments)."

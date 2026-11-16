@@ -1,0 +1,73 @@
+# A save waits for a quiet moment: a flash erase stops the sound, so nothing is written while the rhythm runs or a
+# key is held, and it is written once everything has stopped. From the repository's root:
+#   app/build/host/dabke_host app/tests/save_quiet.txt OUTDIR
+wait 900
+expect store_writes 0
+tap PLAY
+wait 200
+expect running 1
+turn ALGO 2
+wait 8000
+expect running 1
+expect store_writes 0
+tap PLAY
+wait 300
+expect running 0
+key 14 down
+wait 6000
+expect store_writes 0
+key 14 up
+wait 9000
+expect store_writes >0
+# a loop: nothing written while it is recorded or plays (the rhythm running); written once the rhythm stops (two
+# objects: its notes with the settings, its length as it was played with the sequencer's part)
+tap REC
+wait 30
+tapkey 7
+wait 30
+expect running 1
+tap REC
+wait 6000
+expect rec_track -1
+expect trk_n0 1
+expect store_writes 1
+tap PLAY
+wait 300
+expect running 0
+wait 6000
+expect store_writes 3
+expect kept_n0 1
+expect dirty 0
+# a track recording, the rhythm stopped (waiting for its first key): nothing written until it ends
+tap REC
+wait 30
+expect rec_track 0
+expect rec_waiting 1
+tap SEL
+wait 6000
+expect store_writes 3
+tap REC
+wait 6000
+expect rec_track -1
+expect store_writes 4
+expect kept_n0 1
+# a lock made (step mode, a step held, K2 turned): nothing written while the rhythm runs; then the sequencer's part alone
+tap SEQ
+wait 30
+expect seq 1
+tap PLAY
+wait 100
+key w3 down
+wait 30
+turn K2 -3
+key w3 up
+wait 6000
+expect locks 1
+expect dirty 1
+expect store_writes 4
+tap PLAY
+wait 300
+expect running 0
+wait 6000
+expect dirty 0
+expect store_writes 5

@@ -1,0 +1,410 @@
+# His tracks and the rhythm's (fm1-organ/LOGIC.md, rule 9). A track the rhythm drives (the drum tracks' steps, the
+# automatic bass line, the backing) follows the rhythm until he adds, removes or records anything on it. From then on
+# it is his: the rhythm, its variations, its added voices and its fill-ins leave it alone, and the automatic part of
+# that track is silent. Cleared, it is the rhythm's again. And LENGTH counts a bar by the rhythm: sixteen steps, or as
+# many whole bars of the rhythm as fit in sixteen. From the repository's root:
+#   app/build/host/dabke_host app/tests/his.txt OUTDIR
+# Maqsum at 100: a step 150 ms, a bar sixteen steps (2400 ms). Its kick on steps 1 and 9, its dum the same, its tek on
+# 3, 7, 13, its ka (soft) on 5, 11, 15, its riq every second step, its bass line on 1, 9, 15, its backing on 3, 7, 13.
+# (hitsN: drum N's hits so far: 0 dum, 1 tek, 2 ka, 3 slap, 6 riq, 9 kick; startsT: track T+1's notes and hits so far)
+wait 900
+turn PRESET 4
+wait 60
+expect rhythm 4
+expect tempo 100
+expect page_steps 16
+# FILL IS: BREAK (the rhythm page's row 3, K2): the rhythm's tracks fall silent for the bar's last two beats, then all
+# of them hit its last step together (a tek, a slap, a clap, the tabl's stick)
+tap GLO
+turn SELECT -20
+turn SELECT 2
+wait 30
+turn K2 1
+wait 30
+expect ch22 1
+tap HOME
+
+# ---- the kick his (a hit written on step 5, in step mode); the other drum tracks the rhythm's
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 5
+tap SEQ
+wait 30
+tapkey w4
+wait 60
+expect his4 1
+expect his5 0
+expect trig4_0 1
+expect trig4_4 1
+expect trig4_8 1
+tap SEQ
+wait 30
+# PLAY, then PLAY held 0.4 s: a fill-in, in this bar's last two beats (steps 9 to 16). Near the bar's end: his kick
+# played all three of its steps (1, 5, 9: the last one inside the fill); the riq, the rhythm's, only its four before
+# the fill; the fill's last step gave the rhythm's darbuka its slap and a tek (teks: 3 and 7, then the fill's)
+listen
+tap PLAY
+wait 100
+press PLAY
+wait 450
+release PLAY
+said FILL IN
+expect running 1
+wait 1750
+expect in_fill 1
+expect hits9 3
+expect hits6 4
+expect hits3 1
+expect hits1 3
+# the next bar's first step: the fill's hard downbeat is for the rhythm's tracks; his kick plays its own step once
+wait 200
+expect in_fill 0
+expect hits9 4
+wait 2400
+tap PLAY
+wait 60
+expect running 0
+expect hits9 7
+expect hits3 1
+
+# ---- the darbuka and tabl his too (a dum written on step 2); VARIATION: BUSY (the rhythm page's row 1, K3: the ka
+# fills every gap) and ADD CLAPS (row 2, K1). A bar with a fill-in again: his darbuka plays exactly what is written,
+# through the fill, no more and no less: three dums (1, 2, 9), three teks (3, 7, 13), three kas (5, 11, 15), no slap
+tap SEL
+wait 30
+expect track 6
+tap SEQ
+wait 30
+tapkey w1
+wait 60
+expect his5 1
+expect tpat5_0_1 2
+tap SEQ
+wait 30
+tap GLO
+turn SELECT -20
+wait 30
+turn K3 1
+wait 30
+expect ch16 1
+turn SELECT 1
+wait 30
+turn K1 1
+wait 30
+expect ch17 1
+tap HOME
+expect hits0 5
+expect hits1 6
+expect hits2 4
+tap PLAY
+wait 100
+press PLAY
+wait 450
+release PLAY
+wait 1750
+expect in_fill 1
+expect hits9 10
+expect hits0 8
+expect hits1 9
+expect hits2 7
+expect hits3 1
+tap PLAY
+wait 60
+expect running 0
+# the variation and the added claps off again
+tap GLO
+turn K1 -1
+turn SELECT -1
+turn K3 -1
+wait 30
+expect ch16 0
+expect ch17 0
+tap HOME
+
+# ---- the rhythm changed (PRESET: Shaabi, its claps on steps 7 and 13, its kas elsewhere): his tracks play what he
+# wrote (the kick's step 5, the darbuka's kas on 5, 11, 15 and his dum on 2); the claps, untouched, follow the new
+# rhythm. Back to Maqsum
+expect trig6_6 0
+expect tpat5_2_4 1
+turn PRESET 9
+wait 60
+expect rhythm 13
+expect his4 1
+expect his5 1
+expect trig4_4 1
+expect tpat5_0_1 2
+expect tpat5_2_4 1
+expect tpat5_2_3 0
+expect tn4 16
+expect his6 0
+expect trig6_6 2
+turn PRESET -9
+wait 60
+expect rhythm 4
+expect trig6_6 0
+
+# ---- the automatic bass line and backing are the rhythm's (the left keys on BASS: the rhythm page's row 4, K1). ALL
+# picked, a left key held: the bass and the chord sound; PLAY: in a bar the bass line plays three notes (track 4), the
+# backing three chords of three (track 3)
+tap GLO
+turn SELECT 3
+wait 30
+expect row 3
+turn K1 2
+wait 30
+expect left 2
+tap HOME
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 0
+expect starts3 0
+expect starts2 0
+key 2 down
+wait 100
+expect left_root 7
+expect starts3 1
+expect starts2 3
+tap PLAY
+wait 2120
+expect starts3 4
+expect starts2 12
+tap PLAY
+wait 60
+key 2 up
+wait 60
+expect starts3 5
+expect starts2 15
+# a note written on track 4 (step mode, its first step: the tonic, two octaves under the keys): the track is his, a bar
+# long. The same left key held: no automatic bass line with it, held or running: his one note a bar; the backing, still
+# the rhythm's, as before
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 4
+expect his3 0
+tap SEQ
+wait 30
+expect trig3_0 2
+tapkey w0
+wait 60
+expect his3 1
+expect trk_key3_0 38
+expect trk_len3 96
+expect trig3_0 1
+expect trig3_8 0
+tap SEQ
+wait 30
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 0
+key 2 down
+wait 100
+expect starts3 5
+expect starts2 18
+tap PLAY
+wait 2120
+expect starts3 6
+expect starts2 27
+tap PLAY
+wait 60
+key 2 up
+wait 60
+# REC held a second on track 4: his note gone, the track empty of his: "BACK TO THE RHYTHM", and the automatic bass
+# line plays again
+listen
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 4
+press REC
+wait 1100
+release REC
+wait 60
+expect his3 0
+expect trk_len3 0
+said TRACK 4: BACK TO THE RHYTHM
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 0
+expect starts3 6
+key 2 down
+wait 100
+expect starts3 7
+key 2 up
+wait 60
+# the left keys as one keyboard again: track 4 cleared is empty, not the rhythm's
+tap GLO
+turn K1 -2
+wait 30
+expect left 0
+tap HOME
+
+# ---- a recording on track 3 (the left hand) plays back as he played it, and nothing with it
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 3
+tap REC
+wait 30
+expect rec_waiting 1
+tapkey 14
+wait 30
+tap REC
+wait 30
+expect his2 1
+expect trk_n2 1
+press REC
+wait 1100
+release REC
+wait 60
+said TRACK 3 EMPTY
+tap PLAY
+wait 60
+expect running 0
+
+# ---- LENGTH by the rhythm: a bar is sixteen steps (Maqsum, sixteen; Dabke Syria, twice its eight), or as many
+# whole bars of the rhythm as fit in sixteen: twelve in 6/8 (two of six), ten in 10/8, fourteen in 7/8 (two of
+# seven). Two bars: twice that. The kick, his, keeps the sixteen steps it has whatever the rhythm
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 1
+expect tn0 16
+turn PRESET -4
+wait 60
+expect rhythm 0
+expect page_steps 16
+expect tn0 16
+turn PRESET 17
+wait 60
+expect rhythm 17
+expect page_steps 12
+expect tn0 12
+expect tn6 12
+expect tn4 16
+tap FX
+turn SELECT -20
+turn SELECT 3
+wait 30
+listen
+turn K2 1
+wait 60
+expect tn0 24
+said TRACK 1: 24 STEPS
+turn K2 -1
+wait 60
+expect tn0 12
+said TRACK 1: 12 STEPS
+turn PRESET 1
+wait 60
+expect rhythm 18
+expect page_steps 10
+expect tn0 10
+turn K2 1
+wait 60
+expect tn0 20
+turn K2 -1
+turn PRESET 1
+wait 60
+expect rhythm 19
+expect page_steps 14
+expect tn0 14
+turn K2 1
+wait 60
+expect tn0 28
+turn K2 -1
+turn PRESET 1
+wait 60
+expect rhythm 20
+expect page_steps 16
+expect tn0 16
+turn PRESET -20
+wait 60
+expect rhythm 0
+tap HOME
+# a step written in 6/8 on the lead: its loop twelve steps long (a step eight ticks: 96)
+turn PRESET 17
+wait 60
+tap SEQ
+wait 30
+expect track 1
+expect nsteps 12
+tapkey w11
+wait 60
+expect trk_len0 96
+expect trk_pos0_0 88
+expect trig0_11 1
+tapkey w12
+wait 60
+expect trk_n0 1
+tap SEQ
+turn PRESET -17
+wait 60
+expect rhythm 0
+
+# ---- a 0.9 flash (DKB7 settings, no sequencer's part yet): everything comes back as it was. A rhythm of his own (MINE
+# 1, twelve steps) leading; the lead's loop of two takes; the bass line's; the kick's own steps (the track his, twelve
+# steps long: its bar); the lead's organ on track 6; track 8 muted; track 3's pitch; a top sound. The loops, stopped by
+# SEQ then, play with PLAY now
+flash_load app/tests/dkb7.bin
+reboot
+wait 900
+expect own 1
+expect rhythm 21
+expect page_steps 12
+expect trk_n0 3
+expect trk_takes0 2
+expect trk_n3 1
+expect dedit 16
+expect his4 1
+expect tpat4_0_1 2
+expect tn4 12
+expect tfam5 0
+expect tidx5 7
+expect mute 128
+expect par73 12
+expect top_mask 256
+expect sound 101
+expect kept 2
+expect locks 0
+expect seq 0
+tap PLAY
+wait 1500
+expect running 1
+expect loop_plays >1
+tap PLAY
+wait 60
+expect running 0
+# a moment later the sequencer's part is written beside it (the settings stay DKB7), and all of it comes back
+wait 6000
+expect dirty 0
+reboot
+wait 900
+expect trk_n0 3
+expect tn4 12
+expect tpat4_0_1 2
+expect rhythm 21

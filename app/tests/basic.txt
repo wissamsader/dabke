@@ -1,0 +1,773 @@
+# DABKE in the host simulator. From the repository's root:
+#   python3 base/tools/build.py app --host
+#   app/build/host/dabke_host app/tests/basic.txt OUTDIR
+# (knobs: dabke.h's P_* numbers, par6 tone, par5 tempo, par22 reverb, par13 glide; choices: app.c's C_* numbers, ch0
+# instrument, ch3 ornament, ch6 drone, ch24 left keys; centsN: key N's tuning, C = 0)
+wait 900
+expect page 0
+expect octave 0
+expect sound 0
+expect rhythm 0
+expect tempo 140
+expect maqam 2
+expect root 2
+expect cents4 -50
+expect cents2 0
+expect cents11 0
+expect ch0 0
+expect ch3 6
+expect ch6 1
+expect dirty 0
+shot boot.png
+
+# a key plays the sound: not silent, and it goes out over USB as a note, at the velocity it was struck with
+out
+key 7 down
+wait 50
+expect_out USB 90 3C 64
+wav key.wav
+wait 400
+wavstop
+expect peak_db_min -30
+key 7 up
+wait 50
+expect_out USB 80 3C 00
+out
+key 9 down 60
+wait 50
+expect_out USB 90 3E 3C
+key 9 up
+wait 50
+
+# the octave: OCT+ twice, OCT- once; the key sounds an octave up
+tap OCT+
+tap OCT+
+tap OCT-
+wait 30
+expect octave 1
+out
+key 7 down
+wait 30
+expect_out USB 90 48 64
+key 7 up
+wait 30
+
+# EDIT held, a key: that key a quarter tone flat (any page), and again: back; EDIT let go after tuning stays here
+listen
+press EDIT
+tapkey 9
+wait 30
+expect cents2 -50
+said D: QUARTER FLAT
+tapkey 9
+wait 30
+expect cents2 0
+release EDIT
+wait 30
+expect page 0
+
+# SEL (from any page but home, where it picks the track): the maqam page. SELECT moves along the keys, K1 the cents of
+# the one there, K2 the maqam, K3 its root, K4 how deep a quarter flat is. EDIT held and a key: that key a quarter flat
+# or back, here as on every page; EDIT tapped is HOLD here too (no key down: nothing held), it tunes nothing
+tap FX
+wait 30
+tap SEL
+wait 30
+expect page 1
+turn SELECT 4
+wait 30
+expect cur 4
+press EDIT
+tapkey 11
+wait 30
+expect cents4 0
+tapkey 11
+wait 30
+expect cents4 -50
+release EDIT
+wait 30
+listen
+tap EDIT
+wait 60
+said HOLD OFF
+expect cents4 -50
+expect page 1
+turn K1 -3
+wait 30
+expect cents4 -53
+turn K2 1
+wait 30
+expect maqam 3
+expect root 2
+expect cents4 -50
+turn K3 1
+wait 30
+expect root 3
+expect cents4 0
+expect cents5 -50
+turn K4 -10
+wait 30
+expect qdepth 40
+expect cents5 -40
+turn K4 10
+turn K2 -2
+wait 30
+expect maqam 1
+expect root 0
+expect cents4 -50
+expect cents11 -50
+expect cents5 0
+shot maqam-rast.png
+
+# the home page's SELECT: the ready sounds in turn (1 Mijwiz buzz; the drone is the player's: a sound leaves it), and back
+tap HOME
+wait 30
+turn SELECT 1
+wait 30
+expect sound 1
+expect ch6 1
+turn SELECT 2
+wait 30
+expect sound 3
+expect ch0 2
+turn SELECT -3
+wait 30
+expect sound 0
+expect ch0 0
+expect par22 25
+
+# the drone stays as it is through three more sounds; at zero it stays at zero when the sound changes
+turn SELECT 6
+wait 30
+turn SELECT 2
+wait 30
+turn SELECT 5
+wait 30
+expect sound 13
+expect ch6 1
+expect par4 35
+# the home page's knobs: the four parts' volumes, K1 the lead, K2 the drone, K3 the left hand, K4 the drums
+listen
+turn K2 -9
+wait 30
+expect par4 0
+turn SELECT 1
+wait 30
+expect par4 0
+expect ch6 1
+turn K1 -1
+wait 30
+expect par0 76
+turn K1 1
+turn K4 -1
+wait 30
+expect par3 76
+turn K4 1
+wait 30
+# K3 is the left hand's own sound (track 3) whatever the left keys play; each turn says the part and its volume, and
+# no message sends him to another page
+turn K3 2
+wait 30
+expect par1 63
+expect par2 75
+said LEFT HAND 63
+unsaid RHYTHM 4
+turn K3 -2
+wait 30
+expect par1 55
+# the drone switched off (the ornaments page, row 3, K1), then its knob turned up: on again, on the tonic
+tap LFO
+turn SELECT 2
+wait 30
+turn K1 -3
+wait 30
+expect ch6 0
+turn SELECT -2
+tap HOME
+wait 30
+turn K2 2
+wait 30
+expect ch6 1
+expect par4 8
+said DRONE ON
+turn SELECT -14
+wait 30
+expect sound 0
+expect par4 8
+
+# ALGO: the tempo by two; PRESET: the next rhythm, the tempo its own, and back
+turn ALGO 3
+wait 30
+expect tempo 146
+turn PRESET 1
+wait 30
+expect rhythm 1
+expect tempo_is_bpm 1
+turn PRESET -1
+wait 30
+expect rhythm 0
+expect tempo 140
+
+# ENV: the sound page; K1 the instrument (its own knobs come with it), K3 the tone
+tap ENV
+wait 30
+expect page 3
+expect row 0
+turn K1 8
+wait 30
+expect ch0 8
+expect par12 150
+expect ch1 2
+turn K3 -5
+wait 30
+expect par6 65
+turn K1 -8
+wait 30
+expect ch0 0
+expect par6 70
+expect ch1 0
+tap ENV
+wait 30
+expect row 1
+turn SELECT 5
+wait 30
+expect row 5
+
+# FX: the effects; row 2, K3: the wedding PA
+tap FX
+wait 30
+expect page 2
+tap FX
+wait 30
+expect row 1
+turn K3 5
+wait 30
+expect par25 10
+turn K3 -5
+wait 30
+# the mixer on the effects page (rows 6 to 13, a part a row): row 6 the lead, K2 its filter, K3 its bass, K4 muted
+turn SELECT 4
+wait 30
+expect row 5
+turn K2 -3
+wait 30
+expect par47 -6
+turn K3 2
+wait 30
+expect par55 4
+turn K4 -1
+wait 30
+expect mute 1
+turn K4 1
+wait 30
+expect mute 0
+turn K2 3
+turn K3 -2
+turn SELECT -4
+wait 30
+expect row 1
+
+# LFO: the ornaments; K4 the ornament (from AUTO down to SHAKE)
+tap LFO
+wait 30
+expect page 4
+turn K4 -1
+wait 30
+expect ch3 5
+turn K4 1
+wait 30
+expect ch3 6
+
+# PLAY: everything starts on the press. HOME while it runs only goes home (no fill). PLAY held 0.4 s while it runs: a
+# fill-in (said on the screen), and it goes on; PLAY tapped: everything stops
+tap HOME
+press PLAY
+wait 10
+expect running 1
+release PLAY
+wait 60
+expect running 1
+listen
+tap HOME
+wait 30
+unsaid FILL IN
+expect page 0
+press PLAY
+wait 300
+unsaid FILL IN
+wait 200
+said FILL IN
+release PLAY
+wait 60
+expect running 1
+tap PLAY
+wait 60
+expect running 0
+
+# ARP: the arpeggio on and off
+tap ARP
+wait 30
+expect arp 1
+tap ARP
+wait 30
+expect arp 0
+
+# the left keys (rhythm page, row 4, K1): their own sound; the 12 leftmost keys dim and play without the octave
+tap GLO
+wait 30
+expect page 5
+turn SELECT 3
+wait 30
+expect row 3
+turn K1 1
+wait 30
+expect left 1
+expect keysdim 4095
+out
+key 0 down
+wait 30
+expect_out USB 90 35 64
+key 0 up
+wait 30
+# K3 on the home page: now the left hand's own sound
+tap HOME
+turn K3 -1
+wait 30
+expect par1 51
+tap GLO
+wait 30
+# then bass and backing from the left hand: a left key is its root
+turn K1 1
+wait 30
+expect left 2
+key 2 down
+wait 80
+expect left_root 7
+key 2 up
+wait 30
+# K3 on the home page: the backing and the bass line together
+tap HOME
+turn K3 -1
+wait 30
+expect par1 47
+expect par2 71
+tap GLO
+wait 30
+turn K1 -2
+wait 30
+expect left 0
+expect keysdim 0
+tap HOME
+
+# the loops (tests/loop.txt has it all): REC records the picked track (all: the lead) when it is let go, the rhythm
+# starts with the first key; two notes; REC: it ends at once and plays; SEQ is the sequencer (tests/seq.txt): step
+# mode on and off, the loops play on; PLAY alone stops everything
+tap REC
+wait 30
+expect rec_track 0
+expect rec_waiting 1
+tapkey 7
+tapkey 9
+wait 30
+expect running 1
+tap REC
+wait 100
+expect rec_track -1
+expect trk_n0 2
+expect trk_takes0 1
+tap SEQ
+wait 60
+expect seq 1
+expect track 1
+expect running 1
+tap SEQ
+wait 60
+expect seq 0
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 0
+tap PLAY
+wait 60
+expect running 0
+
+# the rhythm page: eight rows (its own step row is gone: the steps are the tracks', in step mode)
+tap GLO
+turn SELECT 20
+wait 30
+expect row 7
+# the drum's own level, tune and length (row 6: K1 the drum)
+turn SELECT -2
+wait 30
+expect row 5
+turn K1 1
+wait 30
+expect drum 1
+turn K2 -4
+wait 30
+expect dlevel 80
+turn K3 4
+wait 30
+expect dtune 120
+turn K4 -2
+wait 30
+expect dlen 80
+tap HOME
+
+# SAVE: the save page, SELECT says where (place 3), SAVE keeps it; the settings saved too
+tap SAVE
+wait 30
+expect save 1
+turn SELECT 2
+wait 30
+expect slot 2
+tap SAVE
+wait 30
+expect save 0
+expect kept 4
+expect sound 102
+expect dirty 0
+
+# what is set comes back after a power cycle
+reboot
+wait 900
+expect octave 1
+expect sound 102
+expect kept 4
+expect maqam 1
+expect root 0
+expect cents4 -50
+expect cents11 -50
+expect trk_n0 2
+expect kept_n0 2
+expect tempo 140
+expect rhythm 0
+expect left 0
+# the kept sound is in the list after the ready ones: SELECT from it goes round to the first
+turn SELECT 1
+wait 30
+expect sound 0
+turn SELECT -1
+wait 30
+expect sound 102
+
+# a change is saved by itself a few seconds later
+turn ALGO 1
+wait 30
+expect tempo 142
+expect dirty 1
+wait 3500
+expect dirty 0
+reboot
+wait 900
+expect tempo 142
+
+# MIDI in: a note plays (with the octave); a pitch wheel and a mod wheel are taken
+midi 90 3C 64
+wait 30
+wav midi.wav
+wait 300
+wavstop
+expect peak_db_min -30
+midi E0 7F 7F
+wait 30
+midi E0 00 40
+midi B0 01 7F
+wait 30
+midi B0 01 00
+midi 80 3C 00
+wait 30
+
+# the keys' pressure: a key leant on bends (PRESSURE: BENDS UP)
+key 16 down 100 80
+wait 300
+expect pressure >40
+key 16 up
+wait 60
+expect pressure 0
+
+# the store objects' sizes, bytes (each at most 3840)
+expect size_settings <3841
+expect size_kept <3841
+# a sound keeps its knobs in 30 places: no more knobs than that may belong to a sound
+expect sound_knobs <31
+
+# the USB port starts as a computer's only: with no computer it never looks for a controller by itself
+usb unplug
+wait 40000
+expect usbh 0
+usb plug
+wait 300
+# USB PORT = AUTO (the ornaments page, row 4, K3; K2 beside it has nothing: the home page is the tracks' lanes, with
+# no panel to choose). No computer: the port looks for a device in a quiet moment; a MIDImix plugged in gets its LEDs,
+# and its fader plays
+tap LFO
+turn SELECT 3
+wait 30
+turn K2 1
+wait 30
+expect ch34 0
+turn K3 -1
+wait 30
+expect ch31 0
+tap HOME
+usb unplug
+listen
+out
+wait 6800
+usbh plug MIDI_Mix
+wait 400
+expect usbh 2
+said CONTROLLER READY
+usbh midi B0 13 40
+wait 30
+expect par0 50
+usbh unplug
+wait 100
+said CONTROLLER UNPLUGGED
+wait 9000
+expect usbh 0
+usb plug
+wait 6000
+expect usbh 0
+
+# ---- TONE at its top (the sound page, K3) with every instrument in turn (K1, thirteen of them), its BODY at zero
+# (row 2, K3), a key leant on with PRESSURE: BRIGHTER (the ornaments page, row 2, K4): the tone filter stays a filter
+# and the sound a sound. (From 97 up, a damped sound's filter fed itself and nothing sounded again until the next
+# start.) level1000: the output's level; -777: not a number
+tap LFO
+turn SELECT -20
+turn SELECT 1
+wait 30
+turn K4 5
+wait 30
+expect ch11 4
+tap ENV
+turn SELECT -20
+wait 30
+turn K3 40
+turn SELECT 1
+turn K3 -40
+turn SELECT -1
+wait 30
+expect par6 100
+key 11 down 100 100
+wait 250
+key 11 up
+key 24 down 100 100
+wait 250
+key 24 up
+wait 150
+expect level1000 >-1
+turn K1 1
+wait 30
+turn K3 40
+turn SELECT 1
+turn K3 -40
+turn SELECT -1
+wait 30
+expect par6 100
+key 11 down 100 100
+wait 250
+key 11 up
+key 24 down 100 100
+wait 250
+key 24 up
+wait 150
+expect level1000 >-1
+turn K1 1
+wait 30
+turn K3 40
+turn SELECT 1
+turn K3 -40
+turn SELECT -1
+wait 30
+expect par6 100
+key 11 down 100 100
+wait 250
+key 11 up
+key 24 down 100 100
+wait 250
+key 24 up
+wait 150
+expect level1000 >-1
+turn K1 1
+wait 30
+turn K3 40
+turn SELECT 1
+turn K3 -40
+turn SELECT -1
+wait 30
+expect par6 100
+key 11 down 100 100
+wait 250
+key 11 up
+key 24 down 100 100
+wait 250
+key 24 up
+wait 150
+expect level1000 >-1
+turn K1 1
+wait 30
+turn K3 40
+turn SELECT 1
+turn K3 -40
+turn SELECT -1
+wait 30
+expect par6 100
+key 11 down 100 100
+wait 250
+key 11 up
+key 24 down 100 100
+wait 250
+key 24 up
+wait 150
+expect level1000 >-1
+turn K1 1
+wait 30
+turn K3 40
+turn SELECT 1
+turn K3 -40
+turn SELECT -1
+wait 30
+expect par6 100
+key 11 down 100 100
+wait 250
+key 11 up
+key 24 down 100 100
+wait 250
+key 24 up
+wait 150
+expect level1000 >-1
+turn K1 1
+wait 30
+turn K3 40
+turn SELECT 1
+turn K3 -40
+turn SELECT -1
+wait 30
+expect par6 100
+key 11 down 100 100
+wait 250
+key 11 up
+key 24 down 100 100
+wait 250
+key 24 up
+wait 150
+expect level1000 >-1
+turn K1 1
+wait 30
+turn K3 40
+turn SELECT 1
+turn K3 -40
+turn SELECT -1
+wait 30
+expect par6 100
+key 11 down 100 100
+wait 250
+key 11 up
+key 24 down 100 100
+wait 250
+key 24 up
+wait 150
+expect level1000 >-1
+turn K1 1
+wait 30
+turn K3 40
+turn SELECT 1
+turn K3 -40
+turn SELECT -1
+wait 30
+expect par6 100
+key 11 down 100 100
+wait 250
+key 11 up
+key 24 down 100 100
+wait 250
+key 24 up
+wait 150
+expect level1000 >-1
+turn K1 1
+wait 30
+turn K3 40
+turn SELECT 1
+turn K3 -40
+turn SELECT -1
+wait 30
+expect par6 100
+key 11 down 100 100
+wait 250
+key 11 up
+key 24 down 100 100
+wait 250
+key 24 up
+wait 150
+expect level1000 >-1
+turn K1 1
+wait 30
+turn K3 40
+turn SELECT 1
+turn K3 -40
+turn SELECT -1
+wait 30
+expect par6 100
+key 11 down 100 100
+wait 250
+key 11 up
+key 24 down 100 100
+wait 250
+key 24 up
+wait 150
+expect level1000 >-1
+turn K1 1
+wait 30
+turn K3 40
+turn SELECT 1
+turn K3 -40
+turn SELECT -1
+wait 30
+expect par6 100
+key 11 down 100 100
+wait 250
+key 11 up
+key 24 down 100 100
+wait 250
+key 24 up
+wait 150
+expect level1000 >-1
+turn K1 1
+wait 30
+turn K3 40
+turn SELECT 1
+turn K3 -40
+turn SELECT -1
+wait 30
+expect par6 100
+key 11 down 100 100
+wait 250
+key 11 up
+key 24 down 100 100
+wait 250
+key 24 up
+wait 150
+expect level1000 >-1
+# the sound is still there, and dies away; the first instrument again
+key 11 down
+wait 200
+expect level1000 >0
+key 11 up
+wait 4000
+expect level1000 <20
+turn K1 1
+wait 30
+tap LFO
+turn K4 -3
+wait 30
+expect ch11 1
+tap HOME

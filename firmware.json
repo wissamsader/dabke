@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "id": "dabke",
+  "name": "DABKE",
+  "author": "STUDIOMORPHIK",
+  "license": "MPL-2.0",
+  "tagline": "an Arabic wedding keyboard with dabke and shaabi rhythms",
+  "description": "An Arabic wedding keyboard. Mijwiz, zurna, keyboard lead, violin, ney, accordion, strings, organ, buzuq, oud and qanun voices with quarter tones on any note and maqam presets, glides, trills and automatic ornaments, a drone, a rhythm box of darbuka, tabl, riq, daf, sagat and claps playing maqsum, baladi, saidi, dabke, khaliji, chobi and more, bass and backing from the left hand, an arpeggio, a step sequence, delay, reverb and a wedding PA. An Akai MIDImix on the USB port works as its mixer.",
+  "tags": ["synth", "drum-machine", "arranger"],
+  "install": "https://studiomorphik.com/dabke/install/",
+  "site": "https://studiomorphik.com/dabke/",
+  "source": "https://github.com/wissamsader/dabke",
+  "screenshot": "docs/img/screen-home.png",
+  "hardware": {
+    "models": ["FM-1"],
+    "flash": ["856014", "B36014"],
+    "features": ["usb-audio-in", "usb-audio-out", "usb-midi-host", "velocity", "pressure", "screen-reader"]
+  },
+  "credits": "Built on fm1-base and felucca-bsp, from Felucca by Leo Kuroshita (Hügelton Instruments)."
+}
