@@ -349,8 +349,8 @@ static const preset_t PRESETS[] = {
                                           * them, read and given the sounds the tracks start with) */
 #define KEPT_MAGIC1 0x314B4B44u
 #define NSK 30                           /* the knobs a sound changes (27 now), packed in P_* order */
-typedef struct {                         /* a MY SOUND: a track's sound and the effects as they were (and the tracks' sounds
-                                          * then, kept as 0.16 kept them, no longer given back) */
+typedef struct {                         /* a MY SOUND: a track's sound, the effects and every track's sound as they were
+                                          * (picked on a track: the sound alone; with ALL: all of it, track 1 the sound) */
     int16_t par[NSK];                    /* those knobs, in their own steps */
     uint8_t ch[NSCH];                    /* its choices */
     uint8_t tsnd[DAB_NTRK][2];           /* each track's sound */
