@@ -115,6 +115,17 @@ enum { ORN_OFF, ORN_MORDENT, ORN_TURN, ORN_SCOOP, ORN_TRILL, ORN_SHAKE, ORN_AUTO
 #define DAB_LK_SOUND 127                /* a lock's knob number that is no knob: the step's sound. Its value: (the drum
                                          * family - SF_KICK) * 16 + the sound's number in it. The hits of a drum sound's
                                          * track on that step play that drum sound instead of the track's own */
+/* Each track's own lead sound (dabke_tpar): a lead sound on a track plays with that track's own instrument knobs,
+ * vibrato, ornaments, glide, TRANSPOSE, TUNE, PLAY, DOUBLE, PICKING, TRILL TO and BEND RANGE. The whole instrument's
+ * knobs of those names (par) are track 1's, and the sounds that have none of their own follow them: the drone, the left
+ * hand, the bass line. A lock of one of a sound's knobs holds its own track's. DAB_SK: a knob's number among a sound's
+ * knobs (-1: not one); DAB_LKK: the knob a lock of knob id on track t holds, as dabke_status's lk_at counts them (the
+ * whole instrument's, then each track's own) */
+#define DAB_NSK 15
+#define DAB_SK(id) ((id) >= P_TONE && (id) <= P_ORNAMOUNT ? (id) - P_TONE : (id) == P_TRANSPOSE ? 13 : (id) == P_TUNE ? 14 : -1)
+#define DAB_NLKS (DAB_NLK + DAB_NTRK * DAB_NSK)
+#define DAB_LKK(t, id) (DAB_SK(id) < 0 ? (id) : DAB_NLK + ((t) & 7) * DAB_NSK + DAB_SK(id))
+#define DAB_PLAIN P_COUNT               /* dabke_tpar's: 1 the instrument's own tone (as it plays alone); 0 its knobs' */
 /* the arpeggio: its orders, how far it goes, its patterns ('X' an accent, 'x' a note, '.' a rest, a step each) */
 enum { ARP_UP, ARP_DOWN, ARP_UPDOWN, ARP_DOWNUP, ARP_PLAYED, ARP_ANY, ARP_CHORD, ARP_INOUT, ARP_THUMB, ARP_NORDER };
 enum { ARPO_1, ARPO_2UP, ARPO_3UP, ARPO_4UP, ARPO_2DOWN, ARPO_3DOWN, ARPO_BOTH, ARPO_N };
@@ -137,11 +148,15 @@ void dabke_key(int manual, int note, int vel);          /* manual 0..7: that tra
                                                          * bass and backing); + DAB_KEY_TRY: heard, not recorded (a
                                                          * note given to a step); vel 0 = off */
 #define DAB_KEY_TRY 16
-void dabke_track_sound(int track, int family, int index);   /* a track's sound: SF_*, its number in that family */
+void dabke_track_sound(int track, int family, int index);   /* a track's sound: SF_*, its number in that family (+
+                                                             * DAB_AGAIN: the same again, another sound of its own:
+                                                             * what it played stops as for any other) */
+#define DAB_AGAIN 128
 int dabke_family_size(int family);                      /* the sounds a family has */
 int dabke_sound_drums(int family);                      /* a drum family's drums (a track's lanes play them in turn) */
 int dabke_sound_drum(int family, int lane);             /* the drum (D_*) a lane of that family's plays */
 void dabke_par(int id, float v);
+void dabke_tpar(int track, int id, float v);            /* a knob or choice of track's own lead sound (above), DAB_PLAIN */
 void dabke_press_debug(int32_t o[4]);                   /* (the readout: the pressure 0..127, its bend in cents, its tracks, PRESSURE) */
 void dabke_pressure(int tracks, float v);                /* the keys' pressure 0..1 and the tracks leant on (a bit each):
                                                          * it bends, shakes or brightens those tracks' key notes */
@@ -207,6 +222,7 @@ int dabke_host_cpu(int scale_pct);      /* (the tests: the render's measured tim
 int dabke_host_drone(void);
 int dabke_host_drone_note(void);
 int dabke_host_par(int id);
+int dabke_host_tpar(int track, int id);
 uint32_t dabke_host_lock(int i);
 int dabke_host_lock_sums(void);
 int dabke_host_dsound(int drum);
@@ -247,7 +263,8 @@ typedef struct {
     uint8_t drum_take;                  /* 1 + the drum track whose last recording kept a take (0: none) */
     uint8_t dtakes[DAB_NTRK];           /* a drum sound's takes that can be taken back, each track's */
     uint8_t hand;                       /* the tracks whose last take he wrote by hand (not a recording), a bit each */
-    uint8_t lk_at[DAB_NLK];             /* each knob: the lock that holds it now (its place + 1; 0: none, its normal value) */
+    uint8_t lk_at[DAB_NLKS];            /* each knob (DAB_LKK): the lock that holds it now (its place + 1; 0: none, its
+                                         * normal value) */
     uint32_t full;                      /* notes that found no room */
     uint8_t tfam[DAB_NTRK], tidx[DAB_NTRK];   /* each track's sound */
     uint8_t voice_cap, voices;          /* the notes that may sound at once now (the load's guard), sounding now */

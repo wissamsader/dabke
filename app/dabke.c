@@ -185,6 +185,23 @@ static volatile uint32_t overloads;
 static uint32_t overloads_seen, calm;
 
 static float par[P_COUNT];
+/* each track's own lead sound (dabke.h DAB_SK): its knobs, then its choices; the whole instrument's of the same names
+ * (par) are track 1's */
+enum { S_TONE, S_BUZZ, S_DETUNE, S_BREATH, S_BODY, S_ATTACK, S_RELEASE, S_GLIDE, S_VIBRATE, S_VIBDEPTH, S_VIBDELAY,
+       S_ORNSPEED, S_ORNAMOUNT, S_TRANSPOSE, S_TUNE, S_MODEL, S_PLAY, S_DOUBLE, S_ORNAMENT, S_TRILLTO, S_PICKING,
+       S_BENDRANGE, NSP };
+static float tpar[DAB_NTRK][NSP];
+static uint8_t tplain[DAB_NTRK];        /* 1: the track's tone is its instrument's own (tone_default), not its knobs' */
+static int sp_of(int id)                /* where a knob or choice is in a track's own sound, -1: not there */
+{
+    int k = DAB_SK(id);
+    return k >= 0 ? k : id >= P_MODEL && id <= P_PICKING ? S_MODEL + id - P_MODEL : id == P_BENDRANGE ? S_BENDRANGE : -1;
+}
+static int sp_id(int k)                 /* and back: the knob or choice at k */
+{
+    return k <= S_ORNAMOUNT ? P_TONE + k : k == S_TRANSPOSE ? P_TRANSPOSE : k == S_TUNE ? P_TUNE
+           : k == S_BENDRANGE ? P_BENDRANGE : P_MODEL + k - S_MODEL;
+}
 static int16_t ntune[12];
 static uint32_t seed = 22222u;
 
@@ -194,6 +211,7 @@ static struct {                     /* worked out from the knobs when one moves 
     float tone, acc, balLow, balHigh, glideK, bassDecN, bassRelN, bassAtk;
     float ageLp, ageHp, ageG, ageN, dg2, dn2, echoTarget, kclick;
 } K;
+static struct { float tune, vib, vibDelay, ornD, glideK; } KT[DAB_NTRK];   /* the same, from each track's own sound */
 static int clapV;                       /* (the claps' band as last set) */
 
 /* the lines the notes add into, a block at a time: a track each */
@@ -216,10 +234,10 @@ static void tp_put(int t, int j, int s, int v)
  * from its step on, and gives the knob its normal value back at that track's next step with a hit or a note. */
 static uint32_t lk[DAB_NLOCK] PLAT_POOL;
 static uint8_t lkN[DAB_NTRK], lkHeld[DAB_NTRK];   /* each track's locks; the knobs it holds now */
-static uint8_t lkAt[DAB_NLK];           /* each knob: the lock that holds it (its place + 1; 0: none) */
+static uint8_t lkAt[DAB_NLKS];          /* each knob (DAB_LKK): the lock that holds it (its place + 1; 0: none) */
 static uint8_t sndLk[DAB_NTRK];         /* the sound lock of the step each track is on (1 + its value; 0: none): that
                                          * step's hits play that drum sound */
-static float parN[DAB_NLK], lkU[DAB_NLK];   /* each knob's normal value; one step of it in the engine's units */
+static float parN[DAB_NLKS], lkU[DAB_NLK];   /* each knob's normal value (DAB_LKK); one step of a knob in its units */
 /* a knob whose jump would click (a filter, an effect's amount) goes to its new value in a few blocks (4 ms): half
  * of what is left each block, then there */
 #define NGL 12
@@ -258,6 +276,8 @@ static uint32_t leadIdle;           /* samples since the last lead note let go (
 /* movement */
 static float vibPh, bendS, droneG, droneLvl, pressS;
 static float pbendS, vibP;               /* the keys' pressure as a bend and as vibrato: the leant track's notes only */
+static float vibPhT[DAB_NTRK], vibST[DAB_NTRK], vibPT[DAB_NTRK], bendST[DAB_NTRK], pbendST[DAB_NTRK];   /* the same,
+                                         * a lead sound's on each track: its own vibrato's speed and depth, its bend range */
 static uint8_t pressTr;                  /* the tracks whose keys are leant on, a bit each */
 static float pitchS[DAB_NTRK];          /* each track's pitch as it sounds now (semitones): its knob's, eased in ~3 ms */
 static uint32_t seedOrn = 777u;
@@ -404,7 +424,7 @@ static uint32_t scopeW, scopeDiv;
 /* messages from the main loop */
 enum { M_KEY, M_PAR, M_NTUNE, M_RHY, M_RUN, M_SYNC, M_ACC, M_STYLE, M_FILL, M_FADE, M_DRUM, M_OWN,
        M_TRKREC, M_UNDO, M_CLEARALL, M_LOOPSET, M_STEP, M_DHIT, M_STEPSSET, M_HOLD, M_TSND, M_PANIC,
-       M_NADD, M_NDEL, M_TLEN, M_LOCK, M_LKCLEAR, M_MUTE };
+       M_NADD, M_NDEL, M_TLEN, M_LOCK, M_LKCLEAR, M_MUTE, M_TPAR };
 typedef struct { uint8_t t; int16_t a, b; float f, g, h; } msg_t;
 #define QN 512u
 static msg_t q[QN];
@@ -512,17 +532,17 @@ static void tone_default(tone_t *t, int model)
 static inline float key_pitch(int n) { return (float)n + (float)ntune[((n % 12) + 12) % 12] * 0.01f; }
 static uint32_t scale_mask(void) { uint32_t s = (uint32_t)par[P_SCALE]; return s ? s & 0xFFFu : 0xAB5u; }
 static int scale_has(int n) { return (int)(scale_mask() >> (((n % 12) + 12) % 12) & 1u); }
-static float step_up(int n)         /* to the neighbour above, semitones (TRILL TO) */
+static float step_up(int n, int tr)    /* to the neighbour above, semitones (TRILL TO, of track tr's sound) */
 {
-    int k, t = (int)par[P_TRILLTO];
+    int k, t = (int)tpar[tr][S_TRILLTO];
     if (t == 2) return 0.5f;
     if (t == 1) return 1.0f;
     for (k = n + 1; k <= n + 4; k++) if (scale_has(k)) return key_pitch(k) - key_pitch(n);
     return 2.0f;
 }
-static float step_down(int n)
+static float step_down(int n, int tr)
 {
-    int k, t = (int)par[P_TRILLTO];
+    int k, t = (int)tpar[tr][S_TRILLTO];
     if (t == 2) return 0.5f;
     if (t == 1) return 1.0f;
     for (k = n - 1; k >= n - 4; k--) if (scale_has(k)) return key_pitch(n) - key_pitch(k);
@@ -551,13 +571,13 @@ static void derive(void)
         tone_t *t = &TT[i];
         int x = tidx[i];
         switch (tfam[i]) {
-        case SF_LEAD:                   /* the lead's knobs shape the lead sound they were set on; another lead sound
-                                         * plays with its own instrument's settings */
-            if (x == (int)par[P_MODEL])
-                make_tone(t, x, par[P_TONE], par[P_BUZZ], par[P_DETUNE], par[P_BREATH], par[P_BODY], par[P_ATTACK],
-                          par[P_RELEASE]);
+        case SF_LEAD: {                 /* a lead sound: its track's own knobs (or its instrument's own tone) */
+            const float *p = tpar[i];
+            if (!tplain[i])
+                make_tone(t, x, p[S_TONE], p[S_BUZZ], p[S_DETUNE], p[S_BREATH], p[S_BODY], p[S_ATTACK], p[S_RELEASE]);
             else tone_default(t, x);
             break;
+        }
         case SF_LEFT:
             tone_default(t, x);
             t->gain *= 0.8f;
@@ -583,6 +603,14 @@ static void derive(void)
     K.ornD = 0.5f / clampf(par[P_ORNSPEED], 2.0f, 40.0f) * SR;          /* a grace note's length, samples */
     K.velAmt = par[P_VELAMT];
     K.glideK = par[P_GLIDE] < 0.002f ? 1.0f : 1.0f - kexpN(par[P_GLIDE] * 0.5f);
+    for (i = 0; i < DAB_NTRK; i++) {    /* (each track's own sound's: as the whole instrument's from its knobs) */
+        const float *p = tpar[i];
+        KT[i].tune = p[S_TUNE] * 0.01f + p[S_TRANSPOSE];
+        KT[i].vib = p[S_VIBDEPTH] * 0.5f;
+        KT[i].vibDelay = p[S_VIBDELAY];
+        KT[i].ornD = 0.5f / clampf(p[S_ORNSPEED], 2.0f, 40.0f) * SR;
+        KT[i].glideK = p[S_GLIDE] < 0.002f ? 1.0f : 1.0f - kexpN(p[S_GLIDE] * 0.5f);
+    }
     K.stabRelN = kexpN(0.025f);          /* the backing's stabs let go in 0.17 s */
     K.bassDecN = kexpN(0.5f * par[P_BASSDECAY]); K.bassRelN = kexpN(0.06f); K.bassAtk = 1.0f - kexpN(0.003f);
     for (i = 0; i < DAB_NDRUM; i++) {
@@ -673,34 +701,45 @@ static void glide_block(void)           /* each block: the knobs on their way */
         else par_now(id, par[id] + (gl[i].to - par[id]) * 0.5f);
     }
 }
-static void lock_free(int id)           /* a knob no lock holds any more: its normal value again */
+static void kn_to(int k, float v)       /* a knob (DAB_LKK) to a value: the whole instrument's, or a track's own sound's
+                                         * (track 1's: the whole instrument's of that name with it) */
 {
-    int i = lkAt[id];
+    int t, s;
+    if (k < DAB_NLK) { par_to(k, v); return; }
+    t = (k - DAB_NLK) / DAB_NSK; s = (k - DAB_NLK) % DAB_NSK;
+    tpar[t][s] = v; dirty = 1;
+    if (!t) par_to(sp_id(s), v);
+}
+static int lk_knob(uint32_t l) { return DAB_LKK(DAB_LK_TRK(l), DAB_LK_ID(l)); }   /* the knob a lock holds */
+static void lock_free(int k)            /* a knob no lock holds any more: its normal value again */
+{
+    int i = lkAt[k];
     if (!i) return;
     if (lkHeld[DAB_LK_TRK(lk[i - 1])]) lkHeld[DAB_LK_TRK(lk[i - 1])]--;
-    lkAt[id] = 0; st.lk_at[id] = 0;
-    par_to(id, parN[id]);
+    lkAt[k] = 0; st.lk_at[k] = 0;
+    kn_to(k, parN[k]);
 }
 static void lock_hold(int i)            /* the lock in place i holds its knob from now */
 {
     uint32_t l = lk[i];
-    int id = DAB_LK_ID(l), t = DAB_LK_TRK(l);
-    if (lkAt[id] && lkHeld[DAB_LK_TRK(lk[lkAt[id] - 1])]) lkHeld[DAB_LK_TRK(lk[lkAt[id] - 1])]--;
-    lkAt[id] = (uint8_t)(i + 1); st.lk_at[id] = lkAt[id];
+    int k = lk_knob(l), t = DAB_LK_TRK(l);
+    if (lkAt[k] && lkHeld[DAB_LK_TRK(lk[lkAt[k] - 1])]) lkHeld[DAB_LK_TRK(lk[lkAt[k] - 1])]--;
+    lkAt[k] = (uint8_t)(i + 1); st.lk_at[k] = lkAt[k];
     lkHeld[t]++;
-    par_to(id, (float)DAB_LK_VAL(l) * lkU[id]);
+    kn_to(k, (float)DAB_LK_VAL(l) * lkU[DAB_LK_ID(l)]);
 }
 static void lock_put(int i, uint32_t v) /* a lock in its place (0: none there now) */
 {
     uint32_t old;
-    int id;
+    int id, k;
     if (i < 0 || i >= DAB_NLOCK || (v && DAB_LK_ID(v) >= DAB_NLK && DAB_LK_ID(v) != DAB_LK_SOUND)) return;
     old = lk[i];
     if (old) {
         id = DAB_LK_ID(old);
-        if (id < DAB_NLK && lkAt[id] == i + 1 &&
+        k = id < DAB_NLK ? lk_knob(old) : 0;
+        if (id < DAB_NLK && lkAt[k] == i + 1 &&
             (!v || DAB_LK_ID(v) != id || DAB_LK_TRK(v) != DAB_LK_TRK(old) || DAB_LK_STEP(v) != DAB_LK_STEP(old)))
-            lock_free(id);              /* (it held its knob: gone, or moved) */
+            lock_free(k);               /* (it held its knob: gone, or moved) */
         if (lkN[DAB_LK_TRK(old)]) lkN[DAB_LK_TRK(old)]--;
     }
     lk[i] = v;
@@ -708,7 +747,8 @@ static void lock_put(int i, uint32_t v) /* a lock in its place (0: none there no
     id = DAB_LK_ID(v);
     lkN[DAB_LK_TRK(v)]++;
     if (id >= DAB_NLK) return;          /* (a step's sound: no knob to hold; taken when that step plays) */
-    if (lkAt[id] == i + 1) par_to(id, (float)DAB_LK_VAL(v) * lkU[id]);   /* (holding now: its new value) */
+    k = lk_knob(v);
+    if (lkAt[k] == i + 1) kn_to(k, (float)DAB_LK_VAL(v) * lkU[id]);   /* (holding now: its new value) */
     else if (running && st.tstep[DAB_LK_TRK(v)] == DAB_LK_STEP(v)) lock_hold(i);   /* (its step plays now: from now) */
 }
 static void lock_clear(int t, int take) /* a track's locks gone (t < 0: every track's); take > 0: those of that take on */
@@ -722,8 +762,11 @@ static void lock_clear(int t, int take) /* a track's locks gone (t < 0: every tr
 static void lk_step(int t, int s, int trig)   /* track t comes to its step s (trig: a hit or a note begins there) */
 {
     int i;
-    if (trig && lkHeld[t])              /* what it held ends here (a lock of the same knob here: that value, below) */
+    if (trig && lkHeld[t]) {            /* what it held ends here (a lock of the same knob here: that value, below): the
+                                         * whole instrument's knobs, its own sound's */
         for (i = 0; i < DAB_NLK; i++) if (lkAt[i] && DAB_LK_TRK(lk[lkAt[i] - 1]) == t) lock_free(i);
+        for (i = DAB_NLK + t * DAB_NSK; i < DAB_NLK + (t + 1) * DAB_NSK; i++) if (lkAt[i]) lock_free(i);
+    }
     if (lkN[t])
         for (i = 0; i < DAB_NLOCK; i++) {
             uint32_t l = lk[i];
@@ -735,7 +778,7 @@ static void lk_step(int t, int s, int trig)   /* track t comes to its step s (tr
 static void lk_stop(void)               /* the rhythm stops: every knob its normal value, no step's sound */
 {
     int i;
-    for (i = 0; i < DAB_NLK; i++) lock_free(i);
+    for (i = 0; i < DAB_NLKS; i++) lock_free(i);
     for (i = 0; i < DAB_NTRK; i++) sndLk[i] = 0;
 }
 
@@ -770,27 +813,28 @@ static void ks_pluck(voice_t *v, float amp)          /* a string struck: a perio
     v->kexc = (int32_t)v->klen + 2;
     v->kexa = amp;
 }
-static void orn_start(voice_t *v)
+static void orn_start(voice_t *v)       /* (its track's own sound's ornament) */
 {
-    int o = (int)par[P_ORNAMENT];
-    v->up = step_up(v->n); v->down = step_down(v->n);
+    const float *p = tpar[v->tr];
+    int o = (int)p[S_ORNAMENT];
+    v->up = step_up(v->n, v->tr); v->down = step_down(v->n, v->tr);
     v->ostep = 0; v->otime = 0; v->ot = 0.0f; v->okk = 0.6f; v->shake = -1.0f; v->oph = 0.0f;
     if (o == ORN_AUTO) {            /* the fast automatic ornament: now and then a grace, a scoop, a turn, a shake */
         float r = rnd01();
         o = ORN_OFF;
-        if (r < par[P_ORNAMOUNT]) {
+        if (r < p[S_ORNAMOUNT]) {
             float c = rnd01();
             o = c < 0.35f ? ORN_MORDENT : c < 0.6f ? ORN_SCOOP : c < 0.75f ? ORN_TURN : 7;   /* 7: two graces */
         }
-        if (!MD_PLUCKED(v->model) && rnd01() < par[P_ORNAMOUNT] * 0.5f) v->shake = 0.32f;
+        if (!MD_PLUCKED(v->model) && rnd01() < p[S_ORNAMOUNT] * 0.5f) v->shake = 0.32f;
     }
     v->orn = (uint8_t)o;
-    if (o == ORN_SCOOP) { v->oo = -v->down; v->okk = 1.0f - kexpN(K.ornD * 1.4f / SR); }
+    if (o == ORN_SCOOP) { v->oo = -v->down; v->okk = 1.0f - kexpN(KT[v->tr].ornD * 1.4f / SR); }
     if (o == ORN_SHAKE) v->shake = 0.0f;
 }
 static void orn_block(voice_t *v, int n)             /* the ornament's offset, a block at a time */
 {
-    float d = K.ornD;
+    float d = KT[v->tr].ornD;
     if (v->orn == ORN_MORDENT || v->orn == ORN_TURN || v->orn == 7 || v->orn == ORN_TRILL) {
         if ((v->otime -= n) <= 0) {
             static const int8_t MOR[2] = {1, 0}, TRN[4] = {1, 0, -1, 0}, TWO[4] = {1, 0, 1, 0};
@@ -807,7 +851,7 @@ static void orn_block(voice_t *v, int n)             /* the ornament's offset, a
         }
     }
     if (v->shake >= 0.0f && v->age >= v->shake && v->gate) {   /* the shake: the wheel rocked up and back */
-        v->oph += clampf(par[P_ORNSPEED], 2.0f, 40.0f) * 0.55f * (float)n / SR;
+        v->oph += clampf(tpar[v->tr][S_ORNSPEED], 2.0f, 40.0f) * 0.55f * (float)n / SR;
         if (v->oph >= 1.0f) v->oph -= 1.0f;
         v->ot = v->up * 0.5f * (1.0f - sin_turn(fracf(v->oph + 0.25f)));
         v->okk = 0.5f;
@@ -825,7 +869,7 @@ static void voice_init(voice_t *v, int slot, int m, int tr, int note, int vel, i
     v->vamt = 0.0f; v->age = 0.0f; v->kexc = 0; v->kpick = 0; v->pick = 0;
     v->s1 = v->s2 = v->s3 = v->s4 = 0.0f; v->kprev = 0.0f; v->kexl = 0.0f; v->kw = 0;
     v->ph1 = seed; v->ph2 = seed * 2654435761u;
-    v->base = key_pitch(note) + (float)oct + K.tune;
+    v->base = key_pitch(note) + (float)oct + (v->fam == SF_LEAD ? KT[tr].tune : K.tune);   /* (a lead sound: its own) */
     if (v->fam != SF_BASS && MD_PLUCKED(t->model)) {
         float f = 440.0f * fm_exp2f((v->base - 69.0f) * (1.0f / 12.0f)), L = SR / f - 0.5f;
         int i;
@@ -843,14 +887,14 @@ static int start(int m, int tr, int note, int vel)   /* a note of that role on t
     int slot, oct = 0, lead, dbl;
     if (tr < 0 || tr >= DAB_NTRK || SF_DRUM(tfam[tr])) return -1;
     lead = tfam[tr] == SF_LEAD && (m == R_KEY || m == R_LOOP);
-    dbl = lead ? (int)par[P_DOUBLE] : 0;
+    dbl = lead ? (int)tpar[tr][S_DOUBLE] : 0;
     slot = free_slot();
     st.starts[tr]++;
     release(m, tr, note);
     voice_init(&vo[slot], slot, m, tr, note, vel, 0);
     if (lead) {
         float from = lastPitch;
-        if (K.glideK < 1.0f) vo[slot].gl = from - vo[slot].base;
+        if (KT[tr].glideK < 1.0f) vo[slot].gl = from - vo[slot].base;
         if (vo[slot].gl > 24.0f || vo[slot].gl < -24.0f) vo[slot].gl = 0.0f;
         lastPitch = vo[slot].base;
     }
@@ -877,8 +921,8 @@ static void retarget(int note, int vel)             /* one note at a time, legat
         float now, nb;
         if (!v->used || v->m != R_KEY || v->tr != leadTr || !v->gate) continue;
         now = v->base + v->gl;
-        nb = key_pitch(note) + (float)v->oct + K.tune;
-        v->n = (uint8_t)note; v->base = nb; v->gl = K.glideK < 1.0f ? now - nb : 0.0f;
+        nb = key_pitch(note) + (float)v->oct + KT[v->tr].tune;
+        v->n = (uint8_t)note; v->base = nb; v->gl = KT[v->tr].glideK < 1.0f ? now - nb : 0.0f;
         if (v->gl > 24.0f || v->gl < -24.0f) v->gl = 0.0f;
         v->vel += (vel_gain(vel) * (v->oct ? 0.6f : 1.0f) - v->vel) * 0.5f;
         orn_start(v); v->age = 0.0f;
@@ -1379,7 +1423,7 @@ static void arp_tick(uint32_t k, uint32_t t, int r)   /* tick k, due at t */
     lo = OLO[o]; noct = OHI[o] - lo + 1; L = n * noct;
     pos = arpPlayed++ / (uint32_t)rep;
     off = g >= 0.999f ? t + tick + tick / 8u : t + (uint32_t)(g * (float)tick);   /* (at the top: into the next note) */
-    ornOff = SR * 60.0f / (par[P_TEMPO] < 20.0f ? 20.0f : par[P_TEMPO]) / (float)r < K.ornD * 4.0f;
+    ornOff = SR * 60.0f / (par[P_TEMPO] < 20.0f ? 20.0f : par[P_TEMPO]) / (float)r < KT[arpTr & 7].ornD * 4.0f;
     if (mode == ARP_CHORD) {            /* all the set together, an octave a time */
         int oc = lo + (int)(pos % (uint32_t)noct);
         for (i = 0; i < n; i++) arp_sound(arpNotes[i] + 12 * oc, vel, off);
@@ -1447,11 +1491,11 @@ static void left_after_off(void)        /* a left key let go, the left hand play
 }
 static void trk_first_key(void);
 static void trk_key(int manual, int note, int vel);
-static int lead_poly(void) { return (int)par[P_PLAY] == 2; }
+static int lead_poly(void) { return (int)tpar[leadTr][S_PLAY] == 2; }   /* (the lead's track's own sound's PLAY) */
 #define LEADV(i) (vo[i].used && vo[i].m == R_KEY && vo[i].tr == leadTr && vo[i].gate)
 static void lead_on(int note, int vel)  /* a lead sound's key, on its track (leadTr): one note or many, as it plays */
 {
-    int i, legato = (int)par[P_PLAY] == 0 && !MD_PLUCKED(TT[leadTr].model), sounding = 0;
+    int i, legato = (int)tpar[leadTr][S_PLAY] == 0 && !MD_PLUCKED(TT[leadTr].model), sounding = 0;
     if (lead_poly()) { start(R_KEY, leadTr, note, vel); return; }
     for (i = 0; i < nms; i++) if (mstack[i] == note) { for (; i < nms - 1; i++) mstack[i] = mstack[i + 1]; nms--; break; }
     if (nms >= 16) { for (i = 0; i < 15; i++) mstack[i] = mstack[i + 1]; nms = 15; }
@@ -1475,7 +1519,7 @@ static void lead_off(int note)
     if (note != monoNote) return;
     if (nms > 0) {                  /* back to the key still held */
         int top = mstack[nms - 1];
-        if ((int)par[P_PLAY] == 0 && !MD_PLUCKED(TT[leadTr].model)) retarget(top, 100);
+        if ((int)tpar[leadTr][S_PLAY] == 0 && !MD_PLUCKED(TT[leadTr].model)) retarget(top, 100);
         else { for (i = 0; i < NV; i++) if (LEADV(i)) vo[i].gate = 0; start(R_KEY, leadTr, top, 100); }
         monoNote = top;
     } else {
@@ -2255,12 +2299,12 @@ static void hold_press(void)            /* HOLD pressed: the keys down held (ins
 /* a track's sound changed: its notes end (held ones too), its loop goes on in the new sound (silent with a drum sound),
  * its steps play the new drums (silent with a note sound) */
 static int8_t drnV[2];
-static void track_sound(int t, int f, int x)
+static void track_sound(int t, int f, int x, int again)   /* (again: the same, as a new sound) */
 {
     int i, n, held = 0;
     if (t < 0 || t >= DAB_NTRK || f < 0 || f >= SF_N) return;
     if (x < 0 || x >= dabke_family_size(f)) x = 0;
-    if (tfam[t] == f && tidx[t] == x) return;
+    if (tfam[t] == f && tidx[t] == x && !again) return;
     if (recTrk == t && !SF_DRUM(tfam[t]) != !SF_DRUM(f))   /* recording, and its sound of the other kind now (notes, drums):
                                                              * the recording ends here as REC would end it, what was played
                                                              * kept. (Ended later, it ended as the other kind: a note left
@@ -2299,7 +2343,7 @@ static uint32_t shed_wait, took;
 static void take(const msg_t *m)
 {
     int i, k;
-    if (dirty && m->t != M_PAR && m->t != M_NTUNE && m->t != M_DRUM) { dirty = 0; derive(); }
+    if (dirty && m->t != M_PAR && m->t != M_TPAR && m->t != M_NTUNE && m->t != M_DRUM) { dirty = 0; derive(); }
     switch (m->t) {
     case M_KEY: if (m->b) key_on(m->a >> 8 & 15, m->a & 255, m->b, m->a >> 12 & 1); else key_off(m->a >> 8 & 15, m->a & 255); break;
     case M_PAR:
@@ -2312,6 +2356,22 @@ static void take(const msg_t *m)
                 parN[m->a] = m->f;
                 if (!lkAt[m->a]) par_to(m->a, m->f);
             } else { par[m->a] = m->f; dirty = 1; }
+        }
+        break;
+    case M_TPAR:                        /* a track's own sound: a knob (its normal value, heard unless a lock holds it
+                                         * now), a choice, or its tone as its instrument's own */
+        if (m->b >= 0 && m->b < DAB_NTRK) {
+            int t = m->b, s = sp_of(m->a);
+            if (m->a == DAB_PLAIN) { tplain[t] = m->f != 0.0f; dirty = 1; }
+            else if (s >= 0 && s < DAB_NSK) {
+                k = DAB_NLK + t * DAB_NSK + s;
+                parN[k] = m->f;
+                if (!lkAt[k]) kn_to(k, m->f);
+            } else if (s >= 0) {
+                if (s == S_PLAY && t == leadTr && m->f != tpar[t][s]) { nms = 0; monoNote = -1; }
+                tpar[t][s] = m->f; dirty = 1;
+                if (!t) par[m->a] = m->f;   /* (track 1's: the whole instrument's of that name) */
+            }
         }
         break;
     case M_NTUNE: if (m->a >= 0 && m->a < 12) ntune[m->a] = (int16_t)(m->b < -100 ? -100 : m->b > 100 ? 100 : m->b); break;
@@ -2401,7 +2461,7 @@ static void take(const msg_t *m)
     case M_LKCLEAR: lock_clear(m->a, m->b); break;
     case M_MUTE: muteM = (uint8_t)m->a; break;
     case M_TSND:                        /* a track's sound: what it played stops (its held notes too), the rest as it was */
-        track_sound(m->a, m->b >> 8, m->b & 255);
+        track_sound(m->a, m->b >> 8, m->b & 127, m->b & DAB_AGAIN);
         break;
     case M_HOLD:
         if (m->a) hold_press(); else { hold_release(); st.hold_ver++; }
@@ -2426,7 +2486,7 @@ static void take(const msg_t *m)
 
 /* ------------------------------------------------- one note's share of a block --- */
 static float vtmp[BS];
-static int render_voice(voice_t *v, int n, float vibS, float bendNow)
+static int render_voice(voice_t *v, int n, float vibS)
 {
     const tone_t *t = &TT[v->tr];
     float inN = 1.0f / (float)n, g0 = v->g, g1, a0, da, pitch, pp0, f, dt, dt2, sec = (float)n / SR, lpF = t->lpF;
@@ -2437,19 +2497,20 @@ static int render_voice(voice_t *v, int n, float vibS, float bendNow)
     float s1 = v->s1, s2 = v->s2, s3 = v->s3, s4 = v->s4;
     /* the pitch: the key with its quarter tones, the glide, the ornament, vibrato and the bend */
     v->age += sec;
-    if (v->gl != 0.0f) { v->gl -= v->gl * K.glideK; if (v->gl < 0.002f && v->gl > -0.002f) v->gl = 0.0f; }
+    if (v->gl != 0.0f) { v->gl -= v->gl * KT[v->tr].glideK; if (v->gl < 0.002f && v->gl > -0.002f) v->gl = 0.0f; }
     pitch = v->base + v->gl + pitchS[v->tr];
     {
-        float kb = key_pitch(v->n) + (float)v->oct + K.tune;   /* (a key's tuning may change while it sounds) */
+        float kb = key_pitch(v->n) + (float)v->oct + (lead ? KT[v->tr].tune : K.tune);   /* (a key's tuning may change
+                                         * while it sounds) */
         pitch += kb - v->base;
         v->base = kb;
     }
-    if (lead) {
+    if (lead) {                     /* (its track's own vibrato and bend range) */
         orn_block(v, n);
-        if (v->age > K.vibDelay) v->vamt += (1.0f - v->vamt) * 0.04f;
-        pitch += v->oo + vibS * v->vamt + bendNow;
+        if (v->age > KT[v->tr].vibDelay) v->vamt += (1.0f - v->vamt) * 0.04f;
+        pitch += v->oo + vibST[v->tr] * v->vamt + bendST[v->tr];
     } else if (!bassv) pitch += vibS * 0.35f;
-    if (leant) pitch += pbendS + vibP;
+    if (leant) pitch += lead ? pbendST[v->tr] + vibPT[v->tr] : pbendS + vibP;
     f = 440.0f * fm_exp2f((pitch - 69.0f) * (1.0f / 12.0f));
     if (f > 16000.0f) f = 16000.0f;
     dt = f / SR; dt2 = dt * t->detB;
@@ -2467,8 +2528,9 @@ static int render_voice(voice_t *v, int n, float vibS, float bendNow)
         float rs = v->gate ? t->rings : (t->rings < 0.25f ? t->rings : 0.25f);
         g1 = g0 * fm_expf(-6.9f * sec / rs);
         v->kloss = fm_expf(-6.9f / (rs * f));
-        if (v->gate && par[P_PICKING] != 0.0f && lead && v->m == R_KEY) {   /* tremolo picking: struck again and again */
-            if ((v->kpick -= n) <= 0) { v->kpick = (int32_t)(SR / clampf(par[P_ORNSPEED], 3.0f, 30.0f)); if (v->age > 0.01f) ks_pluck(v, v->vel * 0.7f); g1 = 1.0f; }
+        if (v->gate && lead && tpar[v->tr][S_PICKING] != 0.0f && v->m == R_KEY) {   /* tremolo picking: struck again
+                                         * and again */
+            if ((v->kpick -= n) <= 0) { v->kpick = (int32_t)(SR / clampf(tpar[v->tr][S_ORNSPEED], 3.0f, 30.0f)); if (v->age > 0.01f) ks_pluck(v, v->vel * 0.7f); g1 = 1.0f; }
         }
     } else g1 = v->gate ? g0 + (1.0f - g0) * t->atkN : g0 * (v->m == R_BACK && backStyle != 1 ? K.stabRelN : t->relN);
     v->g = g1;
@@ -2906,7 +2968,7 @@ static void post_chain(int32_t *lr, int n, float gain, int lowAny, uint32_t busO
 
 static void block(int32_t *lr, int n, float gain)
 {
-    float vibS, bendT, bendNow;
+    float vibS, bendT;
     int i, k, leadOn = 0, lowAny = 0;
     uint32_t busOn = 0;
     if (glN) glide_block();
@@ -2942,7 +3004,22 @@ static void block(int32_t *lr, int n, float gain)
     bendT = (int)par[P_PRESS] == 1 ? pressS * par[P_BENDRANGE] : (int)par[P_PRESS] == 2 ? -pressS * par[P_BENDRANGE] : 0.0f;
     pbendS += (bendT - pbendS) * 0.08f;
     if (pbendS < 0.0005f && pbendS > -0.0005f) pbendS = 0.0f;
-    bendNow = bendS; st.bend = bendS + pbendS;
+    st.bend = bendS + pbendS;
+    for (k = 0; k < DAB_NTRK; k++) {     /* each track's own sound's vibrato and bend (track 1's: the same as the whole
+                                         * instrument's above, which the sounds without their own follow) */
+        const float *p = tpar[k];
+        float turn;
+        vibPhT[k] += p[S_VIBRATE] * (float)n / SR; WRAP(vibPhT[k]);
+        turn = sin_turn(vibPhT[k]);
+        vibST[k] = turn * (KT[k].vib + par[P_MOD] * 0.4f);
+        vibPT[k] = (int)par[P_PRESS] == 3 ? turn * pressS * 0.5f : 0.0f;
+        bendT = par[P_BEND] * p[S_BENDRANGE];
+        bendST[k] += (bendT - bendST[k]) * 0.08f;
+        if (bendST[k] < 0.0005f && bendST[k] > -0.0005f) bendST[k] = 0.0f;
+        bendT = (int)par[P_PRESS] == 1 ? pressS * p[S_BENDRANGE] : (int)par[P_PRESS] == 2 ? -pressS * p[S_BENDRANGE] : 0.0f;
+        pbendST[k] += (bendT - pbendST[k]) * 0.08f;
+        if (pbendST[k] < 0.0005f && pbendST[k] > -0.0005f) pbendST[k] = 0.0f;
+    }
     droneLvl = 1.0f;
     for (k = 0; k < DAB_NTRK; k++) {     /* each track's pitch: moved at once on what sounds, eased so it does not click */
         float d = par[P_PITCH + k] - pitchS[k];
@@ -2953,7 +3030,7 @@ static void block(int32_t *lr, int n, float gain)
         voice_t *v = &vo[i];
         if (!v->used) continue;
         busOn |= 1u << v->tr;
-        if (!render_voice(v, n, vibS, bendNow)) v->used = 0;
+        if (!render_voice(v, n, vibS)) v->used = 0;
         else {
             if (v->fam == SF_LEAD && v->m == R_KEY && v->gate) leadOn = 1;
             if (v->fam == SF_LEFT) lowAny = 1;
@@ -3090,6 +3167,7 @@ void dabke_press_debug(int32_t o[4])
     o[0] = (int32_t)(par[P_PRESSURE] * 127.0f + 0.5f); o[1] = (int32_t)(pbendS * 100.0f); o[2] = pressTr; o[3] = (int32_t)par[P_PRESS];
 }
 void dabke_pressure(int tracks, float v) { post(M_PAR, P_PRESSURE, tracks & 255, v, 0, 0); }
+void dabke_tpar(int track, int id, float v) { post(M_TPAR, id, track, v, 0, 0); }
 void dabke_par(int id, float v) { post(M_PAR, id, 0, v, 0, 0); }   /* (a track's filter and its bass: -1 .. 1, worked
                                                                      * out on the audio side as they move) */
 void dabke_ntune(int pc, int cents) { post(M_NTUNE, pc, cents, 0, 0, 0); }
@@ -3175,11 +3253,21 @@ int dabke_host_lock_sums(void)          /* (its counts in step with its table: 0
 {
     int n[DAB_NTRK] = {0}, h[DAB_NTRK] = {0}, i, bad = 0;
     for (i = 0; i < DAB_NLOCK; i++) if (lk[i]) n[DAB_LK_TRK(lk[i])]++;
-    for (i = 0; i < DAB_NLK; i++) if (lkAt[i]) { if (!lk[lkAt[i] - 1] || DAB_LK_ID(lk[lkAt[i] - 1]) != i) bad |= 4; else h[DAB_LK_TRK(lk[lkAt[i] - 1])]++; }
+    for (i = 0; i < DAB_NLKS; i++) if (lkAt[i]) { if (!lk[lkAt[i] - 1] || lk_knob(lk[lkAt[i] - 1]) != i) bad |= 4; else h[DAB_LK_TRK(lk[lkAt[i] - 1])]++; }
     for (i = 0; i < DAB_NTRK; i++) { if (n[i] != lkN[i]) bad |= 1; if (h[i] != lkHeld[i]) bad |= 2; }
     return bad;
 }
 int dabke_host_par(int id) { return id >= 0 && id < P_COUNT ? (int)(par[id] * 1000.0f + (par[id] < 0.0f ? -0.5f : 0.5f)) : 0; }   /* (a knob as it sounds now, x 1000) */
+int dabke_host_tpar(int t, int id)      /* (a knob or choice of track t's own sound as it sounds now, x 1000; DAB_PLAIN) */
+{
+    int s = sp_of(id);
+    float v;
+    if (t < 0 || t >= DAB_NTRK) return 0;
+    if (id == DAB_PLAIN) return tplain[t];
+    if (s < 0) return 0;
+    v = tpar[t][s];
+    return (int)(v * 1000.0f + (v < 0.0f ? -0.5f : 0.5f));
+}
 int dabke_host_vfam(int t)              /* (the family of a note sounding on track t: -1 none) */
 {
     int i;
@@ -3264,7 +3352,8 @@ void dabke_init(void)
         partLive[i] = 0; st.tstep[i] = 0;
     }
     for (i = 0; i < DAB_NLOCK; i++) lk[i] = 0;
-    for (i = 0; i < DAB_NLK; i++) { lkAt[i] = 0; st.lk_at[i] = 0; lkU[i] = 0.0f; }
+    for (i = 0; i < DAB_NLKS; i++) { lkAt[i] = 0; st.lk_at[i] = 0; }
+    for (i = 0; i < DAB_NLK; i++) lkU[i] = 0.0f;
     for (i = 0; i < DAB_NTRK; i++) { lkN[i] = 0; lkHeld[i] = 0; sndLk[i] = 0; dn[i] = 0; volS[i] = sndS[i] = 0.0f; }
     glN = 0; tl2 = 0; muteM = 0; busWas = 0; nSnap = 0; drumTake = 0; snapArm = -1;
     for (i = 0; i < DAB_NTRK; i++) { st.tfam[i] = tfam[i]; st.tidx[i] = tidx[i]; pitchS[i] = 0.0f; }
@@ -3292,7 +3381,15 @@ void dabke_init(void)
     paF = svf_f(2500.0f); paHk = 1.0f - fm_expf(-TWO_PI * 170.0f / SR); paLk = 1.0f - fm_expf(-TWO_PI * 5200.0f / SR);
     st.left_root = -1; st.beats = 2; st.steps = glen[0];
     leadIdle = 0x40000000u;
+    for (i = 0; i < DAB_NTRK; i++) {    /* each track's own sound as it starts: the whole instrument's (its vibrato's
+                                         * phase with the whole instrument's) */
+        int k;
+        for (k = 0; k < NSP; k++) tpar[i][k] = par[sp_id(k)];
+        tplain[i] = 0;
+        vibPhT[i] = vibPh; bendST[i] = pbendST[i] = vibST[i] = vibPT[i] = 0.0f;
+    }
     for (i = 0; i < DAB_NLK; i++) parN[i] = par[i];   /* (each knob's normal value: as it starts) */
+    for (i = DAB_NLK; i < DAB_NLKS; i++) parN[i] = tpar[(i - DAB_NLK) / DAB_NSK][(i - DAB_NLK) % DAB_NSK];
     dsteps_tell();
     trk_tell(1);
     derive();

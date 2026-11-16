@@ -182,9 +182,12 @@ static void panel_head(void)
     if (!in_strip(0, 32))
         return;
     b[0] = 0;                            /* the picked track's sound, black on its box (all: the whole sound) */
-    if (set.track) {                     /* (its own name: the sign in front says its family) */
+    if (set.track) {                     /* (its own name: the sign in front says its family; a lead sound's: its own) */
         int f = set.tsnd[set.track - 1][0];
-        text_cat(b, FAM_LIST[f][set.tsnd[set.track - 1][1] % fam_size(f)]);
+        if (f == SF_LEAD)
+            lead_name(set.track - 1, b);
+        else
+            text_cat(b, FAM_LIST[f][set.tsnd[set.track - 1][1] % fam_size(f)]);
     } else
         sound_name(b);
     w = text_w(&FONT_XS, b);
