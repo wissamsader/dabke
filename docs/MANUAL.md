@@ -2,7 +2,9 @@
 
 DABKE is a free firmware for the M-VAVE FM-1 that makes it an Arabic wedding keyboard. It has lead voices with quarter tones on any note, a drone, bass and backing from the left hand, and a rhythm box of darbuka, tabl, riq, daf, sagat, kick and claps. Eight tracks record what you play, and an Akai MIDImix can work as its mixer.
 
-**Status.** This is version 0.17, a free public beta from STUDIOMORPHIK. It has been tested on one FM-1.
+**Status.** This is version 0.18, a free public beta from STUDIOMORPHIK. It has been tested on one FM-1.
+
+**New in 0.18.** Hold SAVE while you switch the FM-1 on to start fresh: every setting, sound, loop, step, lock and MY SOUND goes back to how DABKE was on its first start (see Saving). The maqam page shows every note of the maqam white and every other note grey, on the black keys as on the white ones.
 
 **New in 0.17.** Each of the eight tracks keeps its own sound, so SAZ on track 2 and BUZUQ TREMOLO on track 3 play at the same time. SELECT on a picked track offers the 22 ready sounds and your MY SOUNDs, and the SOUND and ORNAMENTS pages edit the picked track's sound. The effects, the tempo, the maqam and the rhythm are still shared by the whole song. Saves from 0.16 load and sound as they did.
 
@@ -44,7 +46,7 @@ DABKE installs from the browser, with Chrome or Edge on a computer. Connect the 
 
 You can also install DABKE with any FM-1 installer that takes a `.fwsc` package. To try DABKE first, the site's Emulator page runs it in your browser.
 
-To go back to another firmware, install that one the same way. When an installer starts writing over USB while DABKE runs, DABKE first saves anything it had not saved yet.
+To go back to another firmware, install that one the same way. When an installer starts writing over USB while DABKE runs, DABKE first saves anything it had not saved yet. When you install DABKE again, it goes on where you left it: its saves stay in the flash, unless the other firmware wrote over them (see below). To begin again from DABKE's first start instead, hold SAVE while you switch the FM-1 on (see Start fresh, in Saving).
 
 DABKE 0.17 loads what 0.16 saved, and it sounds as it did. Going back to 0.16 after 0.17 has saved starts 0.16's settings fresh. The kept sounds stay.
 
@@ -194,7 +196,7 @@ DABKE plays up to 16 notes at once, the drone apart. When the FM-1 is busy it pl
 
 ![The maqam page: BAYATI on D, its E a quarter tone flat, the scale written out under the keys](img/maqam.png "The maqam page: BAYATI on D")
 
-Press SEL on any page but the home page to open the maqam page. It shows the twelve notes of an octave, C to B. On the white keys the maqam's notes are white and the others grey; on the black keys its notes are grey. A retuned note is amber, with its cents. The red frame marks the note SELECT points at. Under the keys, the maqam's scale is written out, with a half-flat sign on each quarter-tone note.
+Press SEL on any page but the home page to open the maqam page. It shows the twelve notes of an octave, C to B, as a keyboard. Every note of the maqam is white and every note outside it is grey, on the black keys as on the white ones. The black keys are the short, narrow ones between the white keys, each with a black edge. A retuned note is amber, with its cents. The red frame marks the note SELECT points at. Under the keys, the maqam's scale is written out, with a half-flat sign on each quarter-tone note.
 
 | Control | What it does |
 | --- | --- |
@@ -469,6 +471,16 @@ Press SAVE: the KEEP THE SOUND page shows eight places, each FREE or USED. Turn 
 To load a kept sound, turn SELECT on the home page: the kept sounds come after the ready ones, as MY SOUND 1 to MY SOUND 8. With a track picked, it goes on that track alone. With ALL picked, it goes on track 1.
 
 A kept sound holds a track's sound: its instrument and its settings, the vibrato and the ornaments. It also holds the effects on the EFFECTS page's first three rows, which come back only when you pick it with ALL. Picking a kept sound never changes another track's sound. A kept sound does not hold the loops, the steps, the rhythm or the maqam. To replace a kept sound, keep another one in its place.
+
+### Start fresh
+
+![The START FRESH page: what goes back to DABKE's first start, SAVE to start fresh, HOME to keep everything](img/start-fresh.png "SAVE held while the FM-1 starts: START FRESH")
+
+To go back to how DABKE was on its first start, hold SAVE while you switch the FM-1 on, and keep holding it until the START FRESH page shows. It says what goes: every setting, every track's sound, the loops, the steps, the locks and the MY SOUNDs. Let go of SAVE and press it again to start fresh: the screen says STARTED FRESH and DABKE opens on the home page with its first ready sound, Dabke Syria at 140, no loops, no steps of yours, no locks and no MY SOUNDs. It stays that way when you switch the FM-1 off and on.
+
+To keep everything, press HOME, or any other button: the screen says EVERYTHING KEPT and the home page opens as on any start. The keys and the knobs do nothing on this page.
+
+Starting fresh rewrites only DABKE's own saves, in the places DABKE always saves to. The panel's calibration and what other firmwares keep in the rest of the flash stay as they are.
 
 ---
 

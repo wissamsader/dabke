@@ -1,0 +1,285 @@
+# START FRESH (0.18). SAVE held while the FM-1 is switched on brings up the START FRESH page instead of the home page.
+# SAVE there: every setting, every track's sound, the loops, the steps, the locks and the MY SOUNDs as on DABKE's first
+# start, made by the same code an empty flash runs, and so after every start from then on. HOME, or any other button,
+# leaves the page and changes nothing; the keys, the knobs and the MIDImix do nothing there. DABKE's own objects only:
+# the flash outside them (another firmware's data, the panel's calibration) stays byte for byte. Without SAVE held a
+# start is as 0.17's. From the repository's root:
+#   app/build/host/dabke_host app/tests/start_fresh.txt OUTDIR
+# (state_keep N / expect state_sameN 1: everything a start makes, the settings, the sequencer's part, the MY SOUNDs and
+# the engine's tracks, knobs and locks, the same as when it was kept; fresh: the START FRESH page up)
+
+# ---- the first start, on an empty flash: what it makes, kept as state 1
+wait 900
+expect fresh 0
+expect page 0
+expect kept 0
+expect sound 0
+expect rhythm 0
+expect tempo 140
+state_keep 1
+# another firmware's data in the flash, outside DABKE's objects (COMBO's kept sounds' sector, two more places), and
+# the panel's calibration (the platform's)
+data_write 0x97000 C0FFEE0123456789
+data_write 0xA0000 5A5AA5A5
+data_write 0xE5000 0102030405060708
+expect data.0x97000 192
+expect data.0xA0003 165
+panel_cal 0102030405060708090A0B0C0D0E0F10
+expect panel_cal 136
+listen
+
+# ---- his state: the tempo and the rhythm, SAZ on track 2, a loop on track 1, the kick's steps his with a lock on step
+# 5, a MY SOUND kept
+turn PRESET 2
+wait 30
+expect rhythm 2
+expect tempo 132
+turn ALGO 3
+wait 30
+expect tempo 138
+press SEL
+tapkey w1
+release SEL
+wait 30
+expect track 2
+turn SELECT 21
+wait 30
+expect sndn1 14
+press SEL
+tapkey w0
+release SEL
+wait 30
+expect track 1
+tap PLAY
+wait 20
+tap REC
+wait 30
+expect rec_track 0
+wait 60
+key 7 down
+wait 80
+key 7 up
+wait 134
+key 9 down
+wait 80
+key 9 up
+wait 300
+tap REC
+wait 30
+expect rec_track -1
+expect trk_n0 2
+tap PLAY
+wait 30
+expect running 0
+press SEL
+tapkey w4
+release SEL
+wait 30
+expect track 5
+tap SEQ
+wait 30
+expect seq 1
+tapkey w1
+tapkey w1
+wait 60
+expect his4 1
+key w4 down
+wait 30
+turn K2 -5
+wait 30
+key w4 up
+wait 60
+expect lock4_4_51 -10
+expect locks 1
+tap SEQ
+wait 30
+expect seq 0
+tap SAVE
+wait 30
+expect save 1
+turn SELECT 2
+wait 30
+tap SAVE
+wait 30
+expect save 0
+expect kept 4
+settle
+wait 6000
+expect dirty 0
+state_keep 2
+hash_keep
+expect state_same1 0
+
+# ---- (a) a start without SAVE held: everything comes back, as in 0.17
+reboot
+wait 900
+expect fresh 0
+expect page 0
+expect hash_same 1
+expect state_same2 1
+expect kept 4
+expect tempo 138
+expect sndn1 14
+expect trk_n0 2
+expect lock4_4_51 -10
+
+# ---- (b) SAVE held at the start: the START FRESH page, said whole to a screen reader. SAVE let go: nothing yet. The
+# keys, the knobs and the MIDImix do nothing there. HOME leaves: the home page, everything as it was
+press SAVE
+reboot
+wait 300
+expect fresh 1
+expect page 0
+expect save 0
+shot start-fresh.png
+listen
+where
+wait 30
+said DABKE. START FRESH. EVERY SETTING, EVERY TRACK'S SOUND, THE LOOPS, THE STEPS, THE LOCKS AND THE MY SOUNDS GO BACK TO HOW DABKE WAS ON ITS FIRST START. SAVE STARTS FRESH. HOME KEEPS EVERYTHING.
+release SAVE
+wait 100
+expect fresh 1
+tapkey 5
+key 9 down
+wait 100
+expect voices0 0
+key 9 up
+turn SELECT 3
+turn K1 4
+turn ALGO 3
+turn PRESET 1
+usbh plug MIDI_Mix
+wait 300
+midi USB B0 13 40
+wait 100
+expect fresh 1
+expect tempo 138
+expect rhythm 2
+tap HOME
+wait 100
+expect fresh 0
+expect page 0
+expect save 0
+said EVERYTHING KEPT
+expect state_same2 1
+expect hash_same 1
+expect kept 4
+wait 6000
+expect dirty 0
+# any other button leaves too, and does nothing more: PLAY starts nothing; SAVE let go after it opens nothing
+press SAVE
+reboot
+wait 300
+expect fresh 1
+tap PLAY
+wait 100
+expect fresh 0
+expect running 0
+release SAVE
+wait 100
+expect save 0
+expect state_same2 1
+# a flash that does not write: NOT STARTED FRESH, the page stays and nothing changes; HOME leaves
+press SAVE
+reboot
+wait 300
+release SAVE
+wait 30
+flash_fail 1
+tap SAVE
+wait 100
+said NOT STARTED FRESH
+expect fresh 1
+flash_fail 0
+tap HOME
+wait 100
+expect fresh 0
+expect state_same2 1
+wait 6000
+expect dirty 0
+reboot
+wait 900
+expect state_same2 1
+# SAVE held while an update starts and ends (the screen again, no start): no START FRESH page
+tap HOME
+press SAVE
+wait 30
+expect save 1
+update
+wait 100
+expect fresh 0
+release SAVE
+tap HOME
+wait 30
+expect save 0
+
+# ---- (c) SAVE held at the start, then SAVE: STARTED FRESH, everything as the first start on the empty flash made it
+# (state 1): no MY SOUNDs, no loops, steps or locks, the first ready sound, Dabke Syria at 140
+reboot
+wait 900
+flash_dump out:sf-before.bin
+press SAVE
+reboot
+wait 300
+expect fresh 1
+release SAVE
+wait 30
+tap SAVE
+wait 300
+said STARTED FRESH
+expect fresh 0
+expect page 0
+expect save 0
+expect state_same1 1
+expect kept 0
+expect sound 0
+expect sndn1 0
+expect tempo 140
+expect rhythm 0
+expect track 0
+expect trk_n0 0
+expect locks 0
+expect lock4_4_51 -999
+expect his4 0
+expect dedit 0
+expect dirty 0
+# the sound and the rhythm go on at once: a key sounds, PLAY starts and stops
+key 9 down
+wait 60
+expect voices0 1
+key 9 up
+tap PLAY
+wait 300
+expect running 1
+tap PLAY
+wait 30
+expect running 0
+settle
+wait 900
+# ---- (e) the flash outside DABKE's three objects as it was: the other firmware's bytes, the panel's calibration
+flash_dump out:sf-after.bin
+flash_same out:sf-before.bin out:sf-after.bin
+expect data.0x97000 192
+expect data.0xA0003 165
+expect data.0xE5007 8
+expect panel_cal 136
+
+# ---- (d) and so it stays: a start after it is a first start again
+reboot
+wait 900
+expect fresh 0
+expect state_same1 1
+expect kept 0
+expect locks 0
+expect panel_cal 136
+# from there DABKE saves as always: a change, kept over a start
+turn ALGO 4
+wait 30
+expect tempo 148
+wait 6000
+expect dirty 0
+reboot
+wait 900
+expect tempo 148
+expect kept 0
+expect trk_n0 0

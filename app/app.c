@@ -486,6 +486,7 @@ static uint32_t set_changed_at;
 /* ---------------------------------------------------------------- the UI --- */
 static struct {
     uint8_t page, save, slot, cur, drum, step;
+    uint8_t fresh;                       /* the START FRESH page: SAVE was held as the FM-1 was switched on */
     uint8_t row[4];                      /* each knob page's row */
     int8_t r0, r1;                       /* the rhythms by index (r1 -1: none) */
     uint32_t keys, btn;
@@ -558,6 +559,8 @@ static volatile uint16_t midi_held[128];  /* a note in: 0x8000 | manual << 7 (4 
 static volatile uint32_t mix_ring[MIX_RING];
 static volatile uint32_t mix_w, mix_r;
 static volatile uint8_t usb_lost_req;
+static uint8_t boot_ui;                  /* app_init ran: the next first screen is a start's (SAVE held: START FRESH) */
+static volatile uint8_t hush;            /* starting fresh: the render gives silence and leaves the engine alone */
 
 /* ----------------------------------------------------------------- helpers --- */
 static void text_cat(char *d, const char *s)
@@ -1763,20 +1766,22 @@ void app_init(void)
     ui.last_orn = ORN_AUTO;
     ui.last_dbl = 1;
     set_dirty = 0;
+    boot_ui = 1;
 }
 
-#ifdef PLAT_HOST
-void app_host_reboot(void)               /* what RAM forgets */
+static void ram_forget(void)             /* what a power-off forgets (the simulator's reboot; starting fresh) */
 {
     memset(&set, 0, sizeof set);
     memset(&kept, 0, sizeof kept);
     memset(&sq, 0, sizeof sq);
     memset(&ui, 0, sizeof ui);
     memset((void *)midi_held, 0, sizeof midi_held);
-    set_dirty = 0;
+    set_dirty = sq_dirty = 0;
     mix_w = mix_r = 0;
     gview_of = -2;
 }
+#ifdef PLAT_HOST
+void app_host_reboot(void) { ram_forget(); }
 #endif
 
 /* ----------------------------------------------------------------- audio --- */
@@ -1841,6 +1846,10 @@ static uint32_t host_out_w;
 #endif
 void app_render(int32_t *lr, uint32_t n, uint32_t master_q12)
 {
+    if (hush) {                          /* (starting fresh: the engine is the main loop's for that moment) */
+        memset(lr, 0, 2u * n * sizeof *lr);
+        return;
+    }
     midi_in();
     dabke_render(lr, n, (float)master_q12 * (8300000.0f / 4096.0f));   /* MASTER: full scale x the gain */
 #ifdef PLAT_HOST
@@ -3552,11 +3561,72 @@ static void usb_watch(void)
     }
 }
 
+/* START FRESH: SAVE held while the FM-1 is switched on brings this page up instead of the home page. SAVE pressed
+ * there: DABKE as on its first start. Its own objects in the flash are emptied (the settings, the sequencer's part,
+ * the kept sounds; never the panel's calibration, nor anything another firmware keeps), then the start runs again as
+ * it does on an empty flash, the same code: the defaults, the first ready sound, no loops, steps, locks or MY SOUNDs.
+ * The render gives silence meanwhile and leaves the engine alone. A save that fails: nothing changes, and what was
+ * emptied is written again. Any other button leaves the page, changing nothing: the home page, as any start. The keys,
+ * the knobs and the MIDImix do nothing there */
+#define FRESH_WORDS "EVERY SETTING, EVERY TRACK'S SOUND, THE LOOPS, THE STEPS, THE LOCKS AND THE MY SOUNDS GO BACK TO HOW " \
+                    APP_NAME " WAS ON ITS FIRST START"
+static void fresh_start(void)
+{
+    static const uint8_t OBJ[3] = {OBJ_SETTINGS, OBJ_SEQ, OBJ_KEPT};
+    uint32_t btn = ui.btn, keys = ui.keys;
+    int i;
+    for (i = 0; i < 3; i++)
+        if (plat_store_save(OBJ[i], &set, 0) != 0) {   /* (an empty object: none there, as on a new FM-1) */
+            changed();                   /* (the settings and the sequencer's part written again, as they are) */
+            sq_changed();
+            app_say("NOT STARTED FRESH", 0);
+            return;
+        }
+    hush = 1;
+    ram_forget();
+    app_init();
+    boot_ui = 0;
+    ui.btn = btn;                        /* (SAVE still down: not a press) */
+    ui.keys = keys;
+    app_ui_init();
+    hush = 0;
+    app_say("STARTED FRESH", 0);
+}
+static void fresh_input(uint32_t btn)
+{
+    uint32_t down = btn & ~ui.btn, k;
+    if (TOUCH_ON())
+        touch_poll();
+    ui.keys = touch_keys();              /* (a key held as the page goes: not a press) */
+    for (k = 0; k < NE; k++)
+        (void)plat_enc((int)k);
+    mix_r = mix_w;
+    if (btn != ui.btn)
+        ui.ver++;
+    ui.btn = btn;
+    if (down >> B_SAVE & 1u) {
+        fresh_start();
+        return;
+    }
+    if (down) {
+        ui.fresh = 0;
+        app_ui_init();                   /* (the home page, as any start opens it) */
+        app_say("EVERYTHING KEPT", 0);
+        return;
+    }
+    plat_lights(btn | 1u << B_SAVE, 0, 0, 0, 1);
+    plat_lights_mid(0, 0);
+}
+
 static void input(void)
 {
     uint32_t keys, btn = plat_buttons(), k, pmax = 0, ptrk = 0;
     int32_t e;
     int touch = TOUCH_ON();
+    if (ui.fresh) {
+        fresh_input(btn);
+        return;
+    }
     midi_pick = (int8_t)(set.track - 1);     /* (the notes in play the picked track too) */
     if (touch)
         touch_poll();                        /* the sensed keys' presses, velocities and pressure */
@@ -3979,6 +4049,12 @@ static void header(void)
 {
     if (!in_strip(0, 32))
         return;
+    if (ui.fresh) {
+        int m = ms_now < ui.msg_until;
+        T(m ? ui.msg : "START FRESH", 8, 22, 16, m ? K_AMB : K_WH, 0, 224);
+        box(0, 30, 240, 1, K_DIM);
+        return;
+    }
     if (step_held() && !ui.save && !arp_panel_up()) {   /* a step held, on any page: its locks named here, whatever was
                                               * said a moment ago ("STEP 5: REVERB 37") */
         char a[72], b2[72];
@@ -4043,6 +4119,22 @@ static void save_page(void)
     }
 }
 
+static void fresh_page(void)             /* START FRESH: what goes, and the two buttons */
+{
+    static const char *const L[4] = {"EVERY SETTING, EVERY TRACK'S SOUND,", "THE LOOPS, THE STEPS, THE LOCKS",
+                                     "AND THE MY SOUNDS GO BACK TO HOW", APP_NAME " WAS ON ITS FIRST START."};
+    int i;
+    for (i = 0; i < 4; i++)
+        T(L[i], 120, 60 + i * 20, 13, K_WH, 1, 228);
+    box(8, 140, 108, 66, K_AMB);
+    T("SAVE", 62, 172, 24, K_BLACK, 1, 0);
+    T("STARTS FRESH", 62, 194, 11, K_BLACK, 1, 100);
+    box(124, 140, 108, 66, K_BOX);
+    T("HOME", 178, 172, 24, K_WH, 1, 0);
+    T("KEEPS EVERYTHING", 178, 194, 11, K_GR, 1, 100);
+    T("ANY OTHER BUTTON KEEPS EVERYTHING TOO", 120, 226, 11, K_GR, 1, 228);
+}
+
 #include "scene.c"
 
 #include "panel.c"
@@ -4060,6 +4152,11 @@ static void home_page(void)              /* the singer over the eight tracks' la
 }
 
 /* the maqam page: the twelve keys, which are a quarter flat, the maqam and its root */
+static uint16_t key_colour(int pc, uint32_t sc)   /* key pc's colour there, on either row: retuned amber, in the maqam
+                                                   * white, outside it grey */
+{
+    return set.ntune[pc] ? K_AMB : (sc >> pc & 1u) ? K_WH : K_GR;
+}
 static void maqam_page(void)
 {
     static const uint8_t WK[7] = {0, 2, 4, 5, 7, 9, 11}, BK[5] = {1, 3, 6, 8, 10}, BX[5] = {1, 2, 4, 5, 6};
@@ -4080,12 +4177,14 @@ static void maqam_page(void)
         }
         T(maqam_as_set() ? "AS THE MAQAM HAS IT" : "CHANGED BY HAND", 8, 72, 9, maqam_as_set() ? K_GR : K_AMB, 0, 0);
     }
-    if (in_strip(78, 160)) {                 /* one octave, C to B, each key with its cents */
+    if (in_strip(78, 160)) {                 /* one octave, C to B, each key with its cents. A key of the maqam is white and
+                                              * one outside it grey, a retuned one amber, on both rows: the black keys
+                                              * are told by their shape, short and narrow between the white ones, with
+                                              * a black gap round them */
         for (i = 0; i < 7; i++) {
-            int pc = WK[i], fl = set.ntune[pc] != 0, in = sc >> pc & 1u, cur = pc == ui.cur;
+            int pc = WK[i], cur = pc == ui.cur;
             int32_t x = 8 + i * 32;
-            uint16_t c = fl ? K_AMB : in ? K_WH : K_GR;
-            box(x, 80, 30, 76, c);
+            box(x, 80, 30, 76, key_colour(pc, sc));
             if (cur) {
                 box(x - 2, 78, 34, 3, K_RED);
                 box(x - 2, 155, 34, 3, K_RED);
@@ -4099,15 +4198,15 @@ static void maqam_page(void)
             }
         }
         for (i = 0; i < 5; i++) {
-            int pc = BK[i], fl = set.ntune[pc] != 0, in = sc >> pc & 1u, cur = pc == ui.cur;
+            int pc = BK[i], cur = pc == ui.cur;
             int32_t x = 8 + BX[i] * 32 - 11;
-            box(x, 80, 22, 44, fl ? K_AMB : in ? RGB(110, 100, 92) : K_BLACK);
-            frame((float)x, 80.0f, 21.0f, 43.0f, K_GR);
+            box(x - 3, 80, 28, 43, K_BLACK);     /* (the gap ends above a white key's cents) */
+            box(x, 80, 22, 40, key_colour(pc, sc));
             if (cur) {
-                frame((float)x - 2.0f, 78.0f, 25.0f, 47.0f, K_RED);
-                frame((float)x - 1.0f, 79.0f, 23.0f, 45.0f, K_RED);
+                frame((float)x - 2.0f, 78.0f, 25.0f, 42.0f, K_RED);
+                frame((float)x - 1.0f, 79.0f, 23.0f, 40.0f, K_RED);
             }
-            T(NOTE_NAME[pc], x + 11, 99, 11, fl ? K_BLACK : K_WH, 1, 20);
+            T(NOTE_NAME[pc], x + 11, 99, 11, K_BLACK, 1, 20);
             if (set.ntune[pc]) {
                 int_text(set.ntune[pc], t);
                 T(t, x + 11, 117, 11, K_BLACK, 1, 21);
@@ -5070,7 +5169,9 @@ static void arp_page(void)
 static void body(void)
 {
     header();
-    if (arp_panel_up())
+    if (ui.fresh)
+        fresh_page();
+    else if (arp_panel_up())
         arp_page();
     else if (ui.save)
         save_page();
@@ -5287,9 +5388,39 @@ static void speak(void)
 
 void app_ui_init(void)
 {
+    if (boot_ui) {                       /* the first screen after a start (on the FM-1 the panel is read by now; not
+                                          * so in app_init): SAVE held, the START FRESH page. The SAVE held is not a
+                                          * press there: let go and pressed again, it is */
+        boot_ui = 0;
+        if (plat_buttons() >> B_SAVE & 1u) {
+            ui.fresh = 1;
+            ui.btn = plat_buttons();
+        }
+    }
     lcd_fill(0, 0, 240, 240, C_BLACK);
     ui.ver++;
     ui.drawn_ver = ui.ver - 1u;
+}
+
+static void fresh_frame(void)            /* the START FRESH page's frame: its buttons, its words, its picture */
+{
+    input();
+    if (!ui.fresh)
+        return;
+    if (ann_on() && ann_where())
+        ann_say(APP_NAME ". START FRESH. " FRESH_WORDS ". SAVE STARTS FRESH. HOME KEEPS EVERYTHING.", 0, ANN_NOW);
+    ann_tick(plat_ms());
+    if (ui.msg_until && ms_now >= ui.msg_until) {
+        ui.msg_until = 0;
+        ui.ver++;
+    }
+    if (ui.ver != ui.drawn_ver && ms_now - ui.full_at >= 50u) {
+        ui.drawn_ver = ui.ver;
+        ui.full_at = ms_now;
+        strip(0, 32);
+        strip(32, 104);
+        strip(136, 104);
+    }
 }
 
 void app_frame(void)
@@ -5298,6 +5429,10 @@ void app_frame(void)
     int full, anim;
     ms_now = plat_ms();
     t_now = (float)(ms_now % 3600000u) * 0.001f;
+    if (ui.fresh) {
+        fresh_frame();
+        return;
+    }
     seq_masks();
     input();
     if (ui.pick_at && ms_now - ui.pick_at >= 600u) {   /* the track picked last: one that stayed picked */
@@ -5451,11 +5586,74 @@ static uint32_t host_hash_of(int part)   /* part 0: all of it; 1 the settings, 2
     return h;
 }
 static uint32_t host_hash(void) { return host_hash_of(0); }
+/* everything a start makes, in one number: host_hash's (the settings, the sequencer's part, the engine's tracks) and
+ * the kept sounds, the engine's knobs, each track's own sound and the locks as the audio side has them, the page, the
+ * rhythms picked. "state_keep N" remembers it, "expect state_sameN 1" compares (START FRESH against a first start) */
+static uint32_t host_state[4];
+static uint32_t host_state_hash(void)
+{
+    uint32_t h = host_hash_of(0), i, k;
+    int32_t v;
+    const uint8_t *p;
+    int t, id;
+#define HB(ptr, n) for (p = (const uint8_t *)(ptr), i = 0; i < (uint32_t)(n); i++) h = (h ^ p[i]) * 16777619u
+    HB(&kept, sizeof kept);
+    for (id = 0; id < P_COUNT; id++) {
+        v = dabke_host_par(id);
+        HB(&v, sizeof v);
+        for (t = 0; t < DAB_NTRK; t++) {
+            v = dabke_host_tpar(t, id);
+            HB(&v, sizeof v);
+        }
+    }
+    for (t = 0; t < DAB_NTRK; t++) {
+        v = dabke_host_tpar(t, DAB_PLAIN);
+        HB(&v, sizeof v);
+    }
+    for (k = 0; k < DAB_NLOCK; k++) {
+        uint32_t l = dabke_host_lock((int)k);
+        HB(&l, sizeof l);
+    }
+    HB(&ui.page, 1); HB(&ui.save, 1); HB(&ui.seq, 1); HB(&ui.fresh, 1); HB(&ui.r0, 1); HB(&ui.r1, 1);
+#undef HB
+    return h;
+}
+static int host_try_bad, host_try_root, host_try_scale, host_try_flat;   /* (maqam_try: the line read) */
 int app_expect(const char *what, int *got)
 {
     const dabke_status_t *s = dabke_status();
     if (!strcmp(what, "page"))
         *got = ui.page;
+    else if (!strcmp(what, "fresh"))         /* the START FRESH page up */
+        *got = ui.fresh;
+    else if (!strcmp(what, "panel_cal")) {   /* the panel's calibration in the flash: its bytes' sum (-1 none) */
+        uint8_t w[PLAT_STORE_MAX];
+        int n = plat_store_load(OBJ_PANEL, w, sizeof w), k;
+        for (k = 0, *got = n < 0 ? -1 : 0; k < n; k++)
+            *got += w[k];
+    }
+    else if (!strncmp(what, "state_same", 10))   /* state_sameN: everything as "state_keep N" found it: 1 */
+        *got = host_state_hash() == host_state[atoi(what + 10) & 3];
+    else if (!strcmp(what, "maqam_bad"))     /* the maqamat (dabke_maqamat.h): lines with a note that cannot be read */
+        *got = dabke_host_maqam(0);
+    else if (!strcmp(what, "maqam_changed")) /* of the first fifteen, those whose keys are not 0.17's */
+        *got = dabke_host_maqam(1);
+    else if (!strcmp(what, "maqam_count"))
+        *got = dabke_host_maqam(2);
+    else if (!strcmp(what, "try_bad"))       /* the line maqam_try read: notes it could not read, its tonic's key, its
+                                              * scale and its quarter-tone flats (a bit each from the tonic) */
+        *got = host_try_bad;
+    else if (!strcmp(what, "try_root"))
+        *got = host_try_root;
+    else if (!strcmp(what, "try_scale"))
+        *got = host_try_scale;
+    else if (!strcmp(what, "try_flat"))
+        *got = host_try_flat;
+    else if (!strncmp(what, "mq_col", 6)) {  /* mq_colN: key N's colour on the maqam page: 0 grey (not in the maqam), 1
+                                              * white (in it), 2 amber (retuned) */
+        uint16_t c = key_colour(atoi(what + 6) % 12, dabke_maqam_scale(set.ch[C_MAQAM], set.ch[C_ROOT]));
+        *got = c == K_AMB ? 2 : c == K_WH ? 1 : 0;
+    }
     else if (!strcmp(what, "save"))
         *got = ui.save;
     else if (!strcmp(what, "row"))
@@ -5879,6 +6077,85 @@ int app_host_cmd(const char *cmd, const char *a, const char *b, const char *c, c
     }
     if (!strcmp(cmd, "hash_keep")) {     /* hash_keep: everything kept, remembered for "expect hash_same 1" */
         host_hash_kept = host_hash();
+        return 1;
+    }
+    if (!strcmp(cmd, "panel_cal")) {     /* panel_cal HEX: the panel's calibration in the flash (OBJ_PANEL, the
+                                          * platform's), as an FM-1 set up with OCT- and OCT+ has it (expect panel_cal) */
+        uint8_t w[64];
+        uint32_t n = 0;
+        while (n < sizeof w && isxdigit((unsigned char)a[2u * n]) && isxdigit((unsigned char)a[2u * n + 1u])) {
+            char h[3] = {a[2u * n], a[2u * n + 1u], 0};
+            w[n++] = (uint8_t)strtoul(h, 0, 16);
+        }
+        if (!n || plat_store_save(OBJ_PANEL, w, n)) {
+            printf("FAIL panel_cal: not saved\n");
+            host_fail_n++;
+        }
+        return 1;
+    }
+    if (!strcmp(cmd, "state_keep")) {    /* state_keep N: everything a start makes, for "expect state_sameN 1" */
+        host_state[atoi(a) & 3] = host_state_hash();
+        return 1;
+    }
+    if (!strcmp(cmd, "maqam_try")) {     /* maqam_try NOTES: a line read as dabke_maqamat.h's are (expect try_bad ...) */
+        const char *w = plat_host_line + 9;
+        char line[96];
+        int k = 0;
+        while (*w == ' ')
+            w++;
+        while (w[k] && w[k] != '\n' && w[k] != '\r' && k < 95) {
+            line[k] = w[k];
+            k++;
+        }
+        line[k] = 0;
+        host_try_bad = dabke_host_maqam_try(line, &host_try_root, &host_try_scale, &host_try_flat);
+        printf("  maqam_try \"%s\": tonic %d, scale %03X, flat %03X, %d not read\n", line, host_try_root, host_try_scale,
+               host_try_flat, host_try_bad);
+        return 1;
+    }
+    if (!strcmp(cmd, "flash_same")) {    /* flash_same A B: two flash_dump images the same outside DABKE's own objects'
+                                          * sectors (the settings, the sequencer's part, the kept sounds): another
+                                          * firmware's data, the panel's calibration and the rest as they were */
+        static uint8_t fa[0x100000], fb[0x100000];
+        static const uint32_t MAP[OBJ_NOBJ] = APP_STORE_MAP;
+        const char *nm[2] = {a, b};
+        uint8_t *buf[2] = {fa, fb};
+        uint32_t i, out = 0, own = 0;
+        int j;
+        for (j = 0; j < 2; j++) {
+            char path[400];
+            FILE *f;
+            if (!strncmp(nm[j], "out:", 4))
+                snprintf(path, sizeof path, "%s/%s", plat_host_dir, nm[j] + 4);
+            else
+                snprintf(path, sizeof path, "%s", nm[j]);
+            f = fopen(path, "rb");
+            if (!f || fread(buf[j], 1, 0x100000, f) != 0x100000) {
+                printf("FAIL flash_same: no 1 MiB image at %s\n", nm[j]);
+                host_fail_n++;
+                if (f)
+                    fclose(f);
+                return 1;
+            }
+            fclose(f);
+        }
+        for (i = 0; i < 0x100000u; i++) {
+            int mine = (i - MAP[OBJ_SETTINGS] < 0x2000u) || (i - MAP[OBJ_SEQ] < 0x2000u) || (i - MAP[OBJ_KEPT] < 0x2000u);
+            if (fa[i] != fb[i]) {
+                if (mine)
+                    own++;
+                else {
+                    if (!out)
+                        printf("  first byte changed outside DABKE's objects: %05X\n", i);
+                    out++;
+                }
+            }
+        }
+        if (out) {
+            printf("FAIL flash_same %s %s: %u bytes changed outside DABKE's objects\n", a, b, out);
+            host_fail_n++;
+        } else
+            printf("  ok flash_same: nothing changed outside DABKE's objects (%u bytes changed in them)\n", own);
         return 1;
     }
     if (!strcmp(cmd, "cpu")) {           /* cpu PCT: the FM-1 as if PCT % as slow as the guard first assumes */

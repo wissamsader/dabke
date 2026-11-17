@@ -228,6 +228,8 @@ int dabke_host_lock_sums(void);
 int dabke_host_dsound(int drum);
 int dabke_host_orn(void);
 int dabke_host_vfam(int track);
+int dabke_host_maqam(int what);       /* (the maqamat: 0 lines it cannot read, 1 those not as 0.17 had them, 2 how many) */
+int dabke_host_maqam_try(const char *notes, int *root, int *scale, int *flat);
 #endif
 void dabke_hold(int press);             /* HOLD pressed (1): the notes of the keys down now sound on after they are let
                                          * go (the lead's, the left hand's, the bass line's), instead of those held

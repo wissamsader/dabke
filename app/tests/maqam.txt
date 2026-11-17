@@ -1,0 +1,97 @@
+# The maqamat (0.18), written in app/dabke_maqamat.h as their notes in letters ("D Eh F G A Bb C", 'h' a half flat) and
+# turned into keys as DABKE starts: every line read whole, and the first fifteen exactly as 0.17 had them as masks, in
+# the same places (the saved settings keep a maqam by its place). Then the maqam page: a key of the maqam white, one
+# outside it grey, a retuned one amber, on the white keys and the black keys alike. From the repository's root:
+#   app/build/host/dabke_host app/tests/maqam.txt OUTDIR
+# (maqam_bad: the lines with a note that cannot be read; maqam_changed: of the first fifteen, those not as 0.17's;
+# maqam_try NOTES: a line read as the list's are, its notes not read (try_bad), its tonic's key (try_root, 0 C .. 11 B),
+# its scale and its quarter-tone flats, a bit each from the tonic (try_scale, try_flat); mq_colN: key N's colour on the
+# maqam page, 0 grey, 1 white, 2 amber)
+wait 900
+expect maqam_bad 0
+expect maqam_changed 0
+expect maqam_count >14
+# lines read as the list's are: Rast (0xAB5, 0x810), Iraq on B half flat (0x56B, 0x021), Hijaz Kar as C Db or C C#
+maqam_try C D Eh F G A Bh
+expect try_bad 0
+expect try_root 0
+expect try_scale 2741
+expect try_flat 2064
+maqam_try Bh C D Eh F G A
+expect try_bad 0
+expect try_root 11
+expect try_scale 1387
+expect try_flat 33
+maqam_try C Db E F G Ab B
+expect try_scale 2483
+maqam_try C C# E F G G# B
+expect try_bad 0
+expect try_scale 2483
+# what the check catches: a letter that is not a note, a sign that is not one, a small letter, two notes on one key,
+# a line with no notes
+maqam_try C D Xh F
+expect try_bad 1
+maqam_try C D Ez F
+expect try_bad 1
+maqam_try C d E F
+expect try_bad 1
+maqam_try C D D# Eb
+expect try_bad 1
+maqam_try
+expect try_bad 1
+
+# ---- the maqam page: BAYATI on D (D Eh F G A Bb C). White: D, F, G, A, C and, on the black keys, Bb; amber: E, a
+# quarter tone flat; grey: C#, Eb, F#, Ab and B
+expect maqam 2
+expect root 2
+tap FX
+tap SEL
+wait 30
+expect page 1
+shot mq-bayati.png
+expect mq_col0 1
+expect mq_col1 0
+expect mq_col2 1
+expect mq_col3 0
+expect mq_col4 2
+expect mq_col5 1
+expect mq_col6 0
+expect mq_col7 1
+expect mq_col8 0
+expect mq_col9 1
+expect mq_col10 1
+expect mq_col11 0
+# SIKAH on E half flat (Eh F G A Bh C D): B amber with E, Bb grey now
+turn K2 2
+wait 30
+expect maqam 4
+shot mq-sikah.png
+expect mq_col4 2
+expect mq_col11 2
+expect mq_col10 0
+expect mq_col5 1
+expect mq_col1 0
+# HIJAZ on D (D Eb F# G A Bb C): no quarter tones; its black keys Eb, F# and Bb white
+turn K2 4
+wait 30
+expect maqam 8
+shot mq-hijaz.png
+expect mq_col3 1
+expect mq_col6 1
+expect mq_col10 1
+expect mq_col1 0
+expect mq_col8 0
+expect mq_col4 0
+expect mq_col11 0
+# a black key retuned by hand: amber, with its cents
+turn SELECT 6
+turn K1 -8
+wait 30
+expect cents6 -8
+expect mq_col6 2
+shot mq-retuned.png
+turn K2 -6
+wait 30
+expect maqam 2
+expect cents6 0
+expect mq_col6 0

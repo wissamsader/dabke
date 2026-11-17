@@ -46,7 +46,7 @@ on the `dabke` branch of [wissamsader/fm1-base](https://github.com/wissamsader/f
     python3 base/tools/build.py app --host            # the host simulator
     ./run_tests.sh                                    # its tests: every one must say ok
     python3 base/tools/build.py app --web             # the browser version (needs Emscripten): app/build/emu/
-    python3 base/tools/build.py app --release 0.17    # the FM-1 package: app/build/dabke-0.17.fwsc
+    python3 base/tools/build.py app --release 0.18    # the FM-1 package: app/build/dabke-0.18.fwsc
 
 The FM-1 package needs JieLi's toolchain and AC79 SDK in a container; fm1-base's README explains the setup. The
 simulator and its tests need only a C compiler and Python 3.
@@ -56,12 +56,25 @@ simulator and its tests need only a C compiler and Python 3.
 | `app/app.c`, `app/app.h` | The panel: pages, knobs, tracks, recording, the step sequencer, saving, the MIDImix |
 | `app/dabke.c`, `app/dabke.h` | The sound engine: voices, maqams, ornaments, the rhythm box, effects |
 | `app/dabke_rhythms.h` | The rhythms |
+| `app/dabke_maqamat.h` | The maqamat, as their notes |
 | `app/panel.c`, `app/scene.c` | The home screen and the singer's scenes |
 | `app/words.tsv` | The screen reader's words |
 | `app/tests/` | The simulator's tests |
 | `app/fm1.toml` | Build settings, package identity (`FM-1_65`) and the text for firmware hubs |
 | `docs/` | The manual and its pictures |
 | `fmhub.json`, `firmware.json` | What firmware hubs show |
+
+### Adding a maqam
+
+The maqamat are in `app/dabke_maqamat.h`, one line each, written as their notes from the tonic:
+
+    {"Rast", "C D Eh F G A Bh"},
+
+The notes are the letters A to G, each with `b` for a flat, `#` for a sharp or `h` for a half flat (a quarter tone
+flat), with one space between them. The first note is the tonic, where the MAQAM page puts the maqam. DABKE turns the
+notes into its tuning when it starts. Put a new maqam at the end of the list, and never move or remove one above it:
+saved songs keep their maqam by its place in the list. Then build the simulator and run the tests: `app/tests/maqam.txt`
+fails on a note it cannot read or on two notes that fall on one key.
 
 ## Licence
 

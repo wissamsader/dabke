@@ -8,6 +8,10 @@
  * keyboard leads, plucked strings, synthesized drums, quarter tones on every note, ornaments and a drone. No double
  * and no libm (fastmath.h): the FM-1's processor has neither. */
 #include <stdint.h>
+#ifdef PLAT_HOST
+#include <stdio.h>
+#include <string.h>
+#endif
 #include "plat.h"
 #include "fastmath.h"
 #include "dabke.h"
@@ -30,38 +34,80 @@ typedef struct {
 #include "dabke_rhythms.h"
 
 /* ---------------------------------------------------------------- maqamat --- */
-/* each as the keys of its scale and the keys a quarter tone flat, a bit each from its tonic (bit 0 the tonic) */
+/* each written as its notes (dabke_maqamat.h), turned once, as DABKE starts, into the keys of its scale and the keys a
+ * quarter tone flat, a bit each from its tonic (bit 0 the tonic), and its tonic's key (0 C .. 11 B) */
 typedef struct {
-    const char *name;
+    const char *name, *notes;
+} maqam_text_t;
+#include "dabke_maqamat.h"
+#define NMAQAM ((int)(sizeof MAQAMAT / sizeof MAQAMAT[0]))
+typedef struct {
     uint8_t root;
     uint16_t scale, flat;
 } maqam_t;
-static const maqam_t MAQAM[] = {
-    {"Plain", 0, 0xAB5, 0x000},       /* no quarter tones: the twelve as they are */
-    {"Rast", 0, 0xAB5, 0x810},        /* C D Eh F G A Bh: the third and seventh half flat */
-    {"Bayati", 2, 0x5AD, 0x004},      /* D Eh F G A Bb C */
-    {"Saba", 2, 0x59D, 0x004},        /* D Eh F Gb A Bb C */
-    {"Sikah", 4, 0x5AB, 0x081},       /* Eh F G A Bh C D */
-    {"Huzam", 4, 0x59B, 0x001},       /* Eh F G Ab B C D */
-    {"Iraq", 11, 0x56B, 0x021},       /* Bh C D Eh F G A */
-    {"Bayati Shuri", 2, 0x66D, 0x004},   /* D Eh F G Ab B C (Bayati with Hijaz on G) */
-    {"Hijaz", 2, 0x5B3, 0x000},       /* D Eb F# G A Bb C */
-    {"Hijaz Kar", 0, 0x9B3, 0x000},   /* C Db E F G Ab B */
-    {"Kurd", 2, 0x5AB, 0x000},        /* D Eb F G A Bb C */
-    {"Nahawand", 0, 0x9AD, 0x000},    /* C D Eb F G Ab B */
-    {"Ajam", 10, 0xAB5, 0x000},       /* Bb C D Eb F G A */
-    {"Nakriz", 0, 0x6CD, 0x000},      /* C D Eb F# G A Bb */
-    {"Saba Zamzam", 2, 0x59B, 0x000}, /* D Eb F Gb A Bb C */
-};
-#define NMAQAM ((int)(sizeof MAQAM / sizeof MAQAM[0]))
+static maqam_t MAQAM[NMAQAM];
+static uint8_t mqMade;
+/* a line's notes into o: how many it could not read (a letter that is not a note, more after its sign, two notes on
+ * one key, no note at all); those are left out. The tests read every line (dabke_host_maqam): 0 for each */
+static int mq_make(const char *s, maqam_t *o)
+{
+    static const uint8_t KEY[7] = {9, 11, 0, 2, 4, 5, 7};   /* A B C D E F G */
+    int bad = 0, any = 0;
+    o->root = 0;
+    o->scale = o->flat = 0;
+    while (*s) {
+        int k, half = 0, rel;
+        if (*s == ' ') {
+            s++;
+            continue;
+        }
+        if (*s < 'A' || *s > 'G') {
+            bad++;
+            while (*s && *s != ' ') s++;
+            continue;
+        }
+        k = KEY[*s++ - 'A'];
+        if (*s == 'b') k += 11, s++;
+        else if (*s == '#') k += 1, s++;
+        else if (*s == 'h') half = 1, s++;
+        if (*s && *s != ' ') {
+            bad++;
+            while (*s && *s != ' ') s++;
+            continue;
+        }
+        k %= 12;
+        if (!any) {                     /* (the first note: the tonic) */
+            o->root = (uint8_t)k;
+            any = 1;
+        }
+        rel = (k - o->root + 12) % 12;
+        if (o->scale >> rel & 1u)
+            bad++;
+        o->scale |= (uint16_t)(1u << rel);
+        if (half) o->flat |= (uint16_t)(1u << rel);
+    }
+    return bad + !any;
+}
+static void mq_ready(void)              /* the maqamat as keys: once, at the start (dabke_init) */
+{
+    int m;
+    if (mqMade) return;
+    for (m = 0; m < NMAQAM; m++) (void)mq_make(MAQAMAT[m].notes, &MAQAM[m]);
+    mqMade = 1;
+}
 int dabke_maqam_count(void) { return NMAQAM; }
-const char *dabke_maqam_name(int m) { return m >= 0 && m < NMAQAM ? MAQAM[m].name : ""; }
-int dabke_maqam_root(int m) { return m >= 0 && m < NMAQAM ? MAQAM[m].root : 0; }
+const char *dabke_maqam_name(int m) { return m >= 0 && m < NMAQAM ? MAQAMAT[m].name : ""; }
+int dabke_maqam_root(int m)
+{
+    mq_ready();
+    return m >= 0 && m < NMAQAM ? MAQAM[m].root : 0;
+}
 int dabke_maqam_detune(int m, int root, int pc, int depth)
 {
     int rel;
     if (m < 0 || m >= NMAQAM)
         return 0;
+    mq_ready();
     rel = ((pc - root) % 12 + 12) % 12;
     return (MAQAM[m].flat >> rel & 1u) ? -depth : 0;
 }
@@ -70,11 +116,59 @@ uint32_t dabke_maqam_scale(int m, int root)
     uint32_t s, r;
     if (m < 0 || m >= NMAQAM)
         m = 0;
+    mq_ready();
     r = (uint32_t)(((root % 12) + 12) % 12);
     s = MAQAM[m].scale;
     return ((s << r) | (s >> (12u - r))) & 0xFFFu;
 }
-int dabke_maqam_tonic_flat(int m) { return m >= 0 && m < NMAQAM ? (int)(MAQAM[m].flat & 1u) : 0; }
+int dabke_maqam_tonic_flat(int m)
+{
+    mq_ready();
+    return m >= 0 && m < NMAQAM ? (int)(MAQAM[m].flat & 1u) : 0;
+}
+#ifdef PLAT_HOST
+/* (the tests: what 0 = the lines of dabke_maqamat.h with a note that cannot be read; 1 = of the first fifteen, those whose
+ * keys differ from 0.17's, which wrote them as masks by hand (root, scale, flat); 2 = the maqamat. A line of your own:
+ * dabke_host_maqam_try) */
+int dabke_host_maqam(int what)
+{
+    static const uint16_t V017[15][3] = {
+        {0, 0xAB5, 0x000}, {0, 0xAB5, 0x810}, {2, 0x5AD, 0x004}, {2, 0x59D, 0x004}, {4, 0x5AB, 0x081},
+        {4, 0x59B, 0x001}, {11, 0x56B, 0x021}, {2, 0x66D, 0x004}, {2, 0x5B3, 0x000}, {0, 0x9B3, 0x000},
+        {2, 0x5AB, 0x000}, {0, 0x9AD, 0x000}, {10, 0xAB5, 0x000}, {0, 0x6CD, 0x000}, {2, 0x59B, 0x000}};
+    static const char *const N017[15] = {"Plain", "Rast", "Bayati", "Saba", "Sikah", "Huzam", "Iraq", "Bayati Shuri",
+                                         "Hijaz", "Hijaz Kar", "Kurd", "Nahawand", "Ajam", "Nakriz", "Saba Zamzam"};
+    int m, n = 0;
+    maqam_t o;
+    if (what == 2) return NMAQAM;
+    for (m = 0; m < (what ? 15 : NMAQAM); m++) {
+        int bad = m < NMAQAM ? mq_make(MAQAMAT[m].notes, &o) : 1;
+        if (what == 0) {
+            if (bad) {
+                printf("  maqam %d \"%s\": %d of its notes cannot be read: \"%s\"\n", m, MAQAMAT[m].name, bad, MAQAMAT[m].notes);
+                n++;
+            }
+        } else if (m >= NMAQAM || o.root != V017[m][0] || o.scale != V017[m][1] || o.flat != V017[m][2] ||
+                   strcmp(MAQAMAT[m].name, N017[m])) {
+            if (m < NMAQAM)
+                printf("  maqam %d \"%s\": root %d scale %03X flat %03X, 0.17's \"%s\" %d %03X %03X\n", m, MAQAMAT[m].name,
+                       o.root, o.scale, o.flat, N017[m], V017[m][0], V017[m][1], V017[m][2]);
+            n++;
+        }
+    }
+    return n;
+}
+int dabke_host_maqam_try(const char *notes, int *root, int *scale, int *flat)   /* (a line read as the list's are: its
+                                         * keys, and the notes it could not read) */
+{
+    maqam_t o;
+    int bad = mq_make(notes, &o);
+    *root = o.root;
+    *scale = o.scale;
+    *flat = o.flat;
+    return bad;
+}
+#endif
 
 /* ------------------------------------------------------------------ tables --- */
 static float SINE[2049] PLAT_POOL;              /* one cycle in 2048 points */
@@ -3334,6 +3428,7 @@ void dabke_init(void)
 {
     int i;
     for (i = 0; i <= 2048; i++) SINE[i] = fm_sinf((float)i * (TWO_PI / 2048.0f));
+    mq_ready();
     for (i = 0; i < 12; i++) ntune[i] = 0;
     for (i = 0; i < 4; i++) {           /* (nothing held, no key down: a start) */
         int m;
