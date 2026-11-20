@@ -46,7 +46,7 @@ on the `dabke` branch of [wissamsader/fm1-base](https://github.com/wissamsader/f
     python3 base/tools/build.py app --host            # the host simulator
     ./run_tests.sh                                    # its tests: every one must say ok
     python3 base/tools/build.py app --web             # the browser version (needs Emscripten): app/build/emu/
-    python3 base/tools/build.py app --release 0.18    # the FM-1 package: app/build/dabke-0.18.fwsc
+    python3 base/tools/build.py app --release 0.19    # the FM-1 package: app/build/dabke-0.19.fwsc
 
 The FM-1 package needs JieLi's toolchain and AC79 SDK in a container; fm1-base's README explains the setup. The
 simulator and its tests need only a C compiler and Python 3.

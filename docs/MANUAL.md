@@ -2,7 +2,9 @@
 
 DABKE is a free firmware for the M-VAVE FM-1 that makes it an Arabic wedding keyboard. It has lead voices with quarter tones on any note, a drone, bass and backing from the left hand, and a rhythm box of darbuka, tabl, riq, daf, sagat, kick and claps. Eight tracks record what you play, and an Akai MIDImix can work as its mixer.
 
-**Status.** This is version 0.18, a free public beta from STUDIOMORPHIK. It has been tested on one FM-1.
+**Status.** This is version 0.19, a free public beta from STUDIOMORPHIK. It has been tested on one FM-1.
+
+**New in 0.19.** HOLD: press the key of a held note again and that note stops; the other held notes go on. OCT- and OCT+ take the held notes up or down with their keys, and they stay held. A new sound on a track keeps its held notes sounding (see HOLD).
 
 **New in 0.18.** Hold SAVE while you switch the FM-1 on to start fresh: every setting, sound, loop, step, lock and MY SOUND goes back to how DABKE was on its first start (see Saving). The maqam page shows every note of the maqam white and every other note grey, on the black keys as on the white ones.
 
@@ -427,7 +429,13 @@ Tap SEQ again to leave step mode. The track stays picked and the keys play it.
 
 Tap EDIT on any page, or SOLO on the MIDImix, while you hold keys: their notes go on sounding after you let go, on the track they were played on (HOLD: 2 NOTES). The held keys stay lit, and the bottom line shows the HOLD mark. Notes you play meanwhile are not held. Tap EDIT with other keys down: those are held instead. Tap it with no key down: the held notes stop (HOLD OFF).
 
-A held left key keeps its chord for the bass and backing. With the arpeggio on, held notes go on arpeggiating. In step mode, the held notes are what a tap adds. While recording, a held note is kept for as long as it sounds. Nothing is held when DABKE starts.
+Press the key of a held note again and that note stops at once, while the other held notes go on (HOLD: 1 NOTE); that press plays nothing else, and its key goes dark. This works whatever track the keys play now and whatever the octave. A note held from a MIDI keyboard stops the same way when you play it again there.
+
+OCT- and OCT+ take the held notes up or down an octave with their keys, and they stay held: the same key still stops its note. The left keys set to SPLIT or BASS keep their pitch, as they always do. The track's PITCH, its TRANSPOSE and TUNE, and a quarter tone set with EDIT move the held notes too, and they stay there. A pitch wheel and the keys' pressure bend held notes only while you move them.
+
+A new sound on a track keeps its held notes sounding, in the new sound. A drum sound holds no notes, so on a drum sound they stop.
+
+A held left key keeps its chord for the bass and backing. With the arpeggio on, held notes go on arpeggiating; the key of a held note takes it out of the arpeggio, with ARP LATCH on too. In step mode the white keys are steps, so they do not stop held notes there, and the held notes are what a tap adds. While recording, a held note is kept for as long as it sounds. Nothing is held when DABKE starts.
 
 EDIT held while you press a key tunes that key, and is not a HOLD.
 
@@ -670,7 +678,7 @@ DABKE reads the MIDImix as it comes from the factory, on channel 1.
 | Bottom knob | The track's PITCH: in tune in the middle, an octave down or up at the ends, in steps as PITCH STEPS says. | K3 on the home page |
 | MUTE | The track off and on again. Lit while it is muted. | PART, the EFFECTS page's MIX row, K4 |
 | REC ARM | REC for that track, and picks it. Let go, it records; again, it stops; held a second, its last take goes. Lit while it records or waits. | REC |
-| SOLO | HOLD. Lit while notes are held. | EDIT, tapped |
+| SOLO | HOLD, as EDIT tapped. Lit while notes are held. | EDIT, tapped |
 | BANK LEFT, BANK RIGHT | The rhythm before or after. Both together: the top sound cleared. | PRESET; TOP SOUND on the EFFECTS page, row 5, K3 |
 | Master fader | The scene fader. | FADE, the EFFECTS page, row 5, K2 |
 
