@@ -234,6 +234,12 @@ int dabke_host_maqam_try(const char *notes, int *root, int *scale, int *flat);
 void dabke_hold(int press);             /* HOLD pressed (1): the notes of the keys down now sound on after they are let
                                          * go (the lead's, the left hand's, the bass line's), instead of those held
                                          * before; no key down: the held notes let go. 0: they are let go */
+void dabke_hold_off(int manual, int note);   /* a held note's own key pressed again: that note let go (as its key
+                                         * would), the other held notes still held */
+void dabke_hold_move(int manual, int from, int to, int last);   /* a held note moved to another note (the octave
+                                         * changed under its key): it sounds there, held still, with no new attack
+                                         * (last: the last of a set, hold_ver counts it when they are all done) */
+int dabke_held(int manual, int note);   /* HOLD keeps that note of that manual sounding now */
 void dabke_panic(void);                                 /* every note off, now */
 int dabke_idle(void);                                   /* 1: the audio side has taken everything asked of it (what it
                                                          * shows is up to date with the main loop's calls) */
@@ -274,6 +280,7 @@ typedef struct {
     uint32_t steps_ver;                 /* a change of them */
     uint8_t hold, held_n;               /* HOLD keeps notes sounding; how many */
     uint32_t hold_ver;                  /* a HOLD press done */
+    uint32_t hold_letgo;                /* held notes let go by a note of theirs again from MIDI (not the panel's keys) */
     uint8_t arp_n, arp_step;            /* the arpeggio: the notes in its set; its pattern's step now */
     uint8_t arp_last;                   /* the last note it played */
     uint32_t arp_plays;                 /* notes it has played */

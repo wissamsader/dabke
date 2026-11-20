@@ -490,7 +490,9 @@ static struct {
     uint8_t row[4];                      /* each knob page's row */
     int8_t r0, r1;                       /* the rhythms by index (r1 -1: none) */
     uint32_t keys, btn;
-    uint16_t keynote[NKEYS];             /* a held key's manual and note (0x8000 | manual << 7 | note), 0 none */
+    uint16_t keynote[NKEYS];             /* a held key's manual and note (0x8000 | manual << 7 | note), 0 none (0x1000 |
+                                          * manual << 7 | note: its press let that held note go, nothing to let go) */
+    uint16_t held_kn[NKEYS];             /* the note HOLD keeps for each FM-1 key lit as held (0x8000 | manual << 7 | note) */
     uint8_t vel[NKEYS];
     char msg[40];
     uint32_t msg_until;
@@ -516,7 +518,9 @@ static struct {
     uint8_t play_down, play_done, edit_done;   /* (PLAY held: a fill, not a stop; EDIT held in step mode: the locks) */
     int8_t rec_was, undo_trk;            /* the track recording as last seen; a take undone, its words still to say */
     uint8_t undo_steps;                  /* (that take was a drum sound's: its steps tell) */
-    uint8_t hold_wait;                   /* HOLD pressed, its words still to say */
+    uint8_t hold_wait;                   /* HOLD pressed (1), or a held note's key pressed again (2): its words still to say */
+    uint8_t letgo_ok;                    /* (letgo_seen is the engine's count) */
+    uint32_t letgo_seen;                 /* the engine's held notes let go by MIDI, as last said */
     uint32_t hold_ver, hold_snap, held_keys;   /* (the engine's count then; the FM-1's keys down then; those held) */
     uint32_t undo_ver, lit_keys, dim_keys, mid_keys;   /* (the FM-1's key lights as last sent) */
     uint8_t tdrum[DAB_NTRK];             /* each track's lane the keys played last (a drum sound on it) */
@@ -1908,10 +1912,67 @@ static void say_note_tuning(int pc)          /* "E: QUARTER FLAT", "E: AS IT IS"
 }
 
 /* ---------------------------------------------------------------- actions --- */
+static void held_say(int n)                  /* what HOLD keeps now, in words: "HOLD: 2 NOTES", "HOLD OFF" */
+{
+    char b[24] = "HOLD: ", t[8];
+    if (!n) {
+        say("HOLD OFF");
+        return;
+    }
+    int_text(n, t);
+    text_cat(b, t);
+    text_cat(b, n == 1 ? " NOTE" : " NOTES");
+    say(b);
+}
+static void held_list(void)
+{                                            /* the notes HOLD keeps under the FM-1's keys, for a tapped step (chord_for):
+                                              * the first track's, four at most */
+    uint32_t k;
+    ui.nheld = 0;
+    ui.held_trk = 0;
+    for (k = 0; k < NKEYS; k++)
+        if ((ui.held_keys >> k & 1u) && (ui.held_kn[k] & 0x8000u)) {
+            int m = ui.held_kn[k] >> 7 & 15, t = m < DAB_NTRK ? m : PART_LEFT;
+            if (!ui.held_trk)
+                ui.held_trk = (uint8_t)(t + 1);
+            if (ui.held_trk == t + 1 && ui.nheld < 4)
+                ui.heldn[ui.nheld++] = (uint8_t)(ui.held_kn[k] & 0x7Fu);
+        }
+}
+static void held_octave(int by)              /* the octave changed by "by" semitones: the notes HOLD keeps under the FM-1's
+                                              * keys go with their keys (the left keys as set stay, as their keys do), so
+                                              * each key still lets its own go. In order, so that none lands on one not
+                                              * moved yet */
+{
+    int i, last = -1;
+    for (i = 0; i < (int)NKEYS; i++) {
+        uint32_t k = (uint32_t)(by > 0 ? (int)NKEYS - 1 - i : i);
+        uint16_t h = ui.held_kn[k];
+        int m = h >> 7 & 15, n = h & 0x7F, to = n + by;
+        if (!(ui.held_keys >> k & 1u) || !(h & 0x8000u) || m >= DAB_NTRK || to < 0 || to > 127)
+            continue;
+        if (last >= 0)
+            dabke_hold_move(ui.held_kn[last] >> 7 & 15, (ui.held_kn[last] & 0x7F) - by, ui.held_kn[last] & 0x7F, 0);
+        ui.held_kn[k] = (uint16_t)(0x8000u | (uint32_t)m << 7 | (uint32_t)to);
+        if ((ui.keys >> k & 1u) && ui.keynote[k] == h)   /* (its key still down: it lets go of the note it holds now) */
+            ui.keynote[k] = ui.held_kn[k];
+        last = (int)k;
+    }
+    if (last >= 0) {                         /* (the last one tells when the engine has moved them all: until then the
+                                              * lights wait) */
+        dabke_hold_move(ui.held_kn[last] >> 7 & 15, (ui.held_kn[last] & 0x7F) - by, ui.held_kn[last] & 0x7F, 1);
+        ui.hold_ver = dabke_status()->hold_ver;
+        ui.hold_wait = 3;
+    }
+    held_list();
+}
 static void set_oct(int32_t v)
 {
     char t[8] = "", n[8];
+    int was = set.oct;
     set.oct = (int8_t)clamp(v, -3, 3);
+    if (set.oct != was)
+        held_octave(12 * (set.oct - was));
     if (set.oct > 0)
         text_cat(t, "+");
     int_text(set.oct, n);
@@ -2155,10 +2216,17 @@ static void hold_press(void)             /* HOLD (SOLO, EDIT tapped): the notes 
     ui.hold_snap = 0;
     ui.nheld = 0;
     ui.held_trk = 0;
+    for (k = 0; k < NKEYS; k++)              /* (a key down whose press let its held note go: its note again, so that it is
+                                              * held with the others: the notes of the keys down are held) */
+        if ((ui.keys >> k & 1u) && (ui.keynote[k] & 0x1000u) && !(ui.keynote[k] & 0x8000u)) {
+            ui.keynote[k] = (uint16_t)(0x8000u | (ui.keynote[k] & 0x7FFu));
+            dabke_key(ui.keynote[k] >> 7 & 15, ui.keynote[k] & 0x7F, ui.vel[k] ? ui.vel[k] : 100);
+        }
     for (k = 0; k < NKEYS; k++)              /* (the keys that sound a note: what a tapped step takes while they are held) */
         if ((ui.keys >> k & 1u) && (ui.keynote[k] & 0x8000u)) {
             int m = ui.keynote[k] >> 7 & 15, t = m < DAB_NTRK ? m : PART_LEFT;
             ui.hold_snap |= 1u << k;
+            ui.held_kn[k] = ui.keynote[k];
             if (!ui.held_trk)
                 ui.held_trk = (uint8_t)(t + 1);
             if (ui.held_trk == t + 1 && ui.nheld < 4)
@@ -3193,7 +3261,21 @@ static void key_down(uint32_t k, int vel)
         }
         return;
     }
-    ui.held_keys &= ~(1u << k);              /* (a held key again: the key has its note now) */
+    if (!(ui.seq && set.track) && (ui.held_keys >> k & 1u) && (ui.held_kn[k] & 0x8000u) &&
+        dabke_held(ui.held_kn[k] >> 7 & 15, ui.held_kn[k] & 0x7F)) {   /* HOLD: the key of a held note, pressed again,
+                                              * lets that note go (whatever the octave or the track picked now), and
+                                              * plays nothing; the other held notes stay. (In step mode the keys are
+                                              * the steps) */
+        uint16_t h = ui.held_kn[k];
+        ui.held_keys &= ~(1u << k);
+        ui.held_kn[k] = 0;
+        ui.keynote[k] = (uint16_t)(0x1000u | (h & 0x7FFu));   /* (nothing to let go) */
+        dabke_hold_off(h >> 7 & 15, h & 0x7F);
+        held_list();
+        ui.hold_ver = dabke_status()->hold_ver;
+        ui.hold_wait = 2;
+        return;
+    }
     t = key_track(k < 12u, &m);
     if (ui.seq && set.track && !ui.save) {
         int dr = trk_drum(t), n = dabke_sound_drums(set.tsnd[t][0]);
@@ -5258,21 +5340,34 @@ static void engine_watch(void)
         say(b);
     }
     ui.rec_was = s->rec_track;
-    if (ui.hold_wait && s->hold_ver != ui.hold_ver) {   /* HOLD done: what it holds */
-        char b[24] = "HOLD: ", n[8];
+    if (ui.hold_wait && s->hold_ver != ui.hold_ver) {   /* HOLD done (or a held note's key let it go): what it holds */
+        int w = ui.hold_wait;
         ui.hold_wait = 0;
-        ui.held_keys = s->held_n ? ui.hold_snap : 0u;
-        if (s->held_n) {
-            int_text(s->held_n, n);
-            text_cat(b, n);
-            text_cat(b, s->held_n == 1 ? " NOTE" : " NOTES");
-            say(b);
-        } else
-            say("HOLD OFF");
+        if (w == 1) {
+            ui.held_keys = s->held_n ? ui.hold_snap : 0u;
+            held_list();
+        }
+        if (w != 3)                          /* (the octave moved them: nothing to say) */
+            held_say(s->held_n);
         ui.ver++;
     }
-    if (!s->held_n && ui.held_keys && !ui.hold_wait)
-        ui.held_keys = 0;
+    if (!ui.letgo_ok || s->hold_letgo == ui.letgo_seen) {
+        ui.letgo_ok = 1;
+        ui.letgo_seen = s->hold_letgo;
+    } else if (!ui.hold_wait) {              /* a held note let go by its note again from MIDI: what is left, said */
+        ui.letgo_seen = s->hold_letgo;
+        held_say(s->held_n);
+    }
+    if (ui.held_keys && !ui.hold_wait) {     /* a key lit as held whose note is held no more (let go some other way): dark */
+        uint32_t k;
+        for (k = 0; k < NKEYS; k++)
+            if ((ui.held_keys >> k & 1u) && !dabke_held(ui.held_kn[k] >> 7 & 15, ui.held_kn[k] & 0x7F)) {
+                ui.held_keys &= ~(1u << k);
+                ui.held_kn[k] = 0;
+                held_list();
+                ui.ver++;
+            }
+    }
     if (ui.undo_trk >= 0 && (ui.undo_steps ? s->steps_ver : s->loop_ver) != ui.undo_ver) {   /* a take undone: what is
                                               * left. Nothing of his: it is empty, or the rhythm's again */
         int t = ui.undo_trk & 7;
@@ -5555,6 +5650,7 @@ void app_update_save(void)
 /* ------------------------------------------------------------- host checks --- */
 #ifdef PLAT_HOST
 static int host_pitch_x10(void);
+static int host_tone(int cents);
 /* everything that is kept, as the settings, the sequencer's part and the engine have it now, in one number: the same
  * before and after a power cycle, if all of it was saved and came back */
 static uint32_t host_hash_kept;
@@ -5936,6 +6032,9 @@ int app_expect(const char *what, int *got)
         *got = s->arp_first[atoi(what + 9) & 15];
     else if (!strcmp(what, "pitch_x10"))     /* what sounds now: its pitch, tenths of a hertz */
         *got = host_pitch_x10();
+    else if (!strncmp(what, "tone", 4) && what[4] >= '0' && what[4] <= '9')   /* toneC: the output's level at the pitch C
+                                              * cents above MIDI note 0 (6000 middle C), dB of full scale */
+        *got = host_tone(atoi(what + 4));
     else if (!strcmp(what, "left_root"))
         *got = s->left_root;
     else if (!strcmp(what, "dirty"))
@@ -5996,6 +6095,24 @@ int app_expect(const char *what, int *got)
 
 /* the pitch of what sounds now (tenths of a hertz, 30 .. 440 Hz; 0 none): the normalized autocorrelation of the last
  * 4096 samples, its first peak near the highest, between the samples' neighbours */
+static int host_tone(int cents)          /* the output's last 8192 samples (186 ms): the level of the pitch CENTS above
+                                          * MIDI note 0 (6000: middle C), dB of full scale, -120 the floor (Goertzel,
+                                          * Hann window: a note sounding reads near its level, one a semitone away
+                                          * some 25 dB lower) */
+{
+    uint32_t w = host_out_w, i;
+    float f = 440.0f * fm_exp2f(((float)cents * 0.01f - 69.0f) * (1.0f / 12.0f)), c, s0 = 0.0f, s1 = 0.0f, s2 = 0.0f, a;
+    c = 2.0f * fm_cosf(6.2831853f * f / 44100.0f);
+    for (i = 0; i < 8192u; i++) {
+        float h = 0.5f - 0.5f * fm_cosf(6.2831853f * (float)i / 8192.0f);
+        s0 = host_out[(w - 8192u + i) & 8191u] * (1.0f / 8388608.0f) * h + c * s1 - s2;
+        s2 = s1;
+        s1 = s0;
+    }
+    a = s1 * s1 + s2 * s2 - c * s1 * s2;
+    a = a > 0.0f ? fm_sqrtf(a) * (4.0f / 8192.0f) : 0.0f;   /* (a full-scale sine: 1) */
+    return a > 1e-6f ? (int)(6.0206f * fm_log2f(a) + (a >= 1.0f ? 0.5f : -0.5f)) : -120;
+}
 static int host_pitch_x10(void)
 {
     static float x[4096], nsdf[1500];
@@ -6047,6 +6164,7 @@ int app_host_cmd(const char *cmd, const char *a, const char *b, const char *c, c
         dabke_track_rec(-1);
         dabke_hold(0);
         ui.held_keys = 0;
+        memset(ui.held_kn, 0, sizeof ui.held_kn);
         if (set.arp)
             arp_toggle();
         step_mode(0);

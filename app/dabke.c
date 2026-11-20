@@ -341,6 +341,7 @@ static int glN;
 #define NMAN (DAB_NTRK + 1)             /* the manuals (dabke_key): a track's keys each, and the left keys as set */
 static uint32_t keyDn[NMAN][4];         /* the keys down, a bit a note */
 static uint32_t heldK[NMAN][4], heldArp[4];   /* the notes HOLD keeps sounding; the lead's in the arpeggio's set */
+static uint32_t eatK[NMAN][4];          /* the keys whose press let their held note go: their letting go does nothing */
 #define BGET(a, n) ((a)[(n) >> 5] >> ((n) & 31) & 1u)
 #define BSET(a, n) ((a)[(n) >> 5] |= 1u << ((n) & 31))
 #define BCLR(a, n) ((a)[(n) >> 5] &= ~(1u << ((n) & 31)))
@@ -518,7 +519,7 @@ static uint32_t scopeW, scopeDiv;
 /* messages from the main loop */
 enum { M_KEY, M_PAR, M_NTUNE, M_RHY, M_RUN, M_SYNC, M_ACC, M_STYLE, M_FILL, M_FADE, M_DRUM, M_OWN,
        M_TRKREC, M_UNDO, M_CLEARALL, M_LOOPSET, M_STEP, M_DHIT, M_STEPSSET, M_HOLD, M_TSND, M_PANIC,
-       M_NADD, M_NDEL, M_TLEN, M_LOCK, M_LKCLEAR, M_MUTE, M_TPAR };
+       M_NADD, M_NDEL, M_TLEN, M_LOCK, M_LKCLEAR, M_MUTE, M_TPAR, M_HOLDOFF, M_HOLDMV };
 typedef struct { uint8_t t; int16_t a, b; float f, g, h; } msg_t;
 #define QN 512u
 static msg_t q[QN];
@@ -1634,17 +1635,28 @@ static int arp_keys(int m)              /* a manual whose keys go into the arpeg
 {
     return m < DAB_NTRK && m != PART_DRONE && tfam[m] == SF_LEAD && par[P_ARPON] != 0.0f;
 }
+static void hold_off(int m, int n);
 static void key_on(int manual, int note, int vel, int norec)   /* (norec: heard, not recorded: a note given to a step) */
 {
     int t;
     if (note < 0 || note > 127 || manual < 0 || manual >= NMAN) return;
     t = KTRK(manual);
+    if (BGET(heldK[manual], note) && !norec && !BGET(keyDn[manual], note)) {   /* HOLD: a held note's key pressed again
+                                         * lets it go, now, as letting go of its key would; that press plays nothing
+                                         * (and is not recorded), its letting go does nothing */
+        hold_off(manual, note);
+        BSET(eatK[manual], note);
+        st.hold_letgo++;                /* (not the panel's doing: it says what is left) */
+        return;
+    }
+    BCLR(eatK[manual], note);
     st.notes++;
     if (!norec) trk_first_key();        /* (waiting to record: the first key starts) */
     if (!arp_keys(manual) && !norec)
         trk_key(t, note, vel);          /* (recording: what is played goes into its track; the arpeggio's keys: its notes) */
     BSET(keyDn[manual], note);
-    if (BGET(heldK[manual], note)) {    /* (a held note's key again: the key has it now, it ends when let go) */
+    if (BGET(heldK[manual], note)) {    /* (a note tried for a step on a held note: the key has it now, it ends when let
+                                         * go) */
         BCLR(heldK[manual], note);
         BCLR(heldArp, note);
         if (st.held_n) st.held_n--;
@@ -1699,6 +1711,10 @@ static void key_off(int manual, int note)
     int t;
     if (note < 0 || note > 127 || manual < 0 || manual >= NMAN) return;
     t = KTRK(manual);
+    if (BGET(eatK[manual], note)) {     /* (its press let a held note go: nothing more) */
+        BCLR(eatK[manual], note);
+        return;
+    }
     BCLR(keyDn[manual], note);
     if (BGET(heldK[manual], note)) {    /* HOLD keeps it: it sounds on (recorded until the hold lets it go) */
         if (arpDown[note] && arp_keys(manual)) { arpDown[note] = 0; nDown--; }   /* (in the arpeggio's set still) */
@@ -2392,13 +2408,100 @@ static void hold_press(void)            /* HOLD pressed: the keys down held (ins
             }
     st.held_n = (uint8_t)c; st.hold = c != 0; st.hold_ver++;
 }
+static void held_count(void)            /* (the screen's count of the held notes) */
+{
+    int m, n, c = 0;
+    for (m = 0; m < NMAN; m++) for (n = 0; n < 4; n++) { uint32_t w = heldK[m][n]; while (w) { c++; w &= w - 1u; } }
+    st.held_n = (uint8_t)c; st.hold = c != 0;
+}
+static void hold_off(int m, int n)      /* a held note's own key pressed again: that note let go (out of the arpeggio's
+                                         * set too, latched or not), the others held still */
+{
+    int k;
+    if (m < 0 || m >= NMAN || n < 0 || n > 127 || !BGET(heldK[m], n)) return;
+    held_end(m, n);
+    if (arp_keys(m) && !arpDown[n])
+        for (k = 0; k < nArp; k++) if (arpNotes[k] == n) { arp_remove(n); st.arp_n = (uint8_t)nArp; break; }
+    held_count();
+    st.hold_ver++;
+}
+static void hold_move(int m, int from, int to)   /* a held note to another note (the octave changed under its key): its
+                                         * voice moves there as it sounds (no new attack), held still, its key's note */
+{
+    int t, i;
+    if (m < 0 || m >= DAB_NTRK || from < 0 || from > 127 || to < 0 || to > 127 || from == to) return;
+    if (!BGET(heldK[m], from) || BGET(heldK[m], to)) return;   /* (not held, or that note held already: as it is) */
+    t = m;
+    BCLR(heldK[m], from); BSET(heldK[m], to);
+    if (BGET(keyDn[m], from)) { BCLR(keyDn[m], from); BSET(keyDn[m], to); }
+    if (SF_DRUM(tfam[t])) return;
+    if (t == PART_DRONE) {              /* (the drone: its note, in its own octave) */
+        if (droneNote == from) droneNote = (int16_t)to;
+        trk_key(t, from, 0); trk_key(t, to, 100);
+        return;
+    }
+    if (BGET(heldArp, from) && arp_keys(m)) {   /* in the arpeggio's set: the set takes the new note in its place */
+        int k;
+        BCLR(heldArp, from); BSET(heldArp, to);
+        if (arpDown[from]) { arpDown[from] = 0; arpDown[to] = 1; }
+        for (k = 0; k < nArp; k++) if (arpOrd[k] == from) arpOrd[k] = (uint8_t)to;
+        for (k = 0; k < nArp; k++) if (arpNotes[k] == from) {   /* (lowest first still) */
+            for (; k < nArp - 1; k++) arpNotes[k] = arpNotes[k + 1];
+            for (k = nArp - 1; k > 0 && arpNotes[k - 1] > to; k--) arpNotes[k] = arpNotes[k - 1];
+            arpNotes[k] = (uint8_t)to;
+            break;
+        }
+        return;
+    }
+    for (i = 0; i < NV; i++)            /* its voices (a DOUBLE's octave too): the new note, from the next block */
+        if (vo[i].used && vo[i].m == R_KEY && vo[i].tr == t && vo[i].n == from && vo[i].gate) {
+            vo[i].n = (uint8_t)to;
+            vo[i].up = step_up(to, t); vo[i].down = step_down(to, t);
+        }
+    if (tfam[t] == SF_LEAD && t == leadTr && !lead_poly()) {   /* (one note at a time: the note under its key) */
+        for (i = 0; i < nms; i++) if (mstack[i] == from) mstack[i] = (uint8_t)to;
+        if (monoNote == from) monoNote = to;
+    }
+    trk_key(t, from, 0); trk_key(t, to, 100);   /* (recording: the note ends there, the new one goes on) */
+}
 
 /* a track's sound changed: its notes end (held ones too), its loop goes on in the new sound (silent with a drum sound),
  * its steps play the new drums (silent with a note sound) */
 static int8_t drnV[2];
+static void held_again(int t, const uint32_t *keep, const uint32_t *keepL, const uint32_t *keepA)
+{                                       /* a track's sound changed with notes held on it: they go on in the new sound,
+                                         * held still (a new attack each, as on any new sound). The drone holds its
+                                         * note by itself; in the arpeggio's set they stay in its set */
+    int n;
+    for (n = 0; n < 128; n++) {
+        if (BGET(keep, n)) {
+            BSET(heldK[t], n);
+            if (t == PART_DRONE) continue;
+            if (BGET(keepA, n) && arp_keys(t)) {
+                if (arpTr != t) arp_forget();
+                arpTr = (uint8_t)t;
+                BSET(heldArp, n);
+                if (!nArp) { arpSync = 1; arpGather = (int32_t)(SR * 0.02f); }
+                arp_add(n);
+                st.arp_n = (uint8_t)nArp;
+            } else if (tfam[t] == SF_LEAD) {
+                lead_track(t);
+                lead_on(n, 100);
+            } else
+                start(R_KEY, t, n, 100);
+        }
+        if (BGET(keepL, n)) {           /* (the left keys as set: the left hand's notes, or its chord's root) */
+            BSET(heldK[DAB_NTRK], n);
+            lower_hold(n, 4, 1);
+            if (!accOn) start(R_KEY, PART_LEFT, n, 100);
+        }
+    }
+    if (t == PART_LEFT && accOn && nLower) find_root();
+}
 static void track_sound(int t, int f, int x, int again)   /* (again: the same, as a new sound) */
 {
-    int i, n, held = 0;
+    int i, n;
+    uint32_t keep[4], keepL[4], keepA[4];
     if (t < 0 || t >= DAB_NTRK || f < 0 || f >= SF_N) return;
     if (x < 0 || x >= dabke_family_size(f)) x = 0;
     if (tfam[t] == f && tidx[t] == x && !again) return;
@@ -2411,6 +2514,11 @@ static void track_sound(int t, int f, int x, int again)   /* (again: the same, a
                                                              * with no loop around it, or a loop's length made up) */
         trk_stop();
     trk_off(t);
+    for (i = 0; i < 4; i++) {           /* (what HOLD keeps on it: to go on in the new sound, below) */
+        keep[i] = heldK[t][i];
+        keepL[i] = t == PART_LEFT ? heldK[DAB_NTRK][i] : 0u;
+        keepA[i] = t == arpTr ? heldArp[i] & heldK[t][i] : 0u;
+    }
     for (i = 0; i < NV; i++) if (vo[i].used && vo[i].tr == t && vo[i].gate) vo[i].gate = 0;
     for (n = 0; n < 128; n++) {
         if (BGET(heldK[t], n)) BCLR(heldK[t], n);
@@ -2423,9 +2531,9 @@ static void track_sound(int t, int f, int x, int again)   /* (again: the same, a
     if (t == leadTr) { nms = 0; monoNote = -1; }
     tfam[t] = (uint8_t)f; tidx[t] = (uint8_t)x;
     st.tfam[t] = (uint8_t)f; st.tidx[t] = (uint8_t)x;
-    for (i = 0; i < NMAN; i++) for (n = 0; n < 128; n++) held += (int)BGET(heldK[i], n);
-    st.held_n = (uint8_t)held; st.hold = held != 0;
     derive();
+    if (!SF_DRUM(f)) held_again(t, keep, keepL, keepA);   /* (a drum sound holds no note: they are let go) */
+    held_count();
 }
 
 /* ---------------------------------------------------------------- messages --- */
@@ -2566,12 +2674,17 @@ static void take(const msg_t *m)
     case M_HOLD:
         if (m->a) hold_press(); else { hold_release(); st.hold_ver++; }
         break;
+    case M_HOLDOFF: hold_off(m->a, m->b); break;
+    case M_HOLDMV:
+        hold_move(m->a >> 8 & 15, m->a & 255, m->b);
+        if (m->f != 0.0f) st.hold_ver++;   /* (the last of them: the panel's lights may look again) */
+        break;
     default:                                                /* panic */
         for (i = 0; i < NV; i++) vo[i].used = 0;
         for (i = 0; i < 128; i++) lowerHeld[i] = 0;
         for (i = 0; i < DAB_NTRK; i++) for (k = 0; k < DAB_LOOP_N / 8; k++) kt[i].snd[k] = 0;
         drnV[0] = drnV[1] = -1;
-        for (k = 0; k < NMAN; k++) for (i = 0; i < 4; i++) { keyDn[k][i] = 0; heldK[k][i] = 0; }
+        for (k = 0; k < NMAN; k++) for (i = 0; i < 4; i++) { keyDn[k][i] = 0; heldK[k][i] = 0; eatK[k][i] = 0; }
         for (i = 0; i < 4; i++) heldArp[i] = 0;
         if (recWait) { recTrk = -1; recWait = 0; }
         st.held_n = 0; st.hold = 0;
@@ -3390,6 +3503,15 @@ void dabke_steps_set(const uint8_t *lo, const uint8_t *hi, int edited, const uin
     post(M_STEPSSET, 0, 0, 0, 0, 0);
 }
 void dabke_hold(int on) { post(M_HOLD, on, 0, 0, 0, 0); }
+void dabke_hold_off(int manual, int note) { post(M_HOLDOFF, manual, note, 0, 0, 0); }
+void dabke_hold_move(int manual, int from, int to, int last)
+{
+    post(M_HOLDMV, ((manual & 15) << 8) | (from & 255), to, last ? 1.0f : 0.0f, 0, 0);
+}
+int dabke_held(int manual, int note)    /* (read from the main loop: a bit the audio side sets and clears) */
+{
+    return manual >= 0 && manual < NMAN && note >= 0 && note < 128 ? (int)BGET(heldK[manual], note) : 0;
+}
 void dabke_panic(void) { post(M_PANIC, 0, 0, 0, 0, 0); }
 int dabke_idle(void) { return q_r == q_w; }
 
@@ -3432,7 +3554,7 @@ void dabke_init(void)
     for (i = 0; i < 12; i++) ntune[i] = 0;
     for (i = 0; i < 4; i++) {           /* (nothing held, no key down: a start) */
         int m;
-        for (m = 0; m < NMAN; m++) { keyDn[m][i] = 0; heldK[m][i] = 0; }
+        for (m = 0; m < NMAN; m++) { keyDn[m][i] = 0; heldK[m][i] = 0; eatK[m][i] = 0; }
         heldArp[i] = 0;
     }
     st.hold = 0; st.held_n = 0; droneIdle = 0x7FFFFFFFu;

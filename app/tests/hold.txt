@@ -1,0 +1,505 @@
+# HOLD (EDIT tapped on any page, SOLO on the MIDImix), as he plays it. From the repository's root:
+#   app/build/host/dabke_host app/tests/hold.txt OUTDIR
+# Pressed with keys down, their notes sound on after the keys are let go; with other keys down, those are held
+# instead; with none down, the held notes go. Played meanwhile, a key is not held. 0.19: the key of a held note,
+# pressed again, lets that note go at once and plays nothing (whatever the octave or the track picked now); OCT- and
+# OCT+ move the held notes with their keys (the left keys as set stay, as their keys do), and they stay held; the
+# track's PITCH, TRANSPOSE and a quarter tone move them too; a track's new sound takes its held notes over; nothing
+# stays stuck. Up to 0.18 a held key pressed again struck its note anew and let it go only when lifted, after OCT- or
+# OCT+ the held notes stayed where they were and their keys could no longer let them go, a held key pressed with
+# another track picked darkened its light and left its note held, and a new sound on a track let its held notes go.
+# (toneC: the output's level at the pitch C cents above MIDI note 0, 6000 middle C, dB of full scale, measured on the
+# last 186 ms: a held note of the ORGAN reads about -30, one gone below -60; an octave above a note sounding reads its
+# harmonic, so a note moved up is checked by its old pitch gone. Key 7 is C4, 9 D4, 11 E (a quarter flat in BAYATI),
+# 14 G4, 19 C5)
+wait 900
+expect track 0
+# the lead on the ORGAN (an even sound to measure), POLY (sound page, row 1, K1 and K2); the automatic ornaments off
+# (ornaments page, row 1, K4), the drone off (row 3, K1)
+tap ENV
+wait 30
+turn K1 7
+wait 60
+turn K2 2
+wait 30
+expect ch0 7
+expect ch1 2
+tap LFO
+turn SELECT -20
+wait 30
+turn K4 -20
+wait 30
+turn SELECT 2
+wait 30
+turn K1 -5
+wait 30
+tap HOME
+wait 30
+listen
+
+# ---- a chord held: C, E, G; let go, they sound on, their keys lit
+key 7 down
+key 11 down
+key 14 down
+wait 100
+tap EDIT
+wait 60
+said HOLD: 3 NOTES
+key 7 up
+key 11 up
+key 14 up
+wait 400
+expect held_n 3
+expect voices0 3
+expect tone6000 >-40
+expect tone6350 >-40
+expect tone6700 >-40
+expect held_keys 18560
+expect lit_key11 1
+
+# ---- the held E's key again: E goes at once, nothing new starts, the others sound on
+key 11 down
+wait 400
+said HOLD: 2 NOTES
+expect held_n 2
+expect voices0 2
+expect tone6350 <-60
+expect tone6000 >-40
+expect tone6700 >-40
+key 11 up
+wait 200
+expect lit_key11 0
+expect voices0 2
+expect held_n 2
+# its next press is a plain note again: it sounds while down, not held
+key 11 down
+wait 200
+expect voices0 3
+key 11 up
+wait 400
+expect voices0 2
+expect held_n 2
+
+# ---- OCT+: the held C and G go up an octave with their keys, and stay held and lit
+tap OCT+
+wait 400
+said OCTAVE +1
+expect held_n 2
+expect voices0 2
+expect tone6000 <-60
+expect tone6700 <-60
+expect tone7200 >-40
+expect tone7900 >-40
+expect held_keys 16512
+# the held C's key (C5 now) lets it go; G5 sounds on
+key 7 down
+wait 400
+said HOLD: 1 NOTE
+expect held_n 1
+expect tone7200 <-60
+expect tone7900 >-40
+key 7 up
+wait 200
+expect voices0 1
+# OCT- back: the held G with it
+tap OCT-
+wait 400
+said OCTAVE 0
+expect tone6700 >-40
+expect voices0 1
+expect lit_key14 1
+expect held_n 1
+
+# ---- HOLD with keys down, among them the key whose press has just let its note go: both held
+key 14 down
+wait 30
+key 7 down
+wait 60
+tap EDIT
+wait 60
+said HOLD: 2 NOTES
+key 14 up
+key 7 up
+wait 400
+expect held_n 2
+expect voices0 2
+expect tone6000 >-40
+expect tone6700 >-40
+expect held_keys 16512
+
+# ---- the track's PITCH (track 1 picked, K3 on the home page): the held notes go up a tone, stay held, and back
+tap SEL
+wait 30
+expect track 1
+turn K3 2
+wait 400
+said TRACK 1: UP 2
+expect tone6200 >-40
+expect tone6900 >-40
+expect tone6000 <-60
+expect tone6700 <-60
+expect held_n 2
+turn K3 -2
+wait 400
+said TRACK 1: IN TUNE
+expect tone6000 >-40
+expect tone6700 >-40
+expect tone6200 <-60
+# TRANSPOSE (sound page, row 3, K4): +2, and back
+tap ENV
+turn SELECT -20
+turn SELECT 2
+wait 30
+turn K4 2
+wait 400
+expect tone6200 >-40
+expect tone6000 <-60
+expect held_n 2
+turn K4 -2
+wait 400
+expect tone6000 >-40
+expect tone6200 <-60
+tap HOME
+wait 30
+# a quarter tone: EDIT held and a G: the held G a quarter flat (lower by 50 cents), and back
+press EDIT
+wait 30
+key 2 down
+wait 30
+key 2 up
+wait 30
+release EDIT
+wait 400
+said G: QUARTER FLAT
+expect held_n 2
+expect tone6650 >-40
+press EDIT
+wait 30
+key 2 down
+wait 30
+key 2 up
+wait 30
+release EDIT
+wait 400
+said G: AS IT IS
+expect held_n 2
+expect tone6700 >-40
+
+# ---- another track picked: the keys play it, but a lit key still lets its own held note go
+tap SEL
+wait 30
+tap SEL
+wait 30
+expect track 3
+key 7 down
+wait 300
+said HOLD: 1 NOTE
+expect voices2 0
+expect voices0 1
+expect held_n 1
+expect tone6000 <-60
+key 7 up
+wait 100
+key 7 down
+wait 200
+expect voices2 1
+key 7 up
+wait 300
+
+# ---- a new sound on the track that holds notes: they go on in it, held still
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 1
+turn SELECT 1
+wait 400
+said TRACK 1: BUZUQ
+expect held_n 1
+expect voices0 1
+expect tone6700 >-45
+expect lit_key14 1
+turn SELECT -1
+wait 400
+expect held_n 1
+expect tone6700 >-40
+# its key lets it go
+key 14 down
+wait 400
+said HOLD OFF
+expect held_n 0
+expect voices0 0
+key 14 up
+wait 100
+
+# ---- SOLO on the MIDImix: the same HOLD; a held key lets its note go after it too
+key 19 down
+wait 60
+midi 90 1B 7F
+midi 80 1B 7F
+wait 60
+said HOLD: 1 NOTE
+key 19 up
+wait 400
+expect tone7200 >-40
+expect held_n 1
+midi 90 1B 7F
+midi 80 1B 7F
+wait 400
+said HOLD OFF
+expect held_n 0
+expect tone7200 <-60
+
+# ---- notes from MIDI (they play the picked track): held, and a held one's note again lets it go, its note off then
+# does nothing
+midi 90 3C 64
+midi 90 43 64
+wait 60
+tap EDIT
+wait 60
+said HOLD: 2 NOTES
+midi 80 3C 00
+midi 80 43 00
+wait 300
+expect held_n 2
+midi 90 3C 64
+wait 300
+said HOLD: 1 NOTE
+expect held_n 1
+expect tone6000 <-60
+expect tone6700 >-40
+midi 80 3C 00
+wait 200
+expect held_n 1
+tap EDIT
+wait 300
+said HOLD OFF
+expect voices0 0
+
+# ---- the lead as it starts (LEGATO, one note at a time): held, OCT+ moves it, its key lets it go
+tap ENV
+turn SELECT -20
+wait 30
+turn K2 -2
+wait 30
+expect ch1 0
+tap HOME
+wait 30
+key 7 down
+wait 200
+tap EDIT
+wait 60
+key 7 up
+wait 400
+expect held_n 1
+expect tone6000 >-40
+# a key over it takes the voice, and when let go the held note again
+key 9 down
+wait 300
+expect tone6200 >-40
+expect tone6000 <-60
+key 9 up
+wait 400
+expect tone6000 >-40
+tap OCT+
+wait 400
+expect tone7200 >-40
+expect tone6000 <-60
+key 7 down
+wait 400
+said HOLD OFF
+expect held_n 0
+expect tone7200 <-60
+expect voices0 0
+key 7 up
+wait 100
+tap OCT-
+wait 100
+
+# ---- the arpeggio: a held note arpeggiates; its key again takes it out of the set, latched or not
+tap ARP
+wait 60
+expect arp 1
+key 7 down
+key 14 down
+wait 100
+tap EDIT
+wait 60
+key 7 up
+key 14 up
+wait 600
+expect arp_n 2
+expect held_n 2
+key 7 down
+wait 100
+key 7 up
+wait 100
+expect arp_n 1
+expect held_n 1
+press ARP
+wait 20
+tap SEL
+turn K4 1
+wait 30
+release ARP
+wait 30
+press ARP
+wait 20
+tap SEL
+release ARP
+wait 30
+expect ch38 1
+key 14 down
+wait 100
+key 14 up
+wait 400
+expect arp_n 0
+expect held_n 0
+press ARP
+wait 20
+tap SEL
+turn K4 -1
+wait 30
+release ARP
+wait 30
+press ARP
+wait 20
+tap SEL
+release ARP
+wait 30
+expect ch38 0
+tap ARP
+wait 60
+expect arp 0
+expect voices0 0
+
+# ---- PLAY and stop, REC while held: the held notes stay; HOLD with no key down lets them go; nothing left sounding
+key 7 down
+wait 60
+tap EDIT
+wait 60
+key 7 up
+wait 200
+tap PLAY
+wait 600
+expect running 1
+expect held_n 1
+expect tone6000 >-40
+tap REC
+wait 400
+expect rec_track 0
+expect held_n 1
+tap REC
+wait 200
+expect rec_track -1
+tap PLAY
+wait 400
+expect running 0
+expect held_n 1
+expect tone6000 >-40
+tap EDIT
+wait 600
+expect held_n 0
+expect gated 0
+expect tone6000 <-60
+
+# ---- ALL picked, the left keys on BASS (rhythm page, row 4, K1): a left key held keeps its chord's root; OCT+ leaves
+# it where it is (the left keys keep their pitch), and its key still lets it go
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+tap SEL
+wait 30
+expect track 0
+tap GLO
+turn SELECT -20
+turn SELECT 3
+turn K1 2
+wait 30
+expect left 2
+tap HOME
+wait 30
+key 2 down
+wait 60
+tap EDIT
+wait 60
+key 2 up
+wait 200
+expect held_n 1
+expect left_root 7
+tap OCT+
+wait 200
+expect left_root 7
+expect held_n 1
+expect lit_key2 1
+key 2 down
+wait 200
+said HOLD OFF
+expect held_n 0
+key 2 up
+wait 200
+expect left_root -1
+tap OCT-
+wait 30
+tap GLO
+turn SELECT -20
+turn SELECT 3
+turn K1 -2
+wait 30
+expect left 0
+tap HOME
+wait 30
+
+# ---- leaning on a key bends the held notes of its track (PRESSURE as it starts: BEND UP), and they come back when
+# the lean ends
+key 7 down 100 0
+wait 60
+tap EDIT
+wait 60
+key 7 up
+wait 400
+expect tone6000 >-40
+key 14 down 100 90
+wait 900
+expect tone6000 <-50
+key 14 down 100 0
+wait 900
+key 14 up
+wait 400
+expect tone6000 >-40
+expect held_n 1
+
+# ---- step mode: the keys are its steps (a held key there is a step); a step tapped takes the held note, moved by
+# the octave as it was
+tap SEL
+wait 30
+expect track 1
+tap OCT+
+wait 300
+expect tapn0 1
+expect tap0_0 72
+tap SEQ
+wait 100
+expect held_n 1
+key 7 down
+wait 60
+key 7 up
+wait 100
+expect held_n 1
+tap SEQ
+wait 100
+tap OCT-
+wait 300
+expect tap0_0 60
+tap EDIT
+wait 600
+expect held_n 0
+expect gated 0
