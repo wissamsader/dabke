@@ -3817,7 +3817,8 @@ static void part_mute(int k, int on)
     solo_send();
     changed();
     trk_name(k, t);
-    app_say(t, on ? "MUTED" : "ON");
+    text_cat(t, ":");
+    app_say(t, on ? "MUTE ON" : "MUTE OFF");
 }
 
 /* the MIDImix: what the main loop takes from the ring. RAGA MEOW's map (fm1-organ/LOGIC.md version 2): strip i is track
