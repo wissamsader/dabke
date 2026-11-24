@@ -18,24 +18,24 @@ DABKE is a free firmware for the M-VAVE FM-1 that makes it an Arabic wedding key
 
 DABKE's sounds, maqamat, rhythms, step sequencer and singer are as they were. The buttons, the pages' rows and the MIDImix have new jobs, each track has a reverb send of its own, and there is a MIXER and a MASTER EQ. The screen has a new look, ink and red on paper. Everything 0.19 saved loads whole (see Saving).
 
-| In 0.19 | In 0.20 |
-| --- | --- |
-| ALL, or one of the eight tracks, picked | Always one of the eight. Track 1 plays the keys as ALL did, with LEFT KEYS, and a ready sound or a MY SOUND picked on it brings its effects, as with ALL. A 0.19 save with ALL picked opens on track 1 |
-| SEL tapped: the next track. SEL held with a white key: that track, on the home page | SEL held with a white key picks a track on every page, and the ninth white key picks the background. SEL tapped opens the MAQAM page |
-| REC: the picked track recorded live. Held a second: the last take gone | SEQ: the picked track's loop. Tapped, it records, closes and plays, stops, plays again. Held a second: cleared |
-| REC on a track with a loop recorded over it | Gone. SEQ on a loop stops it or plays it again |
-| EDIT tapped, or the MIDImix's SOLO: HOLD | REC freezes the picked track, and the MIDImix's REC ARM its strip's track |
-| SEQ tapped: step mode. SEQ held a second: every recording cleared. EDIT held a second in step mode: the track's locks gone | EDIT held a second: step mode on or off. SEQ held a second clears one track's loop, with its locks |
-| PLAY: the rhythm on or off | PLAY stops everything that sounds and brings it back; with nothing to bring back, it starts the rhythm. Held 0.4 s while the rhythm runs: a fill-in, as before |
-| The home page's K1 to K4: EFFECT, FILTER, PITCH, VOLUME | PITCH, FILTER, SPACE, LEVEL. HOME again: two more rows |
-| One EFFECT a track, its share of the delay and the reverb | A DELAY SEND and a REVERB SEND a track. SPACE turns both |
-| The EFFECTS page, rows 4 and 5: TRACK, LENGTH, PITCH STEPS, DRUM; EFFECT, FADE, TOP SOUND, PITCH | The EDIT page's STEPS and SCENE rows. The EFFECTS page's rows 4 and 5 are the picked track's SENDS and TONE, and row 6 is a new MASTER EQ. FX held a second resets the row shown |
-| The EFFECTS page's eight MIX rows | The MIXER, the EDIT page's last row: LEVEL, FX, MUTE, SOLO |
-| The maqam page: K1 CENTS, K2 MAQAM, K3 ROOT, K4 DEPTH, SELECT the note | Two rows: MAQAM, ROOT, DEPTH, PITCH STEPS, and NOTE, ITS CENTS, KEY TOUCH, USB PORT. SELECT turns the maqam |
-| SELECT on the RHYTHM page: the rows | The rhythm, as PRESET |
-| The MIDImix: top knob EFFECT, bottom knob PITCH, SOLO HOLD, REC ARM recorded, BANK the rhythms, master fader the scene | Top knob PITCH, bottom knob SPACE, SOLO the knobs' EFFECTS layer, REC ARM freezes, BANK the picked track's sound, master fader the whole level. The scene fader is FADE, on the EDIT page |
-| SAVE on a used place replaced it | SAVE asks first, and SAVE again replaces it |
-| The screen: light words on black, the knobs as bars | Ink and red on paper. Each page sits in a frame with its name on a red ribbon and a dot a row, and the four knobs are glasses that fill up. The singer and his scenes are as they were |
+| Part | In 0.19 | In 0.20 |
+| --- | --- | --- |
+| Tracks | ALL, or one of the eight tracks, picked | Always one of the eight. Track 1 plays the keys as ALL did, with LEFT KEYS, and a ready sound or a MY SOUND picked on it brings its effects, as with ALL. A 0.19 save with ALL picked opens on track 1 |
+| SEL | SEL tapped: the next track. SEL held with a white key: that track, on the home page | SEL held with a white key picks a track on every page, and the ninth white key picks the background. SEL tapped opens the MAQAM page |
+| Loops | REC: the picked track recorded live. Held a second: the last take gone | SEQ: the picked track's loop. Tapped, it records, closes and plays, stops, plays again. Held a second: cleared |
+| Over a loop | REC on a track with a loop recorded over it | Gone. SEQ on a loop stops it or plays it again |
+| HOLD | EDIT tapped, or the MIDImix's SOLO: HOLD | REC freezes the picked track, and the MIDImix's REC ARM its strip's track |
+| Step mode | SEQ tapped: step mode. SEQ held a second: every recording cleared. EDIT held a second in step mode: the track's locks gone | EDIT held a second: step mode on or off. SEQ held a second clears one track's loop, with its locks |
+| PLAY | PLAY: the rhythm on or off | PLAY stops everything that sounds and brings it back; with nothing to bring back, it starts the rhythm. Held 0.4 s while the rhythm runs: a fill-in, as before |
+| Home page | The home page's K1 to K4: EFFECT, FILTER, PITCH, VOLUME | PITCH, FILTER, SPACE, LEVEL. HOME again: two more rows |
+| Sends | One EFFECT a track, its share of the delay and the reverb | A DELAY SEND and a REVERB SEND a track. SPACE turns both |
+| EFFECTS page | The EFFECTS page, rows 4 and 5: TRACK, LENGTH, PITCH STEPS, DRUM; EFFECT, FADE, TOP SOUND, PITCH | The EDIT page's STEPS and SCENE rows. The EFFECTS page's rows 4 and 5 are the picked track's SENDS and TONE, and row 6 is a new MASTER EQ. FX held a second resets the row shown |
+| Mixing | The EFFECTS page's eight MIX rows | The MIXER, the EDIT page's last row: LEVEL, FX, MUTE, SOLO |
+| MAQAM page | The maqam page: K1 CENTS, K2 MAQAM, K3 ROOT, K4 DEPTH, SELECT the note | Two rows: MAQAM, ROOT, DEPTH, PITCH STEPS, and NOTE, ITS CENTS, KEY TOUCH, USB PORT. SELECT turns the maqam |
+| RHYTHM page | SELECT on the RHYTHM page: the rows | The rhythm, as PRESET |
+| MIDImix | The MIDImix: top knob EFFECT, bottom knob PITCH, SOLO HOLD, REC ARM recorded, BANK the rhythms, master fader the scene | Top knob PITCH, bottom knob SPACE, SOLO the knobs' EFFECTS layer, REC ARM freezes, BANK the picked track's sound, master fader the whole level. The scene fader is FADE, on the EDIT page |
+| SAVE | SAVE on a used place replaced it | SAVE asks first, and SAVE again replaces it |
+| Screen | The screen: light words on black, the knobs as bars | Ink and red on paper. Each page sits in a frame with its name on a red ribbon and a dot a row, and the four knobs are glasses that fill up. The singer and his scenes are as they were |
 
 ---
 
