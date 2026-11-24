@@ -4566,8 +4566,9 @@ static void a_arc(float cx, float cy, float r, float a0, float a1, float w, uint
 static void seg(float fx0, float fy0, float fx1, float fy1, uint16_t c, int lw)
 {
     int32_t x0, y0, x1, y1, dx, sx, dy, sy, err, guard = 1000, steep;
-    if (paper_on) {                          /* (its pixels' middles: as the hard line lands) */
-        a_seg(fx0 + 0.5f, fy0 + 0.5f, fx1 + 0.5f, fy1 + 0.5f, lw <= 1 ? 1.25f : (float)lw, c);
+    if (paper_on) {                          /* (its pixels' middles: as the hard line lands; a little bolder, as RAGA
+                                              * MEOW's ink) */
+        a_seg(fx0 + 0.5f, fy0 + 0.5f, fx1 + 0.5f, fy1 + 0.5f, lw <= 1 ? 1.6f : (float)lw + 0.4f, c);
         return;
     }
     x0 = ri(fx0), y0 = ri(fy0), x1 = ri(fx1), y1 = ri(fy1);
@@ -6134,7 +6135,8 @@ static void knob_pics(const uint8_t *ids, float y, float h)   /* a row's four kn
     int k;
     for (k = 0; k < 4; k++) {
         float x0 = ICX[k] - 27.0f;
-        int32_t a = ri(x0) < 10 ? 10 : ri(x0), b = ri(x0) + 54 > 230 ? 230 : ri(x0) + 54;
+        int32_t a = ri(x0) + 2 < 12 ? 12 : ri(x0) + 2, b = ri(x0) + 52 > 228 ? 228 : ri(x0) + 52;   /* (a gap between
+                                          * them, and from the frame) */
         if (ids[k] == K_NONE)
             continue;
         clip_set(a, ri(y), b - a, ri(h));
@@ -6877,7 +6879,7 @@ void app_frame(void)
     } else if (!ui.save && (arp_panel_up() || ui.page != PG_SEL)) {
         if (anim) {                          /* a page's picture (and in step mode its row of steps) */
             ui.anim_at = ms_now;
-            strip(47, 132);
+            strip(44, 140);
         }
     }
 }
