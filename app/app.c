@@ -4879,9 +4879,9 @@ static void paper(void)                  /* the paper's grain (a strip starts as
     for (i = 0; i < 600u; i++) {
         int32_t x, y;
         s = s * 1664525u + 1013904223u;
-        x = (int32_t)((s >> 8) % 240u);
+        x = (int32_t)((s >> 16) * 240u >> 16);   /* (its top bits scaled to 0..239: no division) */
         s = s * 1664525u + 1013904223u;
-        y = (int32_t)((s >> 8) % 240u);
+        y = (int32_t)((s >> 16) * 240u >> 16);
         if (y >= reg_y0 && y < reg_y1)
             cv_pset(x, y, K_GRAIN);
     }
@@ -5244,7 +5244,7 @@ static void pic_maqam(void)
             }
         }
     }
-    if (in_strip(142, 176)) {            /* the scale written out from its root */
+    if (in_strip(142, 178)) {            /* the scale written out from its root; how a key is retuned */
         int32_t x = 0, w = 0;
         int k, r = set.ch[C_ROOT] % 12;
         for (k = 0; k < 12; k++) {       /* (its width first, to sit in the middle) */
@@ -5264,6 +5264,8 @@ static void pic_maqam(void)
             } else
                 x = TX(NOTE_NAME[pc], x, 162, 2, K_INK, 0, 0) + 9;
         }
+        TX(ui.edit_held ? "KEYS: A QUARTER FLAT OR BACK" : "EDIT + KEY: A QUARTER FLAT", 120, 175, 0,
+           ui.edit_held ? K_RED : K_FAINT, 1, 0);   /* (how a key is made a quarter flat) */
     }
 }
 
@@ -6144,12 +6146,16 @@ static void knob_pics(const uint8_t *ids, float y, float h)   /* a row's four kn
         clip_all();
     }
 }
-static void who_words(int pg, char *b)   /* whose a page is: "TRACK 3  SAZ" (the SOUND and ORNAMENTS pages: the sound they
-                                          * change); the RHYTHM page: its rhythms and its tempo */
+static void who_words(int pg, char *b)   /* whose the row shown is: "TRACK 3  SAZ" (the SOUND and ORNAMENTS pages: the sound
+                                          * they change; the EDIT page's STEPS: the picked track); the RHYTHM page: its
+                                          * rhythms and its tempo. A row of the whole instrument's (the arpeggio, the drone,
+                                          * the settings, the scene): none */
 {
     char n[40];
-    int t = pg == PG_ENV || pg == PG_LFO ? ed_trk() : picked();
+    int t = pg == PG_ENV || pg == PG_LFO ? ed_trk() : picked(), r = ui.row[pg];
     b[0] = 0;
+    if ((pg == PG_ENV && r >= 4) || (pg == PG_LFO && r >= 2) || (pg == PG_EDIT && r != 0))
+        return;
     if (pg == PG_GLO) {
         rhythm_name_copy(b, ui.r0);
         if (ui.r1 >= 0) {
@@ -6836,6 +6842,12 @@ void app_frame(void)
     if (arp_panel_up() != ui.arp_shown) {    /* (the arpeggio's panel up or down: everything again) */
         ui.arp_shown = (uint8_t)arp_panel_up();
         ui.ver++;
+    }
+    {                                        /* (EDIT held or let go on the maqam page: its hint says what the keys do) */
+        static uint8_t edit_shown;
+        if (ui.page == PG_SEL && ui.edit_held != edit_shown)
+            ui.ver++;
+        edit_shown = ui.edit_held;
     }
     /* a whole redraw is 115 KB to the screen, about 21 ms the main loop waits for: twenty a second at most, in two
      * strips (the canvas holds 144 rows). Between them only what moves: the home page's scene 25 times a second, its
