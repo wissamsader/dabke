@@ -7,12 +7,16 @@
  * change the UI makes goes through its calls. Part of the unity build (device/unity.c, host/plat_host.c), after the
  * platform: gfx.c, announce.c and lib/touch.c are in scope.
  *
- * One logic, the same as COMBO's (fm1-organ/LOGIC.md). Eight tracks, each a sound, what it plays and its mix. One
- * picked track (or ALL): what the keys play, what SELECT changes, what REC records, what the sequencer shows and what a
- * held step locks. PLAY alone starts and stops everything. REC records the picked track live. SEQ is the sequencer:
- * step mode, the white keys the steps of the picked track. A step held while a knob turns: that knob locked on that
- * step. What he recorded or wrote is his until he clears it; the rhythm drives only the tracks he has not touched.
- * The main loop decides and queues; the audio side (dabke.c) plays the steps and holds the locks in time. */
+ * One logic, RAGA MEOW's (fm1-organ/LOGIC.md version 2): every button, gesture and MIDImix control does the job it does
+ * there, DABKE keeping its own sounds, maqamat, rhythms, step sequencer and singer. Eight tracks, each a sound, what it
+ * plays and its mix, and one picked track (SEL held and a white key): what the keys play, what SELECT changes on the
+ * home page, what REC freezes and SEQ loops, what the sequencer shows and what a held step locks. The background is the
+ * rhythm (its drums). REC freezes the picked track. SEQ is its loop: tapped, records, closes, stops, plays again; held a
+ * second, cleared. PLAY stops everything (remembered), brings it back, or starts the rhythm; held, a fill-in. EDIT
+ * tapped opens the EDIT page (its last row the MIXER), held a second is step mode, the white keys the steps of the
+ * picked track. FX held a second puts the row shown back to its starts. A step held while a knob turns: that knob
+ * locked on that step. What he recorded or wrote is his until he clears it; the rhythm drives only the tracks he has
+ * not touched. The main loop decides and queues; the audio side (dabke.c) plays the steps and holds the locks in time. */
 #include "fastmath.h"
 #include "dabke.h"
 
@@ -551,7 +555,6 @@ static struct {
     uint32_t keys, btn;
     uint16_t keynote[NKEYS];             /* a held key's manual and note (0x8000 | manual << 7 | note), 0 none (0x1000 |
                                           * manual << 7 | note: its press let that held note go, nothing to let go) */
-    uint16_t held_kn[NKEYS];             /* the note HOLD keeps for each FM-1 key lit as held (0x8000 | manual << 7 | note) */
     uint8_t vel[NKEYS];
     char msg[48];                        /* (44 letters at most) */
     uint32_t msg_until;
@@ -573,15 +576,10 @@ static struct {
     uint8_t sel_down, sel_used;          /* SEL held on the home page (a white key picked a track with it: no tap) */
     uint32_t top_said, seq_at, rec_at, mrec_at, play_at, edit_at, mix_resend;   /* (said, pressed, held, all lights
                                                                                  * again at) */
-    uint8_t rec_trk, mrec_trk, rec_down, mrec_down, rec_done, mrec_done, seq_down, seq_done, bank_down, bank_both;
+    uint8_t seq_down, seq_done;
     uint8_t play_down, play_done, edit_done;   /* (PLAY held: a fill, not a stop; EDIT held in step mode: the locks) */
-    int8_t rec_was, undo_trk;            /* the track recording as last seen; a take undone, its words still to say */
-    uint8_t undo_steps;                  /* (that take was a drum sound's: its steps tell) */
-    uint8_t hold_wait;                   /* HOLD pressed (1), or a held note's key pressed again (2): its words still to say */
-    uint8_t letgo_ok;                    /* (letgo_seen is the engine's count) */
-    uint32_t letgo_seen;                 /* the engine's held notes let go by MIDI, as last said */
-    uint32_t hold_ver, hold_snap, held_keys;   /* (the engine's count then; the FM-1's keys down then; those held) */
-    uint32_t undo_ver, lit_keys, dim_keys, mid_keys;   /* (the FM-1's key lights as last sent) */
+    int8_t rec_was;                      /* the track recording as last seen */
+    uint32_t lit_keys, dim_keys, mid_keys;   /* (the FM-1's key lights as last sent) */
     uint8_t tdrum[DAB_NTRK];             /* each track's lane the keys played last (a drum sound on it) */
     uint8_t edit_held, edit_used;        /* EDIT held; it did something while it was (no HOLD when let go) */
     /* the sequencer: step mode, the page of steps shown, the track picked last (1 + it; 0: none yet); the white keys
@@ -594,9 +592,8 @@ static struct {
                                               * keys' lights, worked out once a frame) */
     uint8_t wstep[16];
     uint32_t wat[16], lock_full_at, full_seen, lk_sig, seq_sig, pick_at;
-    /* the note or chord last played on each track (the keys pressed since none of its keys was down), and the notes
-     * HOLD holds (their track + 1) */
-    uint8_t lastn[DAB_NTRK][4], nlast[DAB_NTRK], heldn[4], nheld, held_trk;
+    /* the note or chord last played on each track (the keys pressed since none of its keys was down) */
+    uint8_t lastn[DAB_NTRK][4], nlast[DAB_NTRK];
     uint8_t press_sent, press_trk;       /* the keys' pressure as sent last, and the tracks it was on */
     uint8_t raw_peak, cnt_peak;          /* (the readout: the most any key read, and the most counted, since it was read) */
     uint8_t last_drone, last_orn, last_dbl;
@@ -1864,7 +1861,6 @@ void app_init(void)
     set.ch[C_HOLD] = 0;                      /* (nothing held at the start) */
     set.loop_on = 1;
     ui.rec_was = -1;                         /* (no track recording) */
-    ui.undo_trk = -1;
     ui.kept_frozen = set.x.frz;              /* (what REC froze before the power-off: PLAY brings it back) */
     ui.mix_lvl = 100;                        /* (the MIDImix's master: live, never kept) */
     ui.skey = -1;                            /* (no step held; the track picked last: the one kept) */
@@ -2026,7 +2022,7 @@ static void set_oct(int32_t v)
     changed();
 }
 
-/* ---- the tracks: the one picked, its sound, recording, its takes; the loops; the scene's top; the hold ---- */
+/* ---- the tracks: the one picked, its sound; the loops; the scene's top ---- */
 static int picked(void) { return set.track ? set.track - 1 : PART_LEAD; }   /* the picked track (a record from before
                                           * the one logic with ALL picked: track 1, which plays the keys as ALL did) */
 static void track_sound(int t, char *b)  /* a track's sound by name ("SAZ", "MY SOUND 2", "LEAD ORGAN", "ROUND") */
