@@ -2529,11 +2529,24 @@ static void freeze(int t, int on)       /* REC: track t frozen (the notes of its
         int m = k ? DAB_NTRK : t;
         if (k && t != PART_LEAD) break;
         for (n = 0; n < 128; n++) {
+            if (on && BGET(eatK[m], n) && !SF_DRUM(tfam[KTRK(m)])) {   /* (a key down whose press let its held note go:
+                                         * its note again, held with the others: the notes of the keys down freeze) */
+                BCLR(eatK[m], n);
+                key_on(m, n, 100, 0);
+            }
             if (on && BGET(keyDn[m], n) && !SF_DRUM(tfam[KTRK(m)])) {
                 BSET(heldK[m], n);
                 if (arp_keys(m) && arpDown[n]) BSET(heldArp, n);
-            } else if (!on && BGET(heldK[m], n))
-                held_end(m, n);
+            } else if (!on && BGET(heldK[m], n)) {
+                if (BGET(keyDn[m], n) || BGET(eatK[m], n)) {   /* (its key still down, the one that moved it there too: a
+                                         * key's note again, ending when that key is let go) */
+                    BCLR(heldK[m], n);
+                    BCLR(heldArp, n);
+                    if (BGET(eatK[m], n)) { BCLR(eatK[m], n); BSET(keyDn[m], n); }
+                    if (m == DAB_NTRK) lower_hold(n, 4, 0);
+                } else
+                    held_end(m, n);
+            }
         }
     }
     if (on) frz |= (uint8_t)(1u << t);
@@ -3807,6 +3820,10 @@ void dabke_init(void)
     for (i = 0; i < DAB_NLK; i++) lkU[i] = 0.0f;
     for (i = 0; i < DAB_NTRK; i++) { lkN[i] = 0; lkHeld[i] = 0; sndLk[i] = 0; dn[i] = 0; volS[i] = sndS[i] = 0.0f; }
     glN = 0; tl2 = 0; muteM = 0; busWas = 0; nSnap = 0; drumTake = 0; snapArm = -1;
+    frz = 0; loopOff = 0; dJoin = 0; fxOff = 0; eqOn = 0; eqSet = 0; mgT = mgS = 1.0f;   /* (the one logic's: a start) */
+    st.frozen = 0; st.holds = 0; st.loop_off = 0;
+    for (i = 0; i < 3; i++) eqDb[i] = eqT[i] = 0.0f;
+    for (i = 0; i < DAB_NTRK; i++) { st.fz_n[i] = 0; st.tlevel[i] = 0.0f; rsndS[i] = 0.0f; }
     for (i = 0; i < DAB_NTRK; i++) { st.tfam[i] = tfam[i]; st.tidx[i] = tidx[i]; pitchS[i] = 0.0f; }
     for (i = 0; i < P_COUNT; i++) par[i] = 0.0f;
     par[P_LEAD] = 0.8f; par[P_LEFT] = 0.55f; par[P_BASS] = 0.75f; par[P_DRUMS] = 0.8f; par[P_DRONE] = 0.35f;
