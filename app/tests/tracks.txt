@@ -114,8 +114,8 @@ expect hits9 >4
 tap PLAY
 wait 60
 expect running 0
-# SEQ held a second: its steps (its loop) gone, the rhythm's again. (The press plays a stopped loop first, the rhythm
-# with it; PLAY stops it)
+# SEQ held a second: its steps (its loop) gone, the rhythm's again. (The press plays the stopped loop again, the rhythm
+# with it; the clear stops the rhythm again)
 press SEQ
 wait 1100
 release SEQ
@@ -123,9 +123,6 @@ wait 30
 expect dedit 0
 expect loop0 0
 said TRACK 1 LOOP CLEARED
-expect running 1
-tap PLAY
-wait 60
 expect running 0
 # back to the lead
 turn SELECT -47
@@ -152,12 +149,12 @@ expect vfam5 0
 key 9 up
 wait 60
 expect hits0 8
-expect hits1 5
+expect hits1 4
 tap PLAY
 wait 1800
 expect running 1
 expect hits0 8
-expect hits1 5
+expect hits1 4
 expect hits9 >4
 tap SEQ
 wait 30
