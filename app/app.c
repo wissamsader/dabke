@@ -1368,7 +1368,8 @@ static void sound_put(int t, sound_t *o, int name, int effects)
     ts_send(t);
     if (set.tsnd[t][0] != SF_LEAD || set.tsnd[t][1] != set.ts[t].ch[0])
         tsnd_put(t, SF_LEAD, set.ts[t].ch[0]);
-    else if (!effects)                   /* (a track's sound changed: what it played stops, as for any other sound) */
+    else                                 /* (a track's sound changed: what it played stops, as for any other sound; track
+                                          * 1's with its effects too) */
         dabke_track_sound(t, SF_LEAD, set.ts[t].ch[0] + DAB_AGAIN);
     view_load();
     if (effects) {                       /* (the other tracks' sounds stay as they are: a sound is one track's) */
@@ -2104,8 +2105,9 @@ static void trk_sound_step(int t, int n) /* track t's sound, n on in its order *
     int tot = sel_total(), f = set.tsnd[t][0], pos = sel_pos(t, f, f == SF_LEAD ? lead_pos(t) : set.tsnd[t][1]), x;
     pos = ((pos + n) % tot + tot) % tot;
     sel_at(t, pos, &f, &x);
-    if (f == SF_LEAD) {                      /* (a lead sound: that sound on it, the effects as they are) */
-        lead_give(t, x, 0);
+    if (f == SF_LEAD) {                      /* (a lead sound: that sound on it; track 1's, the keys' as ALL had them
+                                              * before the one logic: its effects with it, as ALL's were) */
+        lead_give(t, x, t == PART_LEAD);
         return;
     }
     if (f == t)
@@ -2273,7 +2275,10 @@ static void play_press(void)
                 memcpy(set.x.frz_note[t], s->fz_note[t], 4);
                 dabke_freeze(t, 0);
             }
-        set.x.frz = ui.kept_frozen;
+        if (set.x.frz != ui.kept_frozen) {   /* (the frozen tracks kept for a power-off: saved when quiet) */
+            set.x.frz = ui.kept_frozen;
+            changed();
+        }
         ui.frz_seen = 0;
         if (arp_latched()) {                 /* (a latched arpeggio: its set kept, and gone: its LATCH let go and taken again) */
             ui.arp_kept_n = (uint8_t)(s->arp_n > 16 ? 16 : s->arp_n);
@@ -2288,7 +2293,7 @@ static void play_press(void)
         } else if (s->rec_track >= 0)        /* (a take waiting for its first key: no take) */
             dabke_track_rec(-1);
         ui.rec_was = -1;                     /* (a take the stop ends: PLAY's words are what is said) */
-        changed();
+        ui.ver++;
         say("ALL STOPPED");
         return;
     }
@@ -2359,7 +2364,8 @@ static void loop_say(int t, int st)      /* what a loop's tap did, said ("TRACK 
         }
         break;
     case LP_STOP: text_cat(a, " LOOP STOPPED"); break;
-    default: text_cat(a, ": NOTHING PLAYED, NO LOOP");
+    default:
+        text_cat(a, trk_drum(t) && s->trk_len[t & 7] ? " LOOP KEPT, SILENT WITH DRUMS" : ": NOTHING PLAYED, NO LOOP");
     }
     say(a);
     ui.loop_seen[t & 7] = (uint8_t)st;
@@ -3694,8 +3700,9 @@ static const int8_t BLACK_IX[NKEYS] = {-1, 0, -1, 1, -1, 2, -1, -1, 3, -1, 4, -1
 static int key_track(int lower, int *m)  /* the track a key plays; its manual (dabke_key) in m: 8, the left keys as set */
 {
     int pk = picked();
-    if (pk != PART_LEAD || !lower || !left_is_lower()) {   /* (the picked track's; track 1's: the keys as they are set,
-                                              * as ALL was before the one logic: LEFT KEYS split them) */
+    if (pk != PART_LEAD || !lower || !left_is_lower() || ui.seq) {   /* (the picked track's; track 1's: the keys as they are
+                                              * set, as ALL was before the one logic: LEFT KEYS split them; in step mode
+                                              * every key the picked track's) */
         *m = pk;
         return pk;
     }
@@ -5992,6 +5999,12 @@ static void speak(void)                  /* a screen reader that starts listenin
         t[0] = 0;
         text_cat(t, APP_NAME ". ");
         text_cat(t, ui.save ? "KEEP THE SOUND" : arp_panel_up() ? "ARPEGGIO" : ui.seq && pg == PG_HOME ? "STEPS" : PAGE_TITLE[pg]);
+        if (!ui.save && !arp_panel_up() && (pg == PG_ENV || pg == PG_LFO)) {   /* (whose sound they show: "SOUND: TRACK 1"
+                                              * with a track without a lead sound picked) */
+            text_cat(t, ": ");
+            trk_name(ed_trk(), b);
+            text_cat(t, b);
+        }
         text_cat(t, ". ");
         trk_name(picked(), b);
         text_cat(t, b);

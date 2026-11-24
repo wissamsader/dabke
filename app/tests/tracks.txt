@@ -1,24 +1,29 @@
 # Any sound on any track. From the repository's root:
 #   app/build/host/dabke_host app/tests/tracks.txt OUTDIR
 # A track's sound is one of a family's (LEAD, DRONE, LEFT HAND, BASS, KICK, DARBUKA, CLAPS, RIQ: tfamN 0..7, its
-# number tidxN). SELECT on a picked track: its own family first, then the others in that order. A note sound makes it a
-# keys track (its keys play notes, REC a loop); a drum sound a drum track (its keys its drums, REC its steps). The
-# rhythm's steps of tracks 5 to 8 stay with the track and play whatever drum is on it (a note sound: silent, kept); the
-# bass line (track 4), the backing (track 3) and the drone (track 2) play with any note sound on their track, and are
-# silent with a drum sound. (voicesN: track N+1's notes sounding; vfamN: the family of one; hitsN: drum N's hits:
-# 0 dum, 1 tek, 6 riq, 9 kick, 10 clap)
+# number tidxN). A track is picked with SEL held and its white key (the first eight); SELECT on the home page: the
+# picked track's sound, its own family first, then the others in that order. A note sound makes it a keys track (its
+# keys play notes, SEQ a loop); a drum sound a drum track (its keys its drums, SEQ its steps). The rhythm's steps of
+# tracks 5 to 8 stay with the track and play whatever drum is on it (a note sound: silent, kept); the bass line (track
+# 4), the backing (track 3) and the drone (track 2) play with any note sound on their track, and are silent with a drum
+# sound. Track 1 picked plays the keys as set (LEFT KEYS: the lower twelve the left hand's). (voicesN: track N+1's notes
+# sounding; vfamN: the family of one; hitsN: drum N's hits: 0 dum, 1 tek, 6 riq, 9 kick, 10 clap)
 wait 900
 expect tfam0 0
 expect tfam3 3
 expect tfam5 5
 expect ksnd5 500
 
-# ---- SELECT's order on track 1: its own (13 lead sounds), then the drone's 7, the left hand's 13, the bass's 5, each
-# drum family's 4, round again; its kind in front where two share a name
+# ---- SELECT's order on track 1: its own (the 22 ready lead sounds), then the drone's 7, the left hand's 13, the bass's
+# 5, each drum family's 4, round again; its kind in front where two share a name
 listen
-tap SEL
+expect track 1
+press SEL
+tapkey w0
+release SEL
 wait 30
 expect track 1
+said TRACK 1: MIJWIZ
 turn SELECT 22
 wait 30
 expect tfam0 1
@@ -55,9 +60,9 @@ turn SELECT 1
 wait 30
 expect tfam0 0
 # track 4's order begins with its own: the bass's
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w3
+release SEL
 wait 30
 expect track 4
 turn SELECT 1
@@ -68,14 +73,11 @@ said TRACK 4: SYNTH
 turn SELECT -1
 wait 30
 
-# ---- a drum sound on track 1 (a keys track as it starts): its keys play the kick, the rhythm stopped; SEQ (step
-# mode): its steps on the white keys
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+# ---- a drum sound on track 1 (a keys track as it starts): its keys play the kick, the rhythm stopped; step mode (EDIT
+# held a second): its steps on the white keys
+press SEL
+tapkey w0
+release SEL
 wait 30
 expect track 1
 turn SELECT 47
@@ -87,7 +89,9 @@ tapkey 26
 wait 60
 expect hits9 2
 expect voices0 0
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 30
 expect seq 1
 said STEP MODE: WHITE KEYS ARE STEPS
@@ -96,7 +100,9 @@ wait 60
 expect dedit 1
 expect tpat0_0_1 2
 expect lit_key2 1
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 30
 expect seq 0
 expect rec_track -1
@@ -107,13 +113,20 @@ wait 860
 expect hits9 >4
 tap PLAY
 wait 60
-# held a second, REC: its steps gone
-press REC
+expect running 0
+# SEQ held a second: its steps (its loop) gone, the rhythm's again. (The press plays a stopped loop first, the rhythm
+# with it; PLAY stops it)
+press SEQ
 wait 1100
-release REC
+release SEQ
 wait 30
 expect dedit 0
-said TRACK 1 EMPTY
+expect loop0 0
+said TRACK 1 LOOP CLEARED
+expect running 1
+tap PLAY
+wait 60
+expect running 0
 # back to the lead
 turn SELECT -47
 wait 30
@@ -121,12 +134,10 @@ expect tfam0 0
 expect tidx0 0
 
 # ---- a note sound on a drum track: the lead's organ on track 6 (the darbuka's): its keys play notes, its rhythm's
-# drums are silent (kept), REC makes a loop
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+# drums are silent (kept), SEQ makes a loop
+press SEL
+tapkey w5
+release SEL
 wait 30
 expect track 6
 turn SELECT 15
@@ -140,21 +151,21 @@ expect voices5 1
 expect vfam5 0
 key 9 up
 wait 60
-expect hits0 4
-expect hits1 2
+expect hits0 8
+expect hits1 5
 tap PLAY
 wait 1800
 expect running 1
-expect hits0 4
-expect hits1 2
+expect hits0 8
+expect hits1 5
 expect hits9 >4
-tap REC
+tap SEQ
 wait 30
 expect rec_track 5
 expect rec_waiting 0
 tapkey 9
 wait 60
-tap REC
+tap SEQ
 wait 60
 expect trk_n5 1
 expect trk_key5_0 62
@@ -175,22 +186,23 @@ wait 60
 
 # ---- a drum track's own steps stay with the track: the kick's steps edited, a note sound on it (silent, kept), the
 # kick back: its steps again
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w4
+release SEL
 wait 30
 expect track 5
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 30
+expect seq 1
 tapkey 4
 wait 60
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 30
+expect seq 0
 expect dedit 16
 expect tpat4_0_2 2
 turn SELECT 4
@@ -203,17 +215,21 @@ wait 30
 expect tfam4 4
 expect tpat4_0_2 2
 
-# ---- the automatic lines: the bass and backing from the left keys (ALL picked, the left keys on BASS); with the
-# lead's organ on track 4 the bass line is the organ's; with the kick on it, none; with the claps on track 3 no backing
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+# ---- the automatic lines: the bass and backing from the left keys (track 1 picked, the left keys on BASS: the rhythm
+# page's fourth row, GLO again for each next row); with the lead's organ on track 4 the bass line is the organ's; with
+# the kick on it, none; with the claps on track 3 no backing
+press SEL
+tapkey w0
+release SEL
 wait 30
-expect track 0
+expect track 1
 tap GLO
-turn SELECT -20
-turn SELECT 3
+tap GLO
+tap GLO
+tap GLO
+wait 30
+expect page 5
+expect row 3
 turn K1 2
 wait 30
 expect left 2
@@ -226,44 +242,38 @@ expect vfam3 3
 expect vfam2 2
 key 2 up
 wait 60
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w3
+release SEL
 wait 30
 expect track 4
 turn SELECT 16
 wait 30
 expect tfam3 0
 expect tidx3 7
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w0
+release SEL
 wait 30
-expect track 0
+expect track 1
 key 2 down
 wait 100
 expect vfam3 0
 expect voices3 1
 key 2 up
 wait 60
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w3
+release SEL
 wait 30
 turn SELECT 31
 wait 30
 expect tfam3 4
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w0
+release SEL
 wait 30
-expect track 0
+expect track 1
 key 2 down
 wait 100
 expect voices3 0
@@ -271,22 +281,19 @@ expect vfam2 2
 key 2 up
 wait 60
 # the claps on track 3: no backing
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w2
+release SEL
 wait 30
 expect track 3
 turn SELECT 49
 wait 30
 expect tfam2 6
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w0
+release SEL
 wait 30
-expect track 0
+expect track 1
 key 2 down
 wait 100
 expect voices2 0
@@ -296,12 +303,15 @@ wait 60
 # the drone (track 2) with the lead's organ: its line as the organ's notes on the tonic while the rhythm runs; with
 # a drum sound on it: none
 tap GLO
+wait 30
+expect row 3
 turn K1 -2
 wait 30
 expect left 0
 tap HOME
-tap SEL
-tap SEL
+press SEL
+tapkey w1
+release SEL
 wait 30
 expect track 2
 turn SELECT 18
@@ -339,20 +349,17 @@ expect tidx3 0
 expect tpat4_0_2 2
 expect trk_n5 1
 
-# ---- a kept sound: kept with ALL picked in place 2 (track 1's sound and the effects); track 2 given the drone's own
-# sound back; the kept sound chosen again (SELECT with all picked): track 1's sound, and every other track keeps its
-# own: the drone on track 2 stays. (0.17: SAVE keeps the picked track's sound, ALL: track 1's; a sound is one track's,
-# so a kept sound no longer brings back the other tracks' sounds as 0.16's did)
+# ---- a kept sound: kept with track 1 picked in place 2 (track 1's sound and the effects); track 2 given the drone's
+# own sound back; the kept sound chosen again (SELECT, track 1 picked: from the last ready sound, SHAABI LEAD, the 22nd,
+# just before the MY SOUNDs): track 1's sound, and every other track keeps its own: the drone on track 2 stays. (0.17:
+# SAVE keeps the picked track's sound; a sound is one track's, so a kept sound no longer brings back the other tracks'
+# sounds as 0.16's did)
 expect track 2
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w0
+release SEL
 wait 30
-expect track 0
+expect track 1
 tap SAVE
 wait 30
 turn SELECT 1
@@ -362,60 +369,54 @@ tap SAVE
 wait 30
 expect kept 2
 expect sound 101
-tap SEL
-tap SEL
+press SEL
+tapkey w1
+release SEL
 wait 30
 expect track 2
 turn SELECT -48
 wait 30
 expect tfam1 1
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w0
+release SEL
 wait 30
-expect track 0
-turn SELECT 1
-wait 30
-expect sound 0
-expect tfam1 1
+expect track 1
 turn SELECT -1
+wait 30
+expect sound 21
+expect tfam1 1
+turn SELECT 1
 wait 30
 expect sound 101
 expect tfam1 1
 expect tfam2 6
 expect tfam3 4
 # (track 2 given the kick again by SELECT, for what follows: the drone silent, as the load's guard counts it)
-tap SEL
-tap SEL
+press SEL
+tapkey w1
+release SEL
 wait 30
 expect track 2
 turn SELECT 48
 wait 30
 expect tfam1 4
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w0
+release SEL
 wait 30
-expect track 0
+expect track 1
 
 # ---- the load's guard: the FM-1 as if 2.2 times as slow as first assumed: with the rhythm running, four notes at
-# once; ten keys held: the oldest let go for the newest, no render past its time
+# once; ten keys held (track 1, POLY: the left keys on SAME, every key its): the oldest let go for the newest, no render
+# past its time
 expect late 0
 cpu 220
 tap PLAY
 wait 200
 expect voice_cap 4
-tap SEL
-wait 30
 expect track 1
+expect left 0
 tap ENV
 wait 30
 turn K2 2
@@ -474,27 +475,23 @@ wait 900
 expect trk_n0 2
 expect par73 12
 
-# ---- a recording whose track gets a sound of the other kind (notes, drums) ends there, as REC would end it. Track 2
-# (the drone's sounds first on SELECT, then the lead's, the left hand's, the bass's, then the kick's): REC, a key (the
-# rhythm starts, a note recorded), SELECT back to a drum sound: the recording is over, the one note a take of a bar,
-# kept; and it comes back after a power cycle
+# ---- a recording whose track gets a sound of the other kind (notes, drums) ends there, as SEQ would end it. Track 2
+# (the drone's sounds first on SELECT, then the lead's, the left hand's, the bass's, then the kick's): SEQ (its loop
+# recording), a key (the rhythm starts, a note recorded), SELECT back to a drum sound: the recording is over, the one
+# note a take of a bar, kept; and it comes back after a power cycle
 expect running 0
 expect track 3
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w1
+release SEL
 wait 30
 expect track 2
 expect tfam1 1
 expect trk_n1 0
-tap REC
+tap SEQ
 wait 30
 expect rec_track 1
+said TRACK 2 LOOP RECORDING: A KEY STARTS IT
 tapkey 16
 wait 100
 expect running 1
@@ -503,6 +500,8 @@ turn SELECT -1
 wait 60
 expect tfam1 7
 expect rec_track -1
+# a note was played and its take kept (below): its loop kept, silent with a drum sound, never "NOTHING PLAYED"
+unsaid NOTHING PLAYED
 expect trk_n1 1
 expect trk_takes1 1
 expect trk_len1 >0
@@ -516,10 +515,11 @@ wait 900
 expect trk_n1 1
 expect trk_takes1 1
 expect tfam1 7
-# the other way: the track records its drum steps (REC), SELECT forward to its drone sound: the recording is over, the
-# loop as it was
+# the other way: the track records its drum steps (SEQ: a drum sound with no steps of its own: an empty loop),
+# SELECT forward to its drone sound: the recording is over, the loop as it was
 expect track 2
-tap REC
+expect loop1 0
+tap SEQ
 wait 30
 expect rec_track 1
 turn SELECT 1

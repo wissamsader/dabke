@@ -4,10 +4,16 @@
 wait 900
 expect scene 1
 shot home-start.png
-# the left hand on bass and backing, the rhythm running, a left key and a lead key held: tracks 3 and 4 show the
-# rhythm's backing and bass line (outlined, as tracks 5 to 8: the rhythm's)
+# the left hand on bass and backing (the rhythm page's fourth row: GLO, then GLO again for each next row), the rhythm
+# running, a left key and a lead key held (track 1 picked: the keys as set): tracks 3 and 4 show the rhythm's backing
+# and bass line (outlined, as tracks 5 to 8: the rhythm's)
 tap GLO
-turn SELECT 3
+tap GLO
+tap GLO
+tap GLO
+wait 30
+expect page 5
+expect row 3
 turn K1 2
 wait 30
 expect left 2
@@ -44,37 +50,59 @@ expect running 0
 shot home-still.png
 tap PLAY
 wait 300
-# the lead recording (its lane's number red, REC red in the bottom line), then its loop playing: his track (its mark
-# filled, its steps filled)
-tap REC
+expect running 1
+# the lead's loop recording (SEQ: its lane's number red, the bottom line), then its loop playing (SEQ again): his track
+# (its mark filled, its steps filled)
+tap SEQ
 tapkey 14
 tapkey 16
 wait 100
+expect rec_track 0
 shot home-recording.png
-tap REC
-wait 1800
-shot home-loop.png
-# SEL on the home page: the tracks in turn, each lane lit in its turn, its sound in the top line
-tap SEL
-wait 60
-shot track-lead.png
-tap SEL
-wait 60
-shot track-drone.png
-tap SEL
-wait 60
-shot track-left.png
-tap SEL
-wait 60
-shot track-bass.png
-tap SEL
-wait 60
-shot track-kick.png
-# SEQ: the step view of the kick: the rhythm's own steps (outlined); two taps: his (filled); a step held and K2 turned:
-# a lock on it (its padlock, its words in the top line, the knob's value in the locks' blue); let go
 tap SEQ
+wait 1800
+expect loop0 2
+shot home-loop.png
+# SEL held and a white key on the home page: the tracks in turn, each lane lit in its turn, its sound in the top line
+press SEL
+tapkey w0
+release SEL
+wait 60
+expect track 1
+shot track-lead.png
+press SEL
+tapkey w1
+release SEL
+wait 60
+expect track 2
+shot track-drone.png
+press SEL
+tapkey w2
+release SEL
+wait 60
+expect track 3
+shot track-left.png
+press SEL
+tapkey w3
+release SEL
+wait 60
+expect track 4
+shot track-bass.png
+press SEL
+tapkey w4
+release SEL
+wait 60
+expect track 5
+shot track-kick.png
+# step mode (EDIT held a second): the step view of the kick: the rhythm's own steps (outlined); two taps: his
+# (filled); a step held and K2 turned: a lock on it (its padlock, its words in the top line, the knob's value in the
+# locks' blue); let go
+press EDIT
+wait 1100
+release EDIT
 wait 100
 expect seq 1
+expect page 0
 shot step-kick.png
 tapkey w2
 tapkey w5
@@ -88,11 +116,11 @@ shot step-lock-held.png
 key w2 up
 wait 300
 shot step-lock.png
-# LENGTH (the effects page's track row, K2): two bars; OCT+: its second bar
-tap FX
-turn SELECT -20
-turn SELECT 3
+# LENGTH (the EDIT page, EDIT tapped: its first row, STEPS, K2): two bars; OCT+: its second bar
+tap EDIT
 wait 30
+expect page 6
+expect row 0
 turn K2 1
 wait 100
 expect nsteps 32
@@ -103,9 +131,13 @@ wait 1500
 expect spage 1
 shot step-kick-bar2.png
 tap OCT-
-# the darbuka and tabl (its seven drums, the rhythm's), then the lead (its notes by pitch), a step given two notes
-tap SEL
+# the darbuka and tabl (its seven drums, the rhythm's: SEL held and the sixth white key), then the lead (its notes by
+# pitch), a step given two notes
+press SEL
+tapkey w5
+release SEL
 wait 1500
+expect track 6
 shot step-darbuka.png
 # a step's sound (a sound lock): its step 1 held and SELECT one on: DEEP, named in the top line; its padlock
 key w0 down
@@ -117,9 +149,9 @@ held STEP 1: SOUND DEEP
 shot step-sound-held.png
 key w0 up
 wait 300
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w0
+release SEL
 wait 1500
 expect track 1
 shot step-lead.png
@@ -133,14 +165,17 @@ key 5 up
 key 10 up
 key w2 up
 wait 300
+# step 3 of track 1 (the picked track) is held, so the two keys' notes are that step's (in step mode every key is the
+# picked track's, LEFT KEYS on BASS or not)
 expect trig0_2 1
 shot step-lead-chord.png
-# the effects page in step mode: the picked track's steps under the knobs (its locks marked, the step playing, the
-# step held), the track and its length, the bar shown. A step held there: its locks named in the top line, over
-# whatever was said a moment ago (here the tempo); the reverb locked (K4)
+# the effects page in step mode (its first row), the picked track's steps under the knobs (its locks marked, the step
+# playing, the step held), the bar shown. A step held there: its locks named in the top line, over whatever was said a
+# moment ago (here the tempo); the reverb locked (K4)
 tap FX
-turn SELECT -20
 wait 1500
+expect page 2
+expect row 0
 shot fx-steps.png
 turn ALGO 1
 wait 30
@@ -154,61 +189,71 @@ key w4 up
 turn ALGO -1
 wait 60
 tap HOME
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 1500
 expect seq 0
 shot home-his.png
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-wait 30
-expect track 0
+expect track 1
 tap PLAY
 wait 1500
-# the maqam page (SEL from any page but home), EDIT held (its header says what the keys do), a key tuned by hand
+expect running 0
+# the maqam page (SEL tapped, on any page), its TUNING row (SEL again; SELECT: the note), EDIT held (its header says
+# what the keys do; let go: the EDIT page, SEL the maqam page again), then the maqam (its first row, K1), a key tuned
+# by hand (TUNING, K2)
 tap FX
+tap SEL
+wait 30
+expect page 1
 tap SEL
 turn SELECT 4
 wait 30
+expect row 1
+expect cur 4
 shot maqam.png
 press EDIT
 wait 60
 shot maqam-edit-held.png
 release EDIT
 wait 30
-turn K2 2
+tap SEL
 wait 30
+expect page 1
+expect row 0
+turn K1 2
+wait 30
+expect maqam 4
 shot maqam-sikah.png
-turn K1 -8
+tap SEL
+turn K2 -8
 wait 30
+expect cents4 -58
 shot maqam-changed.png
-turn K2 -2
+tap SEL
+turn K1 -2
 wait 30
+expect maqam 2
 # the drone track picked on the home page: SELECT its sound, then back
 tap HOME
-tap SEL
-tap SEL
+press SEL
+tapkey w1
+release SEL
 wait 1500
+expect track 2
 shot drone.png
 turn SELECT 3
 wait 1500
 shot drone-accordion.png
 turn SELECT -3
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w0
+release SEL
 wait 30
-expect track 0
-# every row of the knob pages
+expect track 1
+# every row of the knob pages (each page's button again: its next row). The EFFECTS page's six rows (its own three,
+# track 1's SENDS and TONE, the MASTER EQ), then the TONE row (SELECT back one) with tracks 2 to 8 picked in turn (SEL
+# held and a white key, on this page too): each track's FILTER, BASS, PITCH and LEVEL, where 0.19's mixer rows had them
 tap ENV
 wait 300
 shot sound-1.png
@@ -226,6 +271,7 @@ wait 300
 shot sound-5.png
 tap FX
 wait 300
+expect row 0
 shot fx-1.png
 tap FX
 wait 300
@@ -241,28 +287,52 @@ wait 300
 shot fx-5.png
 tap FX
 wait 300
+expect row 5
 shot fx-6.png
-tap FX
+turn SELECT -1
+press SEL
+tapkey w1
+release SEL
 wait 300
+expect row 4
+expect track 2
 shot fx-7.png
-tap FX
+press SEL
+tapkey w2
+release SEL
 wait 300
 shot fx-8.png
-tap FX
+press SEL
+tapkey w3
+release SEL
 wait 300
 shot fx-9.png
-tap FX
+press SEL
+tapkey w4
+release SEL
 wait 300
 shot fx-10.png
-tap FX
+press SEL
+tapkey w5
+release SEL
 wait 300
 shot fx-11.png
-tap FX
+press SEL
+tapkey w6
+release SEL
 wait 300
 shot fx-12.png
-tap FX
+press SEL
+tapkey w7
+release SEL
 wait 300
+expect track 8
+expect page 2
 shot fx-13.png
+press SEL
+tapkey w0
+release SEL
+wait 30
 tap LFO
 wait 300
 shot orn-1.png
@@ -276,8 +346,13 @@ tap LFO
 wait 300
 shot orn-4.png
 tap GLO
-turn SELECT -20
+tap GLO
+tap GLO
+tap GLO
+tap GLO
+tap GLO
 wait 300
+expect row 0
 shot rhythm-1.png
 tap GLO
 wait 300

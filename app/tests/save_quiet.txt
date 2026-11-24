@@ -19,16 +19,20 @@ expect store_writes 0
 key 14 up
 wait 9000
 expect store_writes >0
-# a loop: nothing written while it is recorded or plays (the rhythm running); written once the rhythm stops (two
-# objects: its notes with the settings, its length as it was played with the sequencer's part)
-tap REC
+# a loop (SEQ: track 1's, the rhythm stopped: the first key starts the rhythm and the take; SEQ again: it closes and
+# plays): nothing written while it is recorded or plays (the rhythm running); written once PLAY has stopped everything
+# (two objects: its notes with the settings, its length as it was played with the sequencer's part)
+tap SEQ
 wait 30
+expect rec_track 0
+expect rec_waiting 1
 tapkey 7
 wait 30
 expect running 1
-tap REC
+tap SEQ
 wait 6000
 expect rec_track -1
+expect loop0 2
 expect trk_n0 1
 expect store_writes 1
 tap PLAY
@@ -38,25 +42,36 @@ wait 6000
 expect store_writes 3
 expect kept_n0 1
 expect dirty 0
-# a track recording, the rhythm stopped (waiting for its first key): nothing written until it ends
-tap REC
+# a track recording, the rhythm stopped (waiting for its first key): nothing written until it ends. Track 2 picked (SEL
+# held and the second white key: a change to save) and its loop recording at once (SEQ, track 2 empty); SEQ again with
+# nothing played: no loop, the take over, the change written; track 1's loop as it was
+press SEL
+tapkey w1
+release SEL
 wait 30
-expect rec_track 0
+expect track 2
+tap SEQ
+wait 30
+expect rec_track 1
 expect rec_waiting 1
-tap SEL
 wait 6000
 expect store_writes 3
-tap REC
+tap SEQ
 wait 6000
 expect rec_track -1
+expect loop1 0
 expect store_writes 4
 expect kept_n0 1
-# a lock made (step mode, a step held, K2 turned): nothing written while the rhythm runs; then the sequencer's part alone
-tap SEQ
+# a lock made (step mode: EDIT held a second; a step held, K2 turned): nothing written while the rhythm runs; then the
+# sequencer's part alone
+press EDIT
+wait 1100
+release EDIT
 wait 30
 expect seq 1
 tap PLAY
 wait 100
+expect running 1
 key w3 down
 wait 30
 turn K2 -3
@@ -70,4 +85,5 @@ wait 300
 expect running 0
 wait 6000
 expect dirty 0
+# the lock alone changed, so the sequencer's part alone is written
 expect store_writes 5

@@ -1,10 +1,14 @@
 # DABKE in the host simulator. From the repository's root:
 #   python3 base/tools/build.py app --host
 #   app/build/host/dabke_host app/tests/basic.txt OUTDIR
-# (knobs: dabke.h's P_* numbers, par6 tone, par5 tempo, par22 reverb, par13 glide; choices: app.c's C_* numbers, ch0
-# instrument, ch3 ornament, ch6 drone, ch24 left keys; centsN: key N's tuning, C = 0)
+# (knobs: dabke.h's P_* numbers, par0 the lead's level, par1 the left hand's, par2 the bass line's, par3 the drums', par4
+# the drone's, par6 tone, par5 tempo, par22 reverb, par13 glide, par47 track 1's filter, par55 its bass; choices: app.c's
+# C_* numbers, ch0 instrument, ch3 ornament, ch6 drone, ch24 left keys; centsN: key N's tuning, C = 0. The one logic
+# (fm1-organ/LOGIC.md): a track is picked with SEL held and its white key, track 1 from the first start; SEL tapped is
+# the MAQAM page; a page's button again shows its next row)
 wait 900
 expect page 0
+expect track 1
 expect octave 0
 expect sound 0
 expect rhythm 0
@@ -66,14 +70,19 @@ release EDIT
 wait 30
 expect page 0
 
-# SEL (from any page but home, where it picks the track): the maqam page. SELECT moves along the keys, K1 the cents of
-# the one there, K2 the maqam, K3 its root, K4 how deep a quarter flat is. EDIT held and a key: that key a quarter flat
-# or back, here as on every page; EDIT tapped is HOLD here too (no key down: nothing held), it tunes nothing
+# SEL tapped (on any page; here from the effects page): the maqam page, its first row (K1 the maqam, K2 its root, K3
+# how deep a quarter flat is). SEL again: its TUNING row (SELECT, or K1: the note, moving along the keys; K2 the cents
+# of the one there). EDIT held and a key: that key a quarter flat or back, here as on every page; EDIT tapped opens the
+# EDIT page from here too, and tunes nothing
 tap FX
 wait 30
 tap SEL
 wait 30
 expect page 1
+expect row 0
+tap SEL
+wait 30
+expect row 1
 turn SELECT 4
 wait 30
 expect cur 4
@@ -89,28 +98,38 @@ wait 30
 listen
 tap EDIT
 wait 60
-said HOLD OFF
+said EDIT
 expect cents4 -50
+expect page 6
+tap SEL
+wait 30
 expect page 1
-turn K1 -3
+expect row 0
+tap SEL
+wait 30
+expect row 1
+turn K2 -3
 wait 30
 expect cents4 -53
-turn K2 1
+tap SEL
+wait 30
+expect row 0
+turn K1 1
 wait 30
 expect maqam 3
 expect root 2
 expect cents4 -50
-turn K3 1
+turn K2 1
 wait 30
 expect root 3
 expect cents4 0
 expect cents5 -50
-turn K4 -10
+turn K3 -10
 wait 30
 expect qdepth 40
 expect cents5 -40
-turn K4 10
-turn K2 -2
+turn K3 10
+turn K1 -2
 wait 30
 expect maqam 1
 expect root 0
@@ -119,9 +138,11 @@ expect cents11 -50
 expect cents5 0
 shot maqam-rast.png
 
-# the home page's SELECT: the ready sounds in turn (1 Mijwiz buzz; the drone is the player's: a sound leaves it), and back
+# the home page's SELECT: track 1's sound, the ready sounds in turn (1 Mijwiz buzz; the drone is the player's: a sound
+# leaves it), and back
 tap HOME
 wait 30
+expect page 0
 turn SELECT 1
 wait 30
 expect sound 1
@@ -146,50 +167,102 @@ wait 30
 expect sound 13
 expect ch6 1
 expect par4 35
-# the home page's knobs: the four parts' volumes, K1 the lead, K2 the drone, K3 the left hand, K4 the drums
+# each track's LEVEL: the home page's first row, K4, the picked track's (0.19's four parts' volumes on the home page
+# with ALL picked: gone with ALL). Track 2 (the drone's): its level to zero; track 1's sound changed: it stays at zero
 listen
-turn K2 -9
+press SEL
+tapkey w1
+release SEL
+wait 30
+expect track 2
+turn K4 -18
 wait 30
 expect par4 0
+press SEL
+tapkey w0
+release SEL
+wait 30
+expect track 1
 turn SELECT 1
 wait 30
+expect sound 14
 expect par4 0
 expect ch6 1
-turn K1 -1
+# track 1's level (the lead's)
+turn K4 -2
 wait 30
 expect par0 76
-turn K1 1
-turn K4 -1
+turn K4 2
+wait 30
+expect par0 80
+# the drums' level: the background's LEVEL (SEL held and the ninth white key picks the background; the MIXER, the EDIT
+# page's last row: K1), then track 1's again
+press SEL
+tapkey w8
+release SEL
+wait 30
+expect fx_bg 1
+expect track 1
+tap EDIT
+tap EDIT
+tap EDIT
+wait 30
+expect page 6
+expect row 2
+turn K1 -2
 wait 30
 expect par3 76
-turn K4 1
+turn K1 2
 wait 30
-# K3 is the left hand's own sound (track 3) whatever the left keys play; each turn says the part and its volume, and
-# no message sends him to another page
-turn K3 2
+expect par3 80
+press SEL
+tapkey w0
+release SEL
+wait 30
+expect fx_bg 0
+tap HOME
+wait 30
+# track 3's level is the left hand's own sound's, whatever the left keys play; each turn says the track and its level,
+# and no message sends him to another page
+press SEL
+tapkey w2
+release SEL
+wait 30
+expect track 3
+turn K4 4
 wait 30
 expect par1 63
 expect par2 75
-said LEFT HAND 63
+said TRACK 3: LEVEL 63
 unsaid RHYTHM 4
-turn K3 -2
+turn K4 -4
 wait 30
 expect par1 55
-# the drone switched off (the ornaments page, row 3, K1), then its knob turned up: on again, on the tonic
+# the drone switched off (the ornaments page, row 3, K1), then its level turned up (track 2, K4): on again, on the tonic
 tap LFO
 turn SELECT 2
 wait 30
+expect row 2
 turn K1 -3
 wait 30
 expect ch6 0
 turn SELECT -2
 tap HOME
+press SEL
+tapkey w1
+release SEL
 wait 30
-turn K2 2
+expect track 2
+turn K4 4
 wait 30
 expect ch6 1
 expect par4 8
 said DRONE ON
+press SEL
+tapkey w0
+release SEL
+wait 30
+expect track 1
 turn SELECT -14
 wait 30
 expect sound 0
@@ -229,14 +302,19 @@ expect ch1 0
 tap ENV
 wait 30
 expect row 1
-turn SELECT 5
+turn SELECT 4
 wait 30
 expect row 5
+# (six rows, round: the next is the first)
+turn SELECT 1
+wait 30
+expect row 0
 
 # FX: the effects; row 2, K3: the wedding PA
 tap FX
 wait 30
 expect page 2
+expect row 0
 tap FX
 wait 30
 expect row 1
@@ -245,25 +323,37 @@ wait 30
 expect par25 10
 turn K3 -5
 wait 30
-# the mixer on the effects page (rows 6 to 13, a part a row): row 6 the lead, K2 its filter, K3 its bass, K4 muted
-turn SELECT 4
+# the picked track's TONE (row 5, SELECT: the rows), track 1's: K1 its filter, K2 its bass (0.19's mixer rows on this
+# page, a part a row, are gone: each track's filter, bass and level are here, its MUTE on the MIXER)
+turn SELECT 3
 wait 30
-expect row 5
-turn K2 -3
+expect row 4
+turn K1 -3
 wait 30
 expect par47 -6
-turn K3 2
+turn K2 2
 wait 30
 expect par55 4
-turn K4 -1
+turn K1 3
+turn K2 -2
+wait 30
+expect par47 0
+expect par55 0
+# its MUTE: the MIXER (the EDIT page's last row: EDIT opens it on the row shown last), K3 right on, left off
+tap EDIT
+wait 30
+expect page 6
+expect row 2
+turn K3 1
 wait 30
 expect mute 1
-turn K4 1
+turn K3 -1
 wait 30
 expect mute 0
-turn K2 3
-turn K3 -2
-turn SELECT -4
+tap FX
+wait 30
+expect row 4
+turn SELECT -3
 wait 30
 expect row 1
 
@@ -278,8 +368,8 @@ turn K4 1
 wait 30
 expect ch3 6
 
-# PLAY: everything starts on the press. HOME while it runs only goes home (no fill). PLAY held 0.4 s while it runs: a
-# fill-in (said on the screen), and it goes on; PLAY tapped: everything stops
+# PLAY: the rhythm starts on the press. HOME while it runs only goes home (on the home page: its next row), no fill.
+# PLAY held 0.4 s while it runs: a fill-in (said on the screen), and it goes on; PLAY tapped: everything stops
 tap HOME
 press PLAY
 wait 10
@@ -292,6 +382,7 @@ tap HOME
 wait 30
 unsaid FILL IN
 expect page 0
+expect row 1
 press PLAY
 wait 300
 unsaid FILL IN
@@ -303,6 +394,11 @@ expect running 1
 tap PLAY
 wait 60
 expect running 0
+said ALL STOPPED
+tap HOME
+tap HOME
+wait 30
+expect row 0
 
 # ARP: the arpeggio on and off
 tap ARP
@@ -312,11 +408,15 @@ tap ARP
 wait 30
 expect arp 0
 
-# the left keys (rhythm page, row 4, K1): their own sound; the 12 leftmost keys dim and play without the octave
+# the left keys (rhythm page, row 4: GLO again for each next row, K1): their own sound; the 12 leftmost keys dim and
+# play without the octave
 tap GLO
 wait 30
 expect page 5
-turn SELECT 3
+expect row 0
+tap GLO
+tap GLO
+tap GLO
 wait 30
 expect row 3
 turn K1 1
@@ -329,11 +429,20 @@ wait 30
 expect_out USB 90 35 64
 key 0 up
 wait 30
-# K3 on the home page: now the left hand's own sound
+# their level: the left hand's own, track 3's (K4 on the home page with track 3 picked; 0.19: K3 with ALL)
 tap HOME
-turn K3 -1
+press SEL
+tapkey w2
+release SEL
+wait 30
+turn K4 -2
 wait 30
 expect par1 51
+press SEL
+tapkey w0
+release SEL
+wait 30
+expect track 1
 tap GLO
 wait 30
 # then bass and backing from the left hand: a left key is its root
@@ -345,12 +454,27 @@ wait 80
 expect left_root 7
 key 2 up
 wait 30
-# K3 on the home page: the backing and the bass line together
+# the backing's level (track 3's) and the bass line's (track 4's), each its own (0.19's K3 with ALL moved both)
 tap HOME
-turn K3 -1
+press SEL
+tapkey w2
+release SEL
+wait 30
+turn K4 -2
 wait 30
 expect par1 47
+press SEL
+tapkey w3
+release SEL
+wait 30
+turn K4 -2
+wait 30
 expect par2 71
+press SEL
+tapkey w0
+release SEL
+wait 30
+expect track 1
 tap GLO
 wait 30
 turn K1 -2
@@ -359,51 +483,62 @@ expect left 0
 expect keysdim 0
 tap HOME
 
-# the loops (tests/loop.txt has it all): REC records the picked track (all: the lead) when it is let go, the rhythm
-# starts with the first key; two notes; REC: it ends at once and plays; SEQ is the sequencer (tests/seq.txt): step
-# mode on and off, the loops play on; PLAY alone stops everything
-tap REC
+# the loops (tests/loop.txt has it all): SEQ, track 1's loop: empty, it records, the rhythm starting with the first key;
+# two notes; SEQ: it closes and plays. Step mode (EDIT held a second, tests/seq.txt): on and off, the loops play on;
+# PLAY alone stops everything
+tap SEQ
 wait 30
 expect rec_track 0
 expect rec_waiting 1
+said TRACK 1 LOOP RECORDING: A KEY STARTS IT
 tapkey 7
 tapkey 9
 wait 30
 expect running 1
-tap REC
+tap SEQ
 wait 100
 expect rec_track -1
 expect trk_n0 2
 expect trk_takes0 1
-tap SEQ
+expect loop0 2
+said TRACK 1 LOOP PLAYING
+press EDIT
+wait 1100
+release EDIT
 wait 60
 expect seq 1
 expect track 1
 expect running 1
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 60
 expect seq 0
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-wait 30
-expect track 0
+expect loop0 2
 tap PLAY
 wait 60
 expect running 0
 
-# the rhythm page: eight rows (its own step row is gone: the steps are the tracks', in step mode)
+# the rhythm page: eight rows (its own step row is gone: the steps are the tracks', in step mode), GLO again for each
+# next row, round after the last
 tap GLO
-turn SELECT 20
+wait 30
+expect row 3
+tap GLO
+tap GLO
+tap GLO
+tap GLO
 wait 30
 expect row 7
+tap GLO
+wait 30
+expect row 0
 # the drum's own level, tune and length (row 6: K1 the drum)
-turn SELECT -2
+tap GLO
+tap GLO
+tap GLO
+tap GLO
+tap GLO
 wait 30
 expect row 5
 turn K1 1
@@ -449,11 +584,12 @@ expect kept_n0 2
 expect tempo 140
 expect rhythm 0
 expect left 0
-# the kept sound is in the list after the ready ones: SELECT from it goes round to the first
-turn SELECT 1
-wait 30
-expect sound 0
+expect track 1
+# the kept sound is in track 1's list after the ready ones: SELECT back from it, the last ready one, and on again
 turn SELECT -1
+wait 30
+expect sound 21
+turn SELECT 1
 wait 30
 expect sound 102
 
@@ -510,6 +646,7 @@ wait 300
 tap LFO
 turn SELECT 3
 wait 30
+expect row 3
 turn K2 1
 wait 30
 expect ch34 0
@@ -538,19 +675,22 @@ wait 6000
 expect usbh 0
 
 # ---- TONE at its top (the sound page, K3) with every instrument in turn (K1, thirteen of them), its BODY at zero
-# (row 2, K3), a key leant on with PRESSURE: BRIGHTER (the ornaments page, row 2, K4): the tone filter stays a filter
-# and the sound a sound. (From 97 up, a damped sound's filter fed itself and nothing sounded again until the next
-# start.) level1000: the output's level; -777: not a number
+# (row 2, K3), a key leant on with PRESSURE: BRIGHTER (the ornaments page, row 2, K4: LFO again for each next row): the
+# tone filter stays a filter and the sound a sound. (From 97 up, a damped sound's filter fed itself and nothing sounded
+# again until the next start.) level1000: the output's level; -777: not a number
 tap LFO
-turn SELECT -20
-turn SELECT 1
 wait 30
+expect row 3
+tap LFO
+tap LFO
+wait 30
+expect row 1
 turn K4 5
 wait 30
 expect ch11 4
 tap ENV
-turn SELECT -20
 wait 30
+expect row 0
 turn K3 40
 turn SELECT 1
 turn K3 -40

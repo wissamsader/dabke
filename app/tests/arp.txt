@@ -1,6 +1,6 @@
 # The arpeggio: ARP tapped on or off; ARP held, its panel over any page, the four knobs its controls (SEL or SELECT:
 # the other four), letting go without using it switches it. Every order, every speed, the octaves both ways, a pattern
-# with rests, each note repeated, the latch, its two rows on the sound page, and the loop recording what it plays.
+# with rests, each note repeated, the latch, its two rows on the sound page, and the loop (SEQ) recording what it plays.
 # Keys: 7 C (60), 9 D (62), 11 E (64), 14 G (67), 18 B (71). Checked by the notes it plays, the first sixteen of a set.
 #   app/build/host/dabke_host app/tests/arp.txt OUTDIR
 wait 900
@@ -622,10 +622,11 @@ release ARP
 wait 30
 expect arp 0
 expect arp_row 0
-# its two rows on the sound page (rows 5 and 6)
+# its two rows on the sound page (rows 5 and 6: SELECT turns its rows, round)
 tap ENV
 wait 30
-turn SELECT 10
+expect row 0
+turn SELECT 5
 wait 30
 expect row 5
 turn K2 1
@@ -641,18 +642,19 @@ expect ch27 1
 turn K1 -1
 tap HOME
 wait 30
-# the lead's loop records what the arpeggio plays (C held: C on every 16th); played back, it does not go through it again
+# the lead's loop (SEQ, track 1's) records what the arpeggio plays (C held: C on every 16th); played back, it does not
+# go through it again
 tap ARP
 wait 30
 expect arp 1
-tap REC
+tap SEQ
 wait 30
 expect rec_track 0
 expect rec_waiting 1
 key 7 down
 wait 500
 expect running 1
-tap REC
+tap SEQ
 wait 30
 key 7 up
 wait 30
@@ -671,16 +673,16 @@ tap PLAY
 wait 60
 expect running 0
 
-# ---- the arpeggio leaves a track without leaving a note behind. Track 3 with a lead sound (SELECT: its own thirteen,
-# then the lead's), ARP on, a key held there: in the arpeggio. Track 1 picked (SEL held, the first white key) and a
-# key tapped: the arpeggio is track 1's now, the first key a plain key with nothing sounding. ARP off, the first key
-# let go: nothing sounds on any track. (The key's note used to start on track 1 at ARP off and never stop.)
-# gated: the notes sounding by a key, a hold or a loop, all tracks
-expect track 0
+# ---- the arpeggio leaves a track without leaving a note behind. Track 3 (SEL held, the third white key) with a lead
+# sound (SELECT: its own thirteen, then the lead's), ARP on, a key held there: in the arpeggio. Track 1 picked (SEL
+# held, the first white key) and a key tapped: the arpeggio is track 1's now, the first key a plain key with nothing
+# sounding. ARP off, the first key let go: nothing sounds on any track. (The key's note used to start on track 1 at
+# ARP off and never stop.) gated: the notes sounding by a key, a frozen track or a loop, all tracks
+expect track 1
 expect arp 1
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w2
+release SEL
 wait 30
 expect track 3
 turn SELECT 13
@@ -704,20 +706,23 @@ expect voices0 0
 key 11 up
 wait 500
 expect gated 0
-# the same with the arpeggio's notes held by HOLD (EDIT) on track 3: the arpeggio gone to track 1, nothing is held
+# the same with the arpeggio's notes held on track 3 by REC (track 3 frozen): the arpeggio gone to track 1, nothing is
+# held
 tap ARP
 wait 30
 expect arp 1
-tap SEL
-tap SEL
+press SEL
+tapkey w2
+release SEL
 wait 30
 expect track 3
 key 11 down
 wait 200
-tap EDIT
+tap REC
 wait 30
 key 11 up
 wait 200
+expect frozen 4
 expect hold 1
 expect arp_n 1
 press SEL
@@ -729,6 +734,8 @@ tapkey 16
 wait 100
 expect hold 0
 expect arp_n 0
+# track 3 holds nothing now, so it is frozen no more
+expect frozen 0
 tap ARP
 wait 500
 expect arp 0

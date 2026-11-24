@@ -40,14 +40,16 @@ expect try_bad 1
 maqam_try
 expect try_bad 1
 
-# ---- the maqam page: BAYATI on D (D Eh F G A Bb C). White: D, F, G, A, C and, on the black keys, Bb; amber: E, a
-# quarter tone flat; grey: C#, Eb, F#, Ab and B
+# ---- the maqam page (SEL tapped, on every page: here from the home page), its first row: K1 the maqam, K2 its root,
+# K3 how deep, K4 PITCH STEPS. BAYATI on D (D Eh F G A Bb C). White: D, F, G, A, C and, on the black keys, Bb; amber:
+# E, a quarter tone flat; grey: C#, Eb, F#, Ab and B
 expect maqam 2
 expect root 2
-tap FX
+expect page 0
 tap SEL
 wait 30
 expect page 1
+expect row 0
 shot mq-bayati.png
 expect mq_col0 1
 expect mq_col1 0
@@ -62,7 +64,7 @@ expect mq_col9 1
 expect mq_col10 1
 expect mq_col11 0
 # SIKAH on E half flat (Eh F G A Bh C D): B amber with E, Bb grey now
-turn K2 2
+turn K1 2
 wait 30
 expect maqam 4
 shot mq-sikah.png
@@ -72,7 +74,7 @@ expect mq_col10 0
 expect mq_col5 1
 expect mq_col1 0
 # HIJAZ on D (D Eb F# G A Bb C): no quarter tones; its black keys Eb, F# and Bb white
-turn K2 4
+turn K1 4
 wait 30
 expect maqam 8
 shot mq-hijaz.png
@@ -83,14 +85,24 @@ expect mq_col1 0
 expect mq_col8 0
 expect mq_col4 0
 expect mq_col11 0
-# a black key retuned by hand: amber, with its cents
-turn SELECT 6
-turn K1 -8
+# a black key retuned by hand: amber, with its cents. SEL again: the page's next row, TUNING (SELECT there, or K1: the
+# note; K2 its cents)
+tap SEL
 wait 30
+expect page 1
+expect row 1
+turn SELECT 6
+turn K2 -8
+wait 30
+expect cur 6
 expect cents6 -8
 expect mq_col6 2
 shot mq-retuned.png
-turn K2 -6
+# SEL again: the first row (round), the maqam back to BAYATI, the hand tuning gone with the change
+tap SEL
+wait 30
+expect row 0
+turn K1 -6
 wait 30
 expect maqam 2
 expect cents6 0

@@ -28,8 +28,8 @@ panel_cal 0102030405060708090A0B0C0D0E0F10
 expect panel_cal 136
 listen
 
-# ---- his state: the tempo and the rhythm, SAZ on track 2, a loop on track 1, the kick's steps his with a lock on step
-# 5, a MY SOUND kept
+# ---- his state: the tempo and the rhythm, SAZ on track 2, a loop on track 1 (SEQ), the kick's steps his with a lock
+# on step 5 (step mode: EDIT held a second), a MY SOUND kept
 turn PRESET 2
 wait 30
 expect rhythm 2
@@ -52,7 +52,7 @@ wait 30
 expect track 1
 tap PLAY
 wait 20
-tap REC
+tap SEQ
 wait 30
 expect rec_track 0
 wait 60
@@ -64,7 +64,7 @@ key 9 down
 wait 80
 key 9 up
 wait 300
-tap REC
+tap SEQ
 wait 30
 expect rec_track -1
 expect trk_n0 2
@@ -76,7 +76,9 @@ tapkey w4
 release SEL
 wait 30
 expect track 5
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 30
 expect seq 1
 tapkey w1
@@ -91,7 +93,9 @@ key w4 up
 wait 60
 expect lock4_4_51 -10
 expect locks 1
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 30
 expect seq 0
 tap SAVE
@@ -214,7 +218,7 @@ wait 30
 expect save 0
 
 # ---- (c) SAVE held at the start, then SAVE: STARTED FRESH, everything as the first start on the empty flash made it
-# (state 1): no MY SOUNDs, no loops, steps or locks, the first ready sound, Dabke Syria at 140
+# (state 1): no MY SOUNDs, no loops, steps or locks, the first ready sound, Dabke Syria at 140, track 1 picked
 reboot
 wait 900
 flash_dump out:sf-before.bin
@@ -236,7 +240,7 @@ expect sound 0
 expect sndn1 0
 expect tempo 140
 expect rhythm 0
-expect track 0
+expect track 1
 expect trk_n0 0
 expect locks 0
 expect lock4_4_51 -999

@@ -1,16 +1,18 @@
 # Each track's own sound (0.17). A note track's sound is any of the 22 ready sounds or a MY SOUND kept, with its own copy
 # of everything a sound is: its instrument and its knobs, vibrato, ornaments, glide, TRANSPOSE, TUNE, PLAY, DOUBLE,
 # PICKING, TRILL TO and BEND RANGE. The effects (the EFFECTS page), the tempo, the maqam, the rhythm, the mixer and KEY
-# TOUCH stay the whole instrument's. The SOUND and ORNAMENTS pages edit the picked track's sound (ALL: track 1's). A
-# ready sound picked with ALL sets the effects too (the whole setup); picked on a track, that track's sound alone. From
-# the repository's root:
+# TOUCH stay the whole instrument's. The SOUND and ORNAMENTS pages edit the picked track's sound (a track without a lead
+# sound picked: track 1's). A ready sound or a MY SOUND picked (SELECT on the home page) is that track's sound alone; on
+# track 1, which plays the keys as ALL did before the one logic, the effects come with it (the whole setup, as ALL had
+# it). A track is picked with SEL held and its white key (the first start: track 1). From the repository's root:
 #   app/build/host/dabke_host app/tests/track_sounds.txt OUTDIR
 # (sndpT_ID: knob ID of track T+1's own sound, in its steps; sndcT_C: its choice C; sndnT: its name, 0.. a ready sound,
 # 100 + i MY SOUND i+1, -1 its instrument's; sndxT: 1 its instrument's own tone; esndT_ID: knob or choice ID of it as
-# the engine has it, x 1000, 118 the plain tone. Knobs: 6 TONE, 15 VIB DEPTH, 17 ORN SPEED, 22 REVERB, 23 DRIVE, 25 PA;
-# choices: 3 ORNAMENT, 5 PICKING; the engine's: 82 ORNAMENT, 84 PICKING)
+# the engine has it, x 1000, 126 the plain tone. Knobs: 6 TONE, 15 VIB DEPTH, 17 ORN SPEED, 19 DELAY, 22 REVERB, 23
+# DRIVE, 24 CHORUS, 25 PA, 27 WOBBLE, 28 TAPE AGE, 29 HISS; choices: 3 ORNAMENT, 5 PICKING; the engine's: 90 ORNAMENT,
+# 92 PICKING)
 wait 900
-expect track 0
+expect track 1
 expect sound 0
 expect tfam0 0
 expect sndn0 0
@@ -30,8 +32,8 @@ expect sndn1 14
 said TRACK 2: SAZ
 expect sndp1_6 90
 expect esnd1_6 900
-expect esnd1_84 0
-expect esnd1_82 6000
+expect esnd1_92 0
+expect esnd1_90 6000
 # picked on a track, a ready sound leaves the effects as they are (SAZ's reverb is 30: the whole instrument's stays 25)
 expect par22 25
 expect epar22 250
@@ -42,7 +44,7 @@ tapkey w2
 release SEL
 wait 30
 expect track 3
-said KEYS PLAY TRACK 3: LEFT HAND STRINGS
+said TRACK 3: LEFT HAND STRINGS
 turn SELECT 20
 wait 30
 expect tfam2 0
@@ -50,20 +52,20 @@ expect tidx2 8
 expect sndn2 13
 said TRACK 3: BUZUQ TREMOLO
 expect sndc2_5 1
-expect esnd2_84 1000
-expect esnd2_82 0
+expect esnd2_92 1000
+expect esnd2_90 0
 expect esnd2_17 14000
 expect esnd2_6 750
 expect esnd1_6 900
-expect esnd1_84 0
-expect esnd0_84 0
+expect esnd1_92 0
+expect esnd0_92 0
 expect par22 25
 # the same note held 1.5 s on each: the single pluck of SAZ dies away, the tremolo goes on picking
 press SEL
 tapkey w1
 release SEL
 wait 30
-said KEYS PLAY TRACK 2: SAZ
+said TRACK 2: SAZ
 wav saz.wav
 key 12 down
 wait 1300
@@ -105,7 +107,7 @@ expect sndp2_6 75
 expect esnd2_6 750
 expect sndp0_6 70
 expect esnd0_6 700
-# the page shows the picked track's sound: track 3's tone, then ALL's (track 1's)
+# the page shows the picked track's sound: track 3's tone, then track 1's
 tap HOME
 wait 30
 press SEL
@@ -117,21 +119,19 @@ wait 30
 expect par6 75
 tap HOME
 wait 30
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w0
+release SEL
 wait 30
-expect track 0
+expect track 1
 tap ENV
 wait 30
 expect par6 70
 tap HOME
 wait 30
 
-# ---- with ALL picked, a ready sound is track 1's and the effects with it: WEDDING ZURNA (the PA, the drive, its reverb)
+# ---- on track 1 a ready sound is track 1's and the effects with it (as ALL's was): WEDDING ZURNA (the PA, the drive,
+# its reverb)
 expect par25 0
 turn SELECT 19
 wait 30
@@ -142,8 +142,8 @@ expect par25 60
 expect par23 25
 expect par22 40
 expect epar25 600
-# on a track it sets that track's sound alone: SHAABI LEAD (its echo 30, chorus 30, PA 25) on track 4 (the bass's five
-# first): the effects stay as WEDDING ZURNA set them
+# on another track it sets that track's sound alone: SHAABI LEAD (its echo 30, chorus 30, PA 25) on track 4 (the bass's
+# five first): the effects stay as WEDDING ZURNA set them
 press SEL
 tapkey w3
 release SEL
@@ -200,17 +200,20 @@ expect tidx4 8
 expect sndn4 100
 said TRACK 5: MY SOUND 1
 expect sndp4_15 26
-expect esnd4_84 1000
+expect esnd4_92 1000
 expect esnd4_15 260
 expect esnd2_15 260
 expect esnd1_15 200
 
-# ---- a lock of a sound's knob holds its own track's: VIB DEPTH locked on track 2's first step; tracks 3 and 1 as set
+# ---- a lock of a sound's knob holds its own track's: VIB DEPTH locked on track 2's first step (step mode: EDIT held a
+# second); tracks 3 and 1 as set
 press SEL
 tapkey w1
 release SEL
 wait 30
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 30
 expect seq 1
 key w0 down
@@ -234,7 +237,9 @@ expect epar15 200
 tap PLAY
 wait 60
 expect esnd1_15 200
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 30
 expect seq 0
 
@@ -282,7 +287,7 @@ tapkey 2
 wait 60
 expect starts6 2
 expect voices6 0
-# a lead track picked: its own sound again (track 2's SAZ)
+# a lead track picked: its own sound again (track 2's SAZ), the page named with it
 press SEL
 tapkey w1
 release SEL
@@ -308,32 +313,28 @@ expect sndp1_6 80
 expect esnd1_6 800
 expect tfam2 0
 expect sndn2 100
-expect esnd2_84 1000
+expect esnd2_92 1000
 expect esnd2_15 260
 expect tfam3 3
 expect tfam4 0
 expect sndn4 100
-expect esnd4_84 1000
+expect esnd4_92 1000
 expect sound -1
 expect tidx0 2
 expect sndp0_6 65
 expect tfam6 6
 expect par25 60
 
-# ---- MY SOUND 1 picked with ALL: track 1's sound and the effects kept with it; every other track keeps its own sound
-# as it is, settings and name: SAZ on track 2 (its tone turned down), BUZUQ TREMOLO on track 3 (its vibrato deeper, kept
-# as MY SOUND 1), MY SOUND 1 on track 5, the claps on track 7. First another ready sound with ALL, CASSETTE MIJWIZ (its
-# wobble, tape age and hiss, no PA), so the effects that come back are MY SOUND 1's (WEDDING ZURNA's PA 60, drive 25 and
-# reverb 40 when it was kept)
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+# ---- MY SOUND 1 picked on track 1: track 1's sound and the effects kept with it (as ALL's was); every other track keeps
+# its own sound as it is, settings and name: SAZ on track 2 (its tone turned down), BUZUQ TREMOLO on track 3 (its
+# vibrato deeper, kept as MY SOUND 1), MY SOUND 1 on track 5, the claps on track 7. First another ready sound on track
+# 1, CASSETTE MIJWIZ (its wobble, tape age and hiss, no PA), so the effects that come back are MY SOUND 1's (WEDDING
+# ZURNA's PA 60, drive 25 and reverb 40 when it was kept)
+press SEL
+tapkey w0
+release SEL
 wait 30
-expect track 0
+expect track 1
 turn SELECT 17
 wait 30
 expect sound 20
@@ -349,7 +350,7 @@ expect sound 100
 expect tfam0 0
 expect tidx0 8
 expect sndp0_15 26
-expect esnd0_84 1000
+expect esnd0_92 1000
 expect esnd0_15 260
 expect par25 60
 expect par23 25
@@ -363,13 +364,13 @@ expect tidx1 8
 expect sndn1 14
 expect sndp1_6 80
 expect esnd1_6 800
-expect esnd1_84 0
-expect esnd1_82 6000
+expect esnd1_92 0
+expect esnd1_90 6000
 expect tfam2 0
 expect tidx2 8
 expect sndn2 100
 expect sndp2_15 26
-expect esnd2_84 1000
+expect esnd2_92 1000
 expect tfam3 3
 expect tfam4 0
 expect sndn4 100
@@ -388,7 +389,7 @@ expect sndx0 0
 expect tfam5 0
 expect tidx5 7
 expect sndx5 1
-expect esnd5_118 1
+expect esnd5_126 1
 expect sndn5 -1
 expect sndp5_6 60
 expect esnd5_15 200
@@ -399,13 +400,13 @@ press SEL
 tapkey w5
 release SEL
 wait 30
-said KEYS PLAY TRACK 6: LEAD ORGAN
+said TRACK 6: LEAD ORGAN
 tap ENV
 wait 30
 turn K4 1
 wait 30
 expect sndx5 0
-expect esnd5_118 0
+expect esnd5_126 0
 tap HOME
 wait 6000
 expect dirty 0

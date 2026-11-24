@@ -44,16 +44,16 @@ expect store_writes 2
 reboot
 wait 900
 expect tempo 146
-# a loop recorded while the rhythm runs (REC ended the take, the rhythm still running): saved at the update, its notes
-# with the settings and its length as it was played with the sequencer's part
+# a loop recorded while the rhythm runs (SEQ: track 1's loop; SEQ again closed the take, the rhythm still running):
+# saved at the update, its notes with the settings and its length as it was played with the sequencer's part
 tap PLAY
 wait 20
-tap REC
+tap SEQ
 wait 30
 expect rec_track 0
 tapkey 7
 wait 600
-tap REC
+tap SEQ
 wait 30
 expect rec_track -1
 expect running 1
@@ -72,16 +72,16 @@ expect trk_n0 1
 expect kept_n0 1
 expect trk_takes0 1
 expect hash_same 1
-# a take still recording when the update starts: ended as REC ends it, and kept. A new loop (track 3, the left hand's),
-# then one recorded over track 1's loop
-tap SEL
-tap SEL
-tap SEL
+# a take still recording when the update starts: ended as SEQ ends it, and kept. A new loop on track 3 (the left
+# hand's: SEL held and the third white key)
+press SEL
+tapkey w2
+release SEL
 wait 30
 expect track 3
 tap PLAY
 wait 20
-tap REC
+tap SEQ
 wait 30
 expect rec_track 2
 tapkey 14
@@ -106,42 +106,41 @@ expect trk_n2 2
 expect trk_takes2 1
 expect trk_n0 1
 expect hash_same 1
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+# (0.19 recorded a second take over track 1's loop here; SEQ on a loop now stops it: recording over a loop is gone.)
+# Track 1's loop playing, SEQ: it stops, kept, nothing recording; the update keeps it as it was
+press SEL
+tapkey w0
+release SEL
 wait 30
 expect track 1
 tap PLAY
 wait 20
-tap REC
+expect loop0 2
+tap SEQ
 wait 30
-expect rec_track 0
-expect overdub 1
-tapkey 9
-wait 300
-expect rec_track 0
-expect store_writes 6
+expect loop0 3
+expect loop_off 1
+expect rec_track -1
+expect overdub 0
 update
 expect rec_track -1
-expect trk_n0 2
-expect kept_n0 2
-expect trk_takes0 2
+expect trk_n0 1
+expect kept_n0 1
+expect trk_takes0 1
 expect dirty 0
 expect store_writes 7
 hash_keep
 reboot
 wait 900
-expect trk_n0 2
-expect trk_takes0 2
+expect trk_n0 1
+expect trk_takes0 1
 expect trk_n2 2
 expect hash_same 1
-# the sequencer's part alone (a lock: step mode, a step held, KNOB 2 turned), made while the rhythm runs: saved at the
-# update
-tap SEQ
+# the sequencer's part alone (a lock: step mode, EDIT held a second; a step held, K2 turned), made while the rhythm
+# runs: saved at the update
+press EDIT
+wait 1100
+release EDIT
 wait 30
 expect seq 1
 tap PLAY
@@ -163,19 +162,18 @@ reboot
 wait 900
 expect locks 1
 expect hash_same 1
-# a drum track still recording when the update starts (track 6, the darbuka's): its hits so far are kept on their steps
+# a drum track still recording when the update starts (track 6, the darbuka's: SEQ, its own steps as its loop): its
+# hits so far are kept on their steps
 expect seq 0
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w5
+release SEL
 wait 30
 expect track 6
 expect his5 0
 tap PLAY
 wait 20
-tap REC
+tap SEQ
 wait 30
 expect rec_track 5
 tapkey 14
@@ -204,23 +202,19 @@ update
 expect running 0
 expect dirty 0
 expect store_writes 11
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w3
+release SEL
 wait 30
 expect track 4
 tap PLAY
 wait 20
-tap REC
+tap SEQ
 wait 30
 expect rec_track 3
 tapkey 3
 wait 600
-tap REC
+tap SEQ
 wait 30
 expect rec_track -1
 expect trk_n3 1
@@ -240,7 +234,7 @@ reboot
 wait 900
 expect tempo 146
 expect trk_n3 1
-expect trk_n0 2
+expect trk_n0 1
 expect trk_n2 2
 expect locks 1
 expect hash_same 1

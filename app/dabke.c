@@ -1459,6 +1459,7 @@ static void arp_flush(void)             /* ARP off: its notes end; the keys stil
     }
     nDown = 0;
 }
+static void held_count(void);
 static void arp_forget(void)            /* the arpeggio leaves its track (another track's keys now, or that track's
                                          * sound changed): its notes end there, its set is gone, its keys still down
                                          * are plain keys with nothing sounding, its held notes are let go. (Left as
@@ -1473,8 +1474,9 @@ static void arp_forget(void)            /* the arpeggio leaves its track (anothe
         if (BGET(heldArp, n)) { BCLR(heldArp, n); if (arpTr < DAB_NTRK) BCLR(heldK[arpTr], n); }
     }
     nDown = 0;
-    for (m = 0; m < NMAN; m++) for (n = 0; n < 4; n++) { uint32_t w = heldK[m][n]; while (w) { held++; w &= w - 1u; } }
-    st.held_n = (uint8_t)held; st.hold = held != 0;
+    (void)m; (void)held;
+    held_count();                       /* (the frozen tracks and their notes again: a track whose held notes were the
+                                         * arpeggio's is frozen no more) */
 }
 static void arp_add(int note)
 {
