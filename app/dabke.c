@@ -391,7 +391,7 @@ static float gm[5][BS];                 /* the mix's places: through the chorus,
                                          * the reverb's send */
 static bq_t eqf[6];                     /* the MASTER EQ: LOW, MID, HIGH on the left, then on the right */
 static float eqDb[3], eqT[3];           /* its three gains as they sound now (gliding) and as set, dB; all 0: out */
-static uint8_t eqSet, eqOn;
+static uint8_t eqSet, eqOn;              /* (eqOn: the bands not flat, a bit each: only those run) */
 static float mgT = 1.0f, mgS = 1.0f;    /* the MIDImix's master fader: as set, as it sounds (gliding) */
 static float ensBuf[1024] PLAT_POOL, chBuf[1024] PLAT_POOL, wowL[1024] PLAT_POOL, wowR[1024] PLAT_POOL;
 static int16_t echoBuf[ECHO_N] PLAT_POOL;
@@ -3156,10 +3156,11 @@ static void eq_block(void)              /* the MASTER EQ for this block: each ga
             eqf[k + 3].b0 = eqf[k].b0; eqf[k + 3].b1 = eqf[k].b1; eqf[k + 3].b2 = eqf[k].b2;
             eqf[k + 3].a1 = eqf[k].a1; eqf[k + 3].a2 = eqf[k].a2;
         }
-        if (g != 0.0f) on = 1;
+        if (g != 0.0f) on |= 1 << k;
+        else if (eqOn >> k & 1u)        /* (that band flat again: out, its filters at rest; at 0 dB a band passes the sound
+                                         * as it is, so it comes back in from rest without a step) */
+            eqf[k].z1 = eqf[k].z2 = eqf[k + 3].z1 = eqf[k + 3].z2 = 0.0f;
     }
-    if (!on && eqOn)                    /* (flat again: out, its filters at rest) */
-        for (k = 0; k < 6; k++) eqf[k].z1 = eqf[k].z2 = 0.0f;
     eqOn = (uint8_t)on;
 }
 static uint32_t busWas;                 /* the tracks that sounded in the last block */
@@ -3363,9 +3364,10 @@ static void post_chain(int32_t *lr, int n, float gain, int lowAny, uint32_t busO
         if (brightOn) { xL = bq_run(&fBrL, xL); xR = bq_run(&fBrR, xR); }
         if (eqOn) {                 /* the MASTER EQ, the last on the whole sound (after every effect, before the limit):
                                      * a mixer's three, a low shelf at 250 Hz, a wide bell at 1 kHz, a high shelf at
-                                     * 3.5 kHz (RAGA MEOW's) */
-            xL = bq_run(&eqf[2], bq_run(&eqf[1], bq_run(&eqf[0], xL)));
-            xR = bq_run(&eqf[5], bq_run(&eqf[4], bq_run(&eqf[3], xR)));
+                                     * 3.5 kHz (RAGA MEOW's); a flat band left out */
+            if (eqOn & 1u) { xL = bq_run(&eqf[0], xL); xR = bq_run(&eqf[3], xR); }
+            if (eqOn & 2u) { xL = bq_run(&eqf[1], xL); xR = bq_run(&eqf[4], xR); }
+            if (eqOn & 4u) { xL = bq_run(&eqf[2], xL); xR = bq_run(&eqf[5], xR); }
         }
         xL = clip3(xL * 0.75f); xR = clip3(xR * 0.75f);
         m = (xL + xR) * 0.5f;
@@ -3491,7 +3493,8 @@ static int base_units(void)             /* what the render costs before its note
     int u = 67 + (drumLive > 0 ? 158 : 0) + (droneG > 0.0f ? 20 : 0);
     u += 16 * ((par[P_CHORUS] > 0.001f) + (par[P_DRIVE] > 0.001f) + (par[P_PA] > 0.001f) + (par[P_WOW] > 0.001f) +
                (par[P_AGE] > 0.001f) + (par[P_HISS] > 0.001f) + (par[P_ECHO] > 0.001f) + (par[P_BRIGHT] < 0.999f));
-    if (eqOn || eqT[0] != 0.0f || eqT[1] != 0.0f || eqT[2] != 0.0f) u += 18;   /* (the MASTER EQ: six biquads a frame) */
+    u += 6 * ((eqT[0] != 0.0f || (eqOn & 1u)) + (eqT[1] != 0.0f || (eqOn >> 1 & 1u)) + (eqT[2] != 0.0f || (eqOn >> 2 & 1u)));
+                                        /* (the MASTER EQ: two biquads a frame for each band not flat) */
     return u;
 }
 static int render_units(void)
