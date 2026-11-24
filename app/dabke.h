@@ -318,6 +318,8 @@ typedef struct {
     uint8_t fz_n[DAB_NTRK], fz_note[DAB_NTRK][4];   /* each track's held notes (four at most; the left keys' with track
                                          * 1's), for PLAY to bring back */
     uint8_t loop_off;                   /* the tracks whose loop (or own steps) SEQ stopped, a bit each */
+    uint8_t arp_trk, arp_set[16];       /* the arpeggio's track and its set's notes (arp_n of them), for PLAY to bring a
+                                         * latched one back */
     float tlevel[DAB_NTRK];             /* how loud each track is now (after its level), 0..1: the MIXER's live bars */
 } dabke_status_t;
 const dabke_status_t *dabke_status(void);

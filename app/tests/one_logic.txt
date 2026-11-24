@@ -577,3 +577,51 @@ wait 1100
 release EDIT
 wait 50
 expect seq 0
+
+# ---- PLAY and a latched arpeggio playing on: stopped (its set kept), brought back, stopped again; the rhythm stays off
+settle
+wait 100
+press SEL
+wait 30
+key w0 down
+wait 30
+key w0 up
+wait 30
+release SEL
+wait 50
+tap ARP
+wait 50
+expect arp 1
+tap ENV
+wait 30
+turn SELECT 5
+wait 50
+expect row 5
+turn K4 1
+wait 50
+expect ch38 1
+key 7 down
+key 11 down
+wait 300
+key 7 up
+key 11 up
+wait 600
+expect arp_n 2
+expect voices0 >0
+tap PLAY
+wait 400
+expect running 0
+expect arp_n 0
+said ALL STOPPED
+tap PLAY
+wait 400
+expect arp_n 2
+expect running 0
+said ALL BACK
+tap PLAY
+wait 400
+expect arp_n 0
+turn K4 -1
+tap ARP
+wait 50
+expect arp 0

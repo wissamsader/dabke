@@ -551,6 +551,7 @@ static struct {
     uint8_t mix_fx;                      /* the MIDImix's knobs on their EFFECTS layer (SOLO tapped: BANK lit) */
     uint8_t mix_lvl;                     /* the MIDImix's master fader, 0..100 (live, never kept) */
     uint8_t frz_seen;                    /* the frozen tracks as last seen */
+    uint8_t arp_kept_n, arp_kept_trk, arp_kept[16];   /* a latched arpeggio PLAY stopped: its set, its track */
     int8_t r0, r1;                       /* the rhythms by index (r1 -1: none) */
     uint32_t keys, btn;
     uint16_t keynote[NKEYS];             /* a held key's manual and note (0x8000 | manual << 7 | note), 0 none (0x1000 |
@@ -2235,15 +2236,17 @@ static void freeze_press(int t)          /* REC: frozen, or let go (a track PLAY
 /* PLAY: everything sounding stops, the frozen tracks and the rhythm remembered (a loop plays on the rhythm's clock: it
  * stops with it and comes back with it); with nothing sounding, or something it stopped still stopped: they come back;
  * with nothing to bring back: the rhythm starts. Held 0.4 s while the rhythm runs: a fill-in (input) */
+static int arp_latched(void) { return set.arp && set.ch[C_ARPLATCH] && dabke_status()->arp_n; }   /* a latched arpeggio
+                                          * playing on, its keys let go */
 static int anything_sounds(void)
 {
     const dabke_status_t *s = dabke_status();
-    return s->running || s->rec_track >= 0 || (s->frozen & (uint8_t)~ui.kept_frozen) != 0;
+    return s->running || s->rec_track >= 0 || (s->frozen & (uint8_t)~ui.kept_frozen) != 0 || arp_latched();
 }
 static int remembered(void)
 {
     const dabke_status_t *s = dabke_status();
-    return (ui.kept_frozen & (uint8_t)~s->frozen) != 0 || (ui.run_kept && !s->running);
+    return (ui.kept_frozen & (uint8_t)~s->frozen) != 0 || (ui.run_kept && !s->running) || (ui.arp_kept_n && !s->arp_n);
 }
 static void frozen_back(int t)           /* a frozen track PLAY stopped (or kept from before a power-off): its notes again */
 {
@@ -2272,6 +2275,13 @@ static void play_press(void)
             }
         set.x.frz = ui.kept_frozen;
         ui.frz_seen = 0;
+        if (arp_latched()) {                 /* (a latched arpeggio: its set kept, and gone: its LATCH let go and taken again) */
+            ui.arp_kept_n = (uint8_t)(s->arp_n > 16 ? 16 : s->arp_n);
+            ui.arp_kept_trk = s->arp_trk;
+            memcpy(ui.arp_kept, s->arp_set, 16);
+            dabke_par(P_ARPLATCH, 0.0f);
+            dabke_par(P_ARPLATCH, 1.0f);
+        }
         if (s->running) {
             dabke_run(0);
             ui.run_kept = 1;
@@ -2293,6 +2303,14 @@ static void play_press(void)
         set.x.frz = 0;
         changed();
     }
+    if (ui.arp_kept_n && !s->arp_n && set.arp && set.ch[C_ARPLATCH]) {   /* (the latched arpeggio: its set again) */
+        for (t = 0; t < ui.arp_kept_n; t++)
+            dabke_key(ui.arp_kept_trk, ui.arp_kept[t], 100);
+        for (t = 0; t < ui.arp_kept_n; t++)
+            dabke_key(ui.arp_kept_trk, ui.arp_kept[t], 0);
+        n++;
+    }
+    ui.arp_kept_n = 0;
     if (ui.run_kept && !s->running) {
         dabke_run(1);
         n++;

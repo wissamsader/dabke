@@ -3537,6 +3537,11 @@ void dabke_render(int32_t *lr, uint32_t n, float gain)
     took = 0;
     guard(n);                           /* (before the keys come in, and again before each block) */
     while (q_r != q_w) { take(&q[q_r]); q_r = (q_r + 1u) % QN; took++; }
+    {                                   /* (the arpeggio's set, for the panel: PLAY brings a latched one back) */
+        int k;
+        st.arp_trk = arpTr;
+        for (k = 0; k < 16; k++) st.arp_set[k] = k < nArp ? arpNotes[k] : 0;
+    }
     if (dirty) { dirty = 0; derive(); }
     t0 = plat_ticks24();                /* (the notes' and effects' time, not the messages') */
     shed_wait = shed_wait > n ? shed_wait - n : 0u;
