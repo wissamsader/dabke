@@ -1,24 +1,26 @@
-# Locks (fm1-organ/LOGIC.md): in step mode a step held while a knob turns holds that knob at a value of its own, from
-# that step until the track's next step with a hit or a note (or another lock of the same knob); then the knob is back
-# at its normal value. Any knob whose value can change while sounding: the track's strip (K1 to K4 in the step view, the
-# MIDImix's strips: tests/midimix.txt) and the knobs of the page on screen. From the repository's root:
+# Locks (fm1-organ/LOGIC.md): in step mode (EDIT held a second) a step held while a knob turns holds that knob at a
+# value of its own, from that step until the track's next step with a hit or a note (or another lock of the same knob);
+# then the knob is back at its normal value. Any knob whose value can change while sounding: the track's strip (K1 to
+# K4 in the step view: the home page's row shown, its first PITCH, FILTER, SPACE, LEVEL; the MIDImix's strips:
+# tests/midimix.txt) and the knobs of the page on screen. SEQ held a second clears the picked track's loop and its
+# locks with it. From the repository's root:
 #   app/build/host/dabke_host app/tests/locks.txt OUTDIR
 # Dabke Syria at 140: a step 107 ms. The kick (track 5) on steps 1, 5, 9, 13 of sixteen.
 # (lockT_S_ID: the lock on track T+1's step S of knob ID, its value in the knob's steps (-999: none); locks, locksT:
 # the locks in all, track T+1's; lk_atID: the lock holding knob ID now, its value (-999: none: its normal value);
-# eparID: knob ID as the engine has it now, x 1000; knobs: 51 track 5's filter (x 0.02), 67 its effect (x 0.01), 75 its
-# pitch (x 0.25 semitone), 43 its volume (x 0.01), 22 the reverb, 14 and 15 the vibrato's speed and depth; mid_keyN:
-# key N's light at the second level, a locked step)
+# eparID: knob ID as the engine has it now, x 1000; knobs: 51 track 5's filter (x 0.02), 67 its delay send (x 0.01),
+# 83 its reverb send (x 0.01), 75 its pitch (x 0.25 semitone), 43 its level (x 0.01), 22 the reverb, 14 and 15 the
+# vibrato's speed and depth; mid_keyN: key N's light at the second level, a locked step)
 wait 900
 listen
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w4
+release SEL
 wait 30
 expect track 5
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 30
 expect seq 1
 # the kick his, the rhythm's steps as they were (a step added and taken away)
@@ -28,8 +30,8 @@ wait 60
 expect his4 1
 expect trig4_4 1
 
-# ---- a step held (step 5: a hit there) and the strip's knobs turned (the step view: K1 effect, K2 filter, K3 pitch,
-# K4 volume): each locked on that step, from its normal value; the knobs themselves stay as they were
+# ---- a step held (step 5: a hit there) and the strip's knobs turned (the step view: K1 pitch, K2 filter, K3 space: its
+# two sends together, K4 level): each locked on that step, from its normal value; the knobs themselves stay as they were
 key w4 down
 wait 30
 expect sstep 4
@@ -38,11 +40,13 @@ wait 30
 expect lock4_4_51 -10
 expect par51 0
 expect locks 1
-turn K1 5
+turn K3 5
 wait 30
 expect lock4_4_67 40
+expect lock4_4_83 40
 expect par67 30
-turn K3 2
+expect par83 30
+turn K1 2
 wait 30
 expect lock4_4_75 8
 expect par75 0
@@ -50,12 +54,12 @@ turn K4 -10
 wait 30
 expect lock4_4_43 80
 expect par43 100
-expect locks 4
+expect locks 5
 # turned again: the lock's own value goes on from where it is
 turn K2 -5
 wait 30
 expect lock4_4_51 -20
-expect locks 4
+expect locks 5
 key w4 up
 wait 60
 # a hold in which a knob was turned is no tap: the hit is still there. Its key: the second level, steadily (a step
@@ -80,11 +84,13 @@ wait 250
 expect epar51 -400
 expect lk_at51 -20
 expect epar67 400
+expect epar83 400
 expect epar75 2000
 expect epar43 800
 wait 400
 expect epar51 0
 expect epar67 300
+expect epar83 300
 expect epar75 0
 expect epar43 1000
 expect lk_at51 -999
@@ -103,7 +109,7 @@ wait 60
 expect lock4_5_51 10
 expect trig4_5 0
 expect mid_key9 1
-expect locks 5
+expect locks 6
 tap PLAY
 wait 450
 expect epar51 -400
@@ -121,7 +127,7 @@ tapkey w5
 wait 60
 expect lock4_5_51 -999
 expect trig4_5 0
-expect locks 4
+expect locks 5
 expect mid_key9 0
 
 # ---- the knob itself turned (no step held) while a lock holds it: its normal value changes, heard once the lock
@@ -144,9 +150,9 @@ expect lock4_4_51 -20
 # ---- the knobs of the page on screen: the reverb (the effects page's first row, K4), the vibrato's speed and depth
 # (the ornaments page's, K1 and K2): held step 9
 tap FX
-turn SELECT -20
 wait 30
 expect page 2
+expect row 0
 key w8 down
 wait 30
 turn K4 5
@@ -156,8 +162,9 @@ expect par22 25
 key w8 up
 wait 30
 tap LFO
-turn SELECT -20
 wait 30
+expect page 4
+expect row 0
 key w8 down
 wait 30
 turn K1 5
@@ -213,7 +220,7 @@ expect lock4_8_127 -999
 key w8 up
 wait 60
 expect trig4_8 1
-expect locks 7
+expect locks 8
 # they play: from step 9 (857 ms) to step 13
 tap PLAY
 wait 700
@@ -228,7 +235,8 @@ expect epar14 5500
 tap PLAY
 wait 60
 
-# ---- removing. EDIT with the step held: that step's locks are gone, the hit stays
+# ---- removing. EDIT with the step held: that step's locks are gone, the hit stays (EDIT used so is no tap: the page
+# stays)
 listen
 key w8 down
 wait 30
@@ -237,9 +245,9 @@ wait 30
 key w8 up
 wait 60
 said STEP 9: LOCKS REMOVED
-expect locks 4
+expect locks 5
 expect trig4_8 1
-expect hold 0
+expect page 0
 # EDIT first, then the step's key: the same (and the key is not tuned a quarter flat)
 press EDIT
 wait 30
@@ -251,7 +259,7 @@ said STEP 5: LOCKS REMOVED
 expect locks 0
 expect cents7 0
 expect trig4_4 1
-expect hold 0
+expect page 0
 expect mid_keys 0
 # a step with a hit and a lock tapped: the hit and its lock go together; tapped again: a hit, no lock
 key w4 down
@@ -270,7 +278,8 @@ tapkey w4
 wait 60
 expect trig4_4 1
 expect locks 0
-# EDIT held a second with no step held: all the picked track's locks; another track's stay
+# SEQ held a second (the rhythm running, the kick's steps playing: stopped, then cleared): the picked track's loop and
+# all its locks gone, step mode as it was; another track's stay. The kick his again after (a step added and taken away)
 key w4 down
 wait 30
 turn K2 -5
@@ -281,7 +290,9 @@ wait 30
 turn K1 5
 key w8 up
 wait 30
-tap SEL
+press SEL
+tapkey w5
+release SEL
 wait 30
 expect track 6
 key w2 down
@@ -291,24 +302,31 @@ key w2 up
 wait 60
 expect locks 3
 expect locks5 1
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w4
+release SEL
 wait 30
 expect track 5
 listen
-press EDIT
+tap PLAY
+wait 100
+press SEQ
 wait 1100
-release EDIT
+release SEQ
 wait 60
-said TRACK 5: ALL LOCKS REMOVED
+said TRACK 5 LOOP CLEARED
 expect locks4 0
 expect locks 1
-expect hold 0
+expect his4 0
+expect seq 1
+tap PLAY
+wait 60
+expect running 0
+tapkey w1
+tapkey w1
+wait 60
+expect his4 1
+expect trig4_4 1
 
 # ---- kept with the settings: a lock on the kick's step 5 again; a power cycle; it is there, and it plays
 key w4 down
@@ -317,12 +335,12 @@ turn K2 -5
 key w4 up
 wait 60
 expect locks4 1
-# LENGTH two bars (the effects page's track row, K2): the first bar's lock is there again in the second, as its hits
-# are, so nothing sounds different; one bar again: kept; two again: not made twice
-tap FX
-turn SELECT -20
-turn SELECT 3
+# LENGTH two bars (the EDIT page's first row, K2): the first bar's lock is there again in the second, as its hits are,
+# so nothing sounds different; one bar again: kept; two again: not made twice
+tap EDIT
 wait 30
+expect page 6
+expect row 0
 turn K2 1
 wait 60
 expect tn4 32
@@ -339,7 +357,9 @@ expect locks4 2
 turn K2 -1
 wait 60
 tap HOME
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 7000
 expect dirty 0
 reboot
@@ -357,17 +377,16 @@ expect epar51 0
 tap PLAY
 wait 60
 
-# ---- recorded live: REC (the lead, a first take; the rhythm stopped: the first key starts it), a note, then K2 (the
+# ---- recorded live: SEQ (the lead, a first take; the rhythm stopped: the first key starts it), a note, then K2 (the
 # picked track's filter) turned while it records: locks on the steps passed, the knob's own value as it was. The loop
-# plays the move back. REC held a second: the take gone, and its locks with it
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+# plays the move back; the rhythm stopped, the knob is back at its own value. SEQ held a second (PLAY first, the loop
+# playing): the loop gone, and its locks with it
+press SEL
+tapkey w0
+release SEL
 wait 30
 expect track 1
-tap REC
+tap SEQ
 wait 30
 expect rec_waiting 1
 tapkey 7
@@ -378,7 +397,7 @@ wait 30
 expect par47 0
 expect locks0 >1
 expect epar47 <-50
-tap REC
+tap SEQ
 wait 30
 expect rec_track -1
 expect trk_takes0 1
@@ -388,31 +407,68 @@ wait 900
 tap PLAY
 wait 60
 expect epar47 0
-press REC
-wait 1100
-release REC
-wait 60
-expect trk_n0 0
-expect locks0 0
-expect locks 3
-said TRACK 1 EMPTY
-
-# ---- SEQ held a second: every recording and every lock gone
+listen
+tap PLAY
+wait 100
 press SEQ
 wait 1100
 release SEQ
 wait 60
-said ALL RECORDINGS CLEARED
-expect locks 0
-expect his4 0
-expect seq 0
+expect trk_n0 0
+expect locks0 0
+expect locks 3
+said TRACK 1 LOOP CLEARED
 
-# ---- the pool: 240 locks. The MIDImix's strips with a step held, each knob and fader a lock: eight steps of track 1,
-# thirty of the thirty-two controls each. One more: "NO ROOM FOR MORE LOCKS", and nothing is lost
-tap SEQ
+# ---- SEQ held a second on the kick (the rhythm running still): its steps and both its locks gone; track 6's lock
+# stays (another track's). EDIT with that step held takes it
+press SEL
+tapkey w4
+release SEL
+wait 30
+expect track 5
+press SEQ
+wait 1100
+release SEQ
+wait 60
+said TRACK 5 LOOP CLEARED
+expect locks4 0
+expect his4 0
+expect locks 1
+tap PLAY
+wait 60
+expect running 0
+press SEL
+tapkey w5
+release SEL
+wait 30
+expect track 6
+press EDIT
+wait 1100
+release EDIT
+wait 30
+expect seq 1
+key w2 down
+wait 30
+tap EDIT
+wait 30
+key w2 up
+wait 60
+said STEP 3: LOCKS REMOVED
+expect locks 0
+
+# ---- the pool: 240 locks. The MIDImix's strips with a step held, each knob and fader a lock (the bottom knob, SPACE:
+# two, its track's two sends): six steps of track 1 (his: a note on its last step), the thirty-two controls each, forty
+# locks a step. One more: "NO ROOM FOR MORE LOCKS", and nothing is lost
+press SEL
+tapkey w0
+release SEL
 wait 30
 expect seq 1
 expect track 1
+tapkey w15
+wait 60
+expect his0 1
+expect locks 0
 key w0 down
 wait 30
 midi B0 10 20
@@ -445,6 +501,8 @@ midi B0 38 20
 midi B0 39 20
 midi B0 3A 20
 midi B0 3B 20
+midi B0 3C 20
+midi B0 3D 20
 wait 60
 key w0 up
 wait 30
@@ -480,6 +538,8 @@ midi B0 38 20
 midi B0 39 20
 midi B0 3A 20
 midi B0 3B 20
+midi B0 3C 20
+midi B0 3D 20
 wait 60
 key w1 up
 wait 30
@@ -515,6 +575,8 @@ midi B0 38 20
 midi B0 39 20
 midi B0 3A 20
 midi B0 3B 20
+midi B0 3C 20
+midi B0 3D 20
 wait 60
 key w2 up
 wait 30
@@ -550,6 +612,8 @@ midi B0 38 20
 midi B0 39 20
 midi B0 3A 20
 midi B0 3B 20
+midi B0 3C 20
+midi B0 3D 20
 wait 60
 key w3 up
 wait 30
@@ -585,6 +649,8 @@ midi B0 38 20
 midi B0 39 20
 midi B0 3A 20
 midi B0 3B 20
+midi B0 3C 20
+midi B0 3D 20
 wait 60
 key w4 up
 wait 30
@@ -620,100 +686,42 @@ midi B0 38 20
 midi B0 39 20
 midi B0 3A 20
 midi B0 3B 20
+midi B0 3C 20
+midi B0 3D 20
 wait 60
 key w5 up
 wait 30
+expect locks 240
+expect lock0_5_47 -25
+expect lock0_0_63 25
+expect lock0_0_79 25
+listen
 key w6 down
 wait 30
 midi B0 10 20
-midi B0 11 20
-midi B0 12 20
-midi B0 13 20
-midi B0 14 20
-midi B0 15 20
-midi B0 16 20
-midi B0 17 20
-midi B0 18 20
-midi B0 19 20
-midi B0 1A 20
-midi B0 1B 20
-midi B0 1C 20
-midi B0 1D 20
-midi B0 1E 20
-midi B0 1F 20
-midi B0 2E 20
-midi B0 2F 20
-midi B0 30 20
-midi B0 31 20
-midi B0 32 20
-midi B0 33 20
-midi B0 34 20
-midi B0 35 20
-midi B0 36 20
-midi B0 37 20
-midi B0 38 20
-midi B0 39 20
-midi B0 3A 20
-midi B0 3B 20
 wait 60
 key w6 up
-wait 30
-key w7 down
-wait 30
-midi B0 10 20
-midi B0 11 20
-midi B0 12 20
-midi B0 13 20
-midi B0 14 20
-midi B0 15 20
-midi B0 16 20
-midi B0 17 20
-midi B0 18 20
-midi B0 19 20
-midi B0 1A 20
-midi B0 1B 20
-midi B0 1C 20
-midi B0 1D 20
-midi B0 1E 20
-midi B0 1F 20
-midi B0 2E 20
-midi B0 2F 20
-midi B0 30 20
-midi B0 31 20
-midi B0 32 20
-midi B0 33 20
-midi B0 34 20
-midi B0 35 20
-midi B0 36 20
-midi B0 37 20
-midi B0 38 20
-midi B0 39 20
-midi B0 3A 20
-midi B0 3B 20
-wait 60
-key w7 up
-wait 30
-expect locks 240
-expect lock0_7_47 -25
-listen
-key w8 down
-wait 30
-midi B0 10 20
-wait 60
-key w8 up
 wait 60
 said NO ROOM FOR MORE LOCKS
 expect locks 240
-expect lock0_8_63 -999
+expect lock0_6_71 -999
 expect lock0_0_63 25
-expect lock0_7_47 -25
-# EDIT held a second: all of them gone
+expect lock0_5_47 -25
+# SEQ held a second (PLAY first): track 1's loop and all of its locks gone
+tap PLAY
+wait 100
+press SEQ
+wait 1100
+release SEQ
+wait 60
+expect locks 0
+expect his0 0
+tap PLAY
+wait 60
+expect running 0
 press EDIT
 wait 1100
 release EDIT
-wait 60
-expect locks 0
-tap SEQ
 wait 30
 expect seq 0
 
@@ -736,7 +744,9 @@ wait 60
 expect track 6
 expect ksnd5 500
 expect locks 0
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 60
 expect seq 1
 key w0 down
@@ -779,16 +789,16 @@ held STEP 3: SOUND BOOM
 key w2 up
 wait 60
 expect locks5 2
-expect hits9 23
-expect hits1 21
+expect hits9 34
+expect hits1 33
 tap PLAY
 wait 400
 expect dsnd9 501
-expect hits9 25
-expect hits1 21
+expect hits9 36
+expect hits1 33
 wait 1900
-expect hits9 26
-expect hits1 23
+expect hits9 37
+expect hits1 35
 expect dsnd9 400
 tap PLAY
 wait 60
@@ -853,10 +863,10 @@ expect nsteps 32
 expect lock5_16_127 17
 expect locks5 2
 tap OCT-
-tap FX
-turn SELECT -20
-turn SELECT 3
+tap EDIT
 wait 30
+expect page 6
+expect row 0
 turn K2 -1
 wait 60
 expect nsteps 16
@@ -871,7 +881,9 @@ expect mirror 0
 expect lksums 0
 expect track 6
 # SELECT with no step held is the track's sound, as it was: the darbuka BRIGHT, two on; and back
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 60
 expect seq 1
 listen
@@ -919,44 +931,46 @@ expect locks5 0
 turn SELECT -4
 wait 60
 expect ksnd5 500
-# EDIT held a second takes a track's sound locks with its other locks; SEQ held a second: every track's
+# SEQ held a second takes a track's sound locks with its loop (the darbuka's steps, his; the rhythm running: PLAY
+# first), and the audio side with them
 key w0 down
 wait 250
 turn SELECT 1
 key w0 up
 wait 60
 expect lock5_0_127 17
-press EDIT
-wait 1100
-release EDIT
-wait 60
-expect locks5 0
-key w0 down
-wait 250
-turn SELECT 1
-key w0 up
-wait 60
-expect locks5 1
-tap SEQ
-wait 30
+expect his5 1
+tap PLAY
+wait 100
 press SEQ
 wait 1100
 release SEQ
 wait 60
+expect locks5 0
+expect his5 0
 expect locks 0
-expect seq 0
 expect mirror 0
+tap PLAY
+wait 60
+expect running 0
+press EDIT
+wait 1100
+release EDIT
+wait 60
+expect seq 0
 turn PRESET -4
 wait 60
 expect rhythm 0
 
-# ---- a lock made by hand outside any take (on the rhythm's track, or before a first recording) stays on its step
-# when his steps or notes are taken back; EDIT (the step held, or held a second) or SEQ held takes it. Track 6, the
-# rhythm's: its step 1's sound locked by hand. REC held: nothing of his here, and the lock stays. A step tapped (the
-# track his) and REC held: his steps go, the track is the rhythm's again, the lock still on its step
+# ---- a lock made by hand on a track with nothing of his (track 6, the rhythm's: its step 1's sound locked): SEQ held
+# a second finds no loop there, says so, and the lock stays. A step tapped (the track his) and SEQ held (PLAY first):
+# his steps go, the track is the rhythm's again, and every lock of it with them, the one made before too. The lead the
+# same: its filter locked on step 3 before any recording, a take recorded; SEQ held: the loop and the lock gone
 expect track 6
 expect locks 0
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 60
 key w0 down
 wait 250
@@ -966,25 +980,29 @@ wait 60
 expect lock5_0_127 17
 expect his5 0
 listen
-press REC
+press SEQ
 wait 1100
-release REC
+release SEQ
 wait 60
-said TRACK 6: NOTHING OF YOURS HERE
+said TRACK 6: NO LOOP HERE
 expect lock5_0_127 17
+expect rec_track -1
 tapkey w3
 wait 60
 expect his5 1
-press REC
+tap PLAY
+wait 100
+press SEQ
 wait 1100
-release REC
+release SEQ
 wait 60
-said TRACK 6: BACK TO THE RHYTHM
+said TRACK 6 LOOP CLEARED
 expect his5 0
-expect lock5_0_127 17
-expect locks5 1
-# a note sound the same: the lead's filter locked on step 3 before any recording; a take recorded and taken back: the
-# track is empty, the lock on its step. EDIT held a second in step mode: gone
+expect lock5_0_127 -999
+expect locks5 0
+tap PLAY
+wait 60
+expect running 0
 press SEL
 tapkey w0
 release SEL
@@ -996,40 +1014,29 @@ turn K2 -5
 key w2 up
 wait 60
 expect lock0_2_47 -10
-tap SEQ
-wait 30
-expect seq 0
-tap REC
-wait 30
-tapkey 7
-wait 200
-tap REC
-wait 60
-tap PLAY
-wait 60
-expect running 0
-expect trk_takes0 1
-listen
-press REC
-wait 1100
-release REC
-wait 60
-said TRACK 1 EMPTY
-expect trk_n0 0
-expect lock0_2_47 -10
-tap SEQ
-wait 60
 press EDIT
 wait 1100
 release EDIT
-wait 60
-expect locks0 0
-expect locks5 1
+wait 30
+expect seq 0
 tap SEQ
 wait 30
+tapkey 7
+wait 200
+tap SEQ
+wait 60
+expect trk_takes0 1
+expect lock0_2_47 -10
+listen
 press SEQ
 wait 1100
 release SEQ
 wait 60
+said TRACK 1 LOOP CLEARED
+expect trk_n0 0
+expect lock0_2_47 -999
 expect locks 0
+tap PLAY
+wait 60
+expect running 0
 expect seq 0

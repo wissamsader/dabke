@@ -547,6 +547,7 @@ static struct {
     uint32_t fx_at;
     uint8_t kept_frozen, run_kept;       /* what PLAY stopped and brings back: the frozen tracks, the rhythm */
     uint8_t seq_trk, seq_was, seq_say;   /* SEQ: its track, its loop then, its tap to be said when let go */
+    uint8_t seq_ran;                     /* (its press started the rhythm) */
     uint8_t loop_seen[DAB_NTRK];         /* each track's loop as last said */
     uint8_t mix_fx;                      /* the MIDImix's knobs on their EFFECTS layer (SOLO tapped: BANK lit) */
     uint8_t mix_lvl;                     /* the MIDImix's master fader, 0..100 (live, never kept) */
@@ -2243,7 +2244,9 @@ static int arp_latched(void) { return set.arp && set.ch[C_ARPLATCH] && dabke_sta
 static int anything_sounds(void)
 {
     const dabke_status_t *s = dabke_status();
-    return s->running || s->rec_track >= 0 || (s->frozen & (uint8_t)~ui.kept_frozen) != 0 || arp_latched();
+    return s->running || (s->rec_track >= 0 && !s->rec_waiting) || (s->frozen & (uint8_t)~ui.kept_frozen) != 0 ||
+           arp_latched();                    /* (a take waiting for its first key: nothing sounds yet, PLAY starts it with
+                                              * the rhythm) */
 }
 static int remembered(void)
 {
@@ -2379,6 +2382,7 @@ static void seq_press(void)
     ui.seq_at = plat_ms();
     ui.seq_trk = (uint8_t)t;
     ui.seq_was = (uint8_t)st;
+    ui.seq_ran = 0;
     switch (st) {
     case LP_EMPTY:
         if (t == PART_DRONE && !trk_drum(t) && !set.ch[C_DRONE])   /* (a drone that is off cannot move: on, on the tonic) */
@@ -2389,8 +2393,10 @@ static void seq_press(void)
     case LP_PLAY: dabke_loop_off(t, 1); break;
     default:
         dabke_loop_off(t, 0);
-        if (!dabke_status()->running)
+        if (!dabke_status()->running) {
             dabke_run(1);
+            ui.seq_ran = 1;                  /* (held a second instead: the clear stops the rhythm this press started) */
+        }
     }
 }
 static void seq_hold(uint32_t btn)       /* SEQ let go: its tap said; held a second: the track's loop cleared (said) */
@@ -2406,6 +2412,10 @@ static void seq_hold(uint32_t btn)       /* SEQ let go: its tap said; held a sec
         int t = ui.seq_trk;
         ui.seq_done = 1;
         dabke_track_clear(t);
+        if (ui.seq_ran) {                    /* (the press had started the rhythm to play the loop again: stopped again) */
+            dabke_run(0);
+            ui.seq_ran = 0;
+        }
         if (ui.seq_was != LP_EMPTY)          /* (its locks go with it; an empty track's made by hand stay) */
             lk_clear(t, -1, 0);
         trk_name(t, a);

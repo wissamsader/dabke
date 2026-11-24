@@ -1,24 +1,26 @@
-# The tracks, from the FM-1 alone. SEL on the home page picks a track (ALL, 1 .. 8); SELECT there changes its sound;
-# REC, let go, records it (ALL: the lead), REC again stops at once (the bars played kept whole, a loop of them); REC on
-# a track with a loop adds a take over it; REC held a second takes the last take away and records nothing (a drum
-# sound's live take: its steps as they were before it); the loops play whenever the rhythm runs: PLAY alone starts and
-# stops everything, SEQ is the sequencer (tests/seq.txt); SEQ held a second clears every recording (tests/keys.txt has
-# HOLD and the keys playing the picked track); the effects page's rows 4 and 5 are the picked track's pitch, LENGTH,
-# sound and effect, the scene fader and the pitch knob's steps. Dabke Syria at 140: a step 107 ms, a bar 8 steps (857
-# ms), 48 ticks. From the repository's root:
+# The tracks' loops, from the FM-1 alone (fm1-organ/LOGIC.md version 2). SEL held and a white key picks a track (1 ..
+# 8); SELECT on the home page changes its sound. SEQ is the picked track's loop: on an empty track it records (the
+# rhythm stopped: the first key starts it), SEQ again closes it at once (the bars played kept whole, a loop of them,
+# playing from the next bar); on a loop playing SEQ stops it (kept), again it plays; SEQ held a second clears that
+# track's loop, its locks with it, every other track's kept (a drum sound's own steps: the rhythm's again). The loops
+# play whenever the rhythm runs: PLAY alone stops and starts everything. EDIT held a second is step mode
+# (tests/seq.txt); REC freezes (tests/hold.txt). The EDIT page's first row is the picked track (K1), its LENGTH (K2),
+# the drum a tapped step gets (K3) and PITCH STEPS (K4); its second row FADE (the scene fader) and TOP SOUND; the
+# effects page's SENDS and TONE rows are the picked track's sends, filter, bass, pitch and level. Dabke Syria at 140:
+# a step 107 ms, a bar 8 steps (857 ms), 48 ticks. From the repository's root:
 #   app/build/host/dabke_host app/tests/loop.txt OUTDIR
 wait 900
 expect rec_track -1
-expect track 0
+expect track 1
 listen
-# the rhythm runs; REC: the lead records (all picked: the lead), from this bar's start
+# the rhythm runs; SEQ: the lead (track 1, picked at the start) records, from this bar's start
 tap PLAY
 wait 20
-tap REC
+tap SEQ
 wait 30
 expect rec_track 0
 expect rec_waiting 0
-said TRACK 1: RECORDING
+said TRACK 1 LOOP RECORDING
 # three notes, on steps 2, 4 and 6
 wait 60
 key 7 down
@@ -33,8 +35,8 @@ key 11 down
 wait 80
 key 11 up
 wait 10
-# REC again: it stops at once; the loop is the whole bar, and it plays from the next bar
-tap REC
+# SEQ again: it closes at once; the loop is the whole bar, and it plays from the next bar
+tap SEQ
 wait 30
 expect rec_track -1
 expect trk_n0 3
@@ -44,34 +46,42 @@ expect trk_takes0 1
 expect trk_key0_0 60
 expect trk_key0_1 62
 expect trk_key0_2 64
-said TRACK 1: 1 BAR, 1 TAKE
+said TRACK 1 LOOP PLAYING, 1 BAR
 wait 1800
 expect loop_plays >2
 expect loop_last_trk 0
-# SEQ no longer stops the loops: it is the sequencer, step mode on (ALL picked: track 1, the first time) and off; the
-# rhythm and the loop play on through both
-tap SEQ
+# EDIT held a second: step mode on (the track picked stays), and off again; the rhythm and the loop play on through
+# both
+press EDIT
+wait 1100
+release EDIT
 wait 30
 expect seq 1
 expect track 1
 expect running 1
 said STEP MODE: WHITE KEYS ARE STEPS
-unsaid LOOPS
-tap SEQ
+unsaid LOOP
+press EDIT
+wait 1100
+release EDIT
 wait 900
 expect seq 0
 expect running 1
 expect loop_plays >5
 said STEP MODE OFF
-# SEL: the drone picked, then the left hand (the keys play it, said so)
-tap SEL
+# SEL held and the second white key: the drone picked; the third: the left hand (the keys play it, said so)
+press SEL
+tapkey w1
+release SEL
 wait 30
 expect track 2
-said KEYS PLAY TRACK 2
-tap SEL
+said TRACK 2: DRONE MIJWIZ
+press SEL
+tapkey w2
+release SEL
 wait 30
 expect track 3
-said KEYS PLAY TRACK 3
+said TRACK 3: LEFT HAND STRINGS
 # SELECT on the home page: the left hand's sound, and back
 turn SELECT 1
 wait 30
@@ -80,94 +90,103 @@ said TRACK 3: LEFT HAND ORGAN
 turn SELECT -1
 wait 30
 expect ch13 6
-# REC: the left hand records; every key plays it while it does
-tap REC
+# SEQ: the left hand records; every key plays it while it does
+tap SEQ
 wait 30
 expect rec_track 2
 tapkey 14
 wait 30
-tap REC
-wait 30
-expect rec_track -1
-expect trk_n2 1
-expect trk_key2_0 67
-said , 1 TAKE
-# REC again: a second take over it
-tap REC
-wait 30
-expect overdub 1
-tapkey 16
-wait 30
-tap REC
-wait 30
-expect trk_n2 2
-expect trk_takes2 2
-# REC held a second: the last take gone; again: the one before, empty
-press REC
-wait 1100
-release REC
+tap SEQ
 wait 30
 expect rec_track -1
 expect trk_n2 1
 expect trk_takes2 1
-said TRACK 3: LAST TAKE GONE
-press REC
-wait 1100
-release REC
+expect trk_key2_0 67
+said TRACK 3 LOOP PLAYING, 1 BAR
+# SEQ on the loop playing: it stops, kept; what is played meanwhile is not recorded. Again: it plays again
+tap SEQ
 wait 30
+expect loop2 3
+expect loop_off 4
+expect rec_track -1
+said TRACK 3 LOOP STOPPED
+tapkey 16
+wait 30
+expect trk_n2 1
+tap SEQ
+wait 30
+expect loop2 2
+expect loop_off 0
+expect trk_n2 1
+said TRACK 3 LOOP PLAYING
+# SEQ held a second: that loop cleared (it never records while held); again, on the empty track: nothing there, said,
+# and nothing kept
+press SEQ
+wait 1100
+release SEQ
+wait 30
+expect rec_track -1
 expect trk_n2 0
 expect trk_len2 0
-said TRACK 3 EMPTY
+expect loop2 0
+said TRACK 3 LOOP CLEARED
+press SEQ
+wait 500
+unsaid RECORDING
+wait 600
+release SEQ
+wait 30
+expect rec_track -1
+expect trk_n2 0
+expect trk_len2 0
+said TRACK 3: NO LOOP HERE
 # the drone records, and moves: two keys a moment apart, the drone on each in turn
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w1
+release SEL
 wait 30
 expect track 2
-tap REC
+tap SEQ
 wait 30
 expect rec_track 1
 tapkey 9
 wait 300
 tapkey 14
 wait 30
-tap REC
+tap SEQ
 wait 30
 expect trk_n1 2
 expect trk_key1_0 62
 expect trk_key1_1 67
 # the bass line records its own notes, two octaves under the keys
-tap SEL
-tap SEL
+press SEL
+tapkey w3
+release SEL
 wait 30
 expect track 4
-tap REC
+tap SEQ
 wait 30
 expect rec_track 3
 tapkey 0
 wait 30
-tap REC
+tap SEQ
 wait 30
 expect trk_n3 1
 expect trk_key3_0 29
-# the darbuka and tabl: REC records its drums live as the keys play them (all its keys: its seven drums up the keys),
+# the darbuka and tabl: SEQ records its drums live as the keys play them (all its keys: its seven drums up the keys),
 # each hit kept on the step it falls on; the track is his from the first hit (its lane's mark), the rhythm's own steps
 # to begin with
 listen
-tap SEL
-tap SEL
+press SEL
+tapkey w5
+release SEL
 wait 30
 expect track 6
 expect his5 0
-tap REC
+tap SEQ
 wait 30
 expect rec_track 5
-said TRACK 6: RECORDING
+said TRACK 6 LOOP RECORDING
 unsaid WHITE KEYS
 tapkey 14
 wait 30
@@ -177,51 +196,54 @@ expect tn5 16
 expect drum_take 6
 tapkey 3
 wait 30
-tap REC
+tap SEQ
 wait 30
 expect rec_track -1
-said TRACK 6: TAKE KEPT
-# REC held a second: that take gone; the track had nothing of his before it: the rhythm's again. Nothing records
-press REC
+said TRACK 6 LOOP PLAYING
+# SEQ held a second: its loop cleared; a drum sound's: its own steps go, the rhythm's again. Nothing records
+press SEQ
 wait 500
 unsaid RECORDING
 wait 600
-release REC
+release SEQ
 wait 30
 expect rec_track -1
 expect dedit 0
 expect his5 0
-said TRACK 6: BACK TO THE RHYTHM
-# the effects page, row 4: the picked track (K1), its LENGTH (K2), PITCH STEPS (K3), the drum a tapped step gets (K4);
-# row 5: its effect (K1), FADE (K2), TOP SOUND (K3), its pitch (K4). The kick's
-tap FX
-tap FX
-tap FX
-tap FX
+said TRACK 6 LOOP CLEARED
+# the EDIT page's first row: the picked track (K1), its LENGTH (K2), the drum a tapped step gets (K3), PITCH STEPS (K4);
+# the effects page's TONE row: its filter, its bass, its pitch (K3), its level. The kick's
+tap EDIT
 wait 30
-expect row 3
+expect page 6
+expect row 0
 turn K1 -1
 wait 30
 expect track 5
 listen
-# its pitch (row 5, K4): three semitones down; PITCH STEPS MICRO (row 4, K3): a quarter tone a click, and FULL again
-turn SELECT 1
-turn K4 -3
+# its pitch (the TONE row, K3): three semitones down; PITCH STEPS MICRO (the EDIT page, K4): a quarter tone a click, and
+# FULL again
+tap FX
+turn SELECT 4
+wait 30
+expect page 2
+expect row 4
+turn K3 -3
 wait 30
 expect par75 -12
 said TRACK 5: DOWN 3
-turn SELECT -1
-turn K3 1
+tap EDIT
+turn K4 1
 wait 30
 expect ch44 1
-expect row 3
-turn SELECT 1
-turn K4 1
+expect row 0
+tap FX
+turn K3 1
 wait 30
 expect par75 -11
 said TRACK 5: DOWN 2 AND THREE QUARTERS
-turn SELECT -1
-turn K3 -1
+tap EDIT
+turn K4 -1
 wait 30
 expect ch44 0
 # LENGTH (K2): two bars (32 steps), and one again
@@ -233,18 +255,18 @@ turn K2 -1
 wait 30
 expect tn4 16
 said TRACK 5: 16 STEPS
-turn SELECT 1
-turn K4 -20
+tap FX
+turn K3 -20
 wait 30
 expect par75 -48
 said TRACK 5: DOWN 12
-turn K4 12
+turn K3 12
 wait 30
 expect par75 0
 said TRACK 5: IN TUNE
-turn SELECT -1
-# DRUM (K4): the drum a tapped step gets; the kick's track has the one
-turn K4 1
+tap EDIT
+# STEP DRUM (K3): the drum a tapped step gets; the kick's track has the one
+turn K3 1
 wait 30
 said TRACK 5: A TAP ADDS KICK
 # its sound: SELECT on the home page (the kick's own sounds first)
@@ -256,42 +278,50 @@ said TRACK 5: BOOM
 turn SELECT -1
 wait 30
 expect ch39 0
+# its DELAY SEND (the effects page's SENDS row, K1); FADE (the EDIT page's SCENE row, K1), the scene fader (FADE alone
+# now, the MIDImix's master is the whole level): at 97 and up, a control turned sets its top
 tap FX
 wait 30
-expect row 3
-# row 5: the effect; FADE, the scene fader as the MIDImix's master: at 97 and up, a control turned sets its top
-turn SELECT 1
-wait 30
 expect row 4
+turn SELECT -1
+wait 30
+expect row 3
 turn K1 -5
 wait 30
 expect par67 20
-turn K2 50
+tap EDIT
+tap EDIT
+wait 30
+expect page 6
+expect row 1
+turn K1 50
 wait 30
 expect master 64
-turn K2 47
+turn K1 47
 wait 30
 expect master 124
 said FADER UP: THIS IS THE TOP SOUND
+tap FX
 turn K1 5
 wait 30
 expect par67 20
 expect top16 30
 expect eff67 30
-turn K2 -97
+tap EDIT
+turn K1 -97
 wait 30
 expect master 0
 expect eff67 20
-turn K2 50
+turn K1 50
 wait 30
 expect eff67 25
 # TOP SOUND turned: cleared
-turn K3 1
+turn K2 1
 wait 30
 expect top_mask 0
 said TOP SOUND CLEARED
 expect eff67 20
-turn K2 -50
+turn K1 -50
 # kept: what is recorded comes back after a power cycle (written once the rhythm stops)
 tap PLAY
 wait 6000
@@ -305,30 +335,35 @@ expect trk_n1 2
 expect trk_n3 1
 expect trk_key1_1 67
 expect running 0
-# all picked again (SEL from the riq: all)
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+# track 1 picked again; PLAY: the loops play; SEQ held a second: track 1's loop cleared, said so, every other track's
+# kept; PLAY: all stopped
+press SEL
+tapkey w0
+release SEL
 wait 30
-expect track 0
-# SEQ held a second: every recording cleared, said so
+expect track 1
+tap PLAY
+wait 100
+expect running 1
 press SEQ
 wait 1100
 release SEQ
 wait 30
 expect trk_n0 0
-expect trk_n1 0
-expect trk_n3 0
-expect dedit 0
-said ALL RECORDINGS CLEARED
-# the rhythm stopped, REC: it waits for the first key, which starts the rhythm; a take of more than eight bars ends
-# by itself at eight and plays
-tap REC
+expect trk_n1 2
+expect trk_n3 1
+said TRACK 1 LOOP CLEARED
+tap PLAY
+wait 60
+expect running 0
+said ALL STOPPED
+# the rhythm stopped, SEQ: it waits for the first key, which starts the rhythm; a take of more than eight bars ends by
+# itself at eight and plays
+tap SEQ
 wait 30
 expect rec_track 0
 expect rec_waiting 1
-said TRACK 1: PLAY TO START
+said TRACK 1 LOOP RECORDING: A KEY STARTS IT
 tapkey 7
 wait 30
 expect running 1
@@ -338,3 +373,19 @@ expect rec_track -1
 expect trk_bars0 8
 expect trk_len0 384
 expect trk_n0 1
+said TRACK 1 LOOP PLAYING, 8 BARS
+# PLAY: all stopped, that loop with the rhythm. SEQ held a second on it: the loop cleared, and nothing else changes:
+# the rhythm stays stopped
+tap PLAY
+wait 60
+expect running 0
+expect loop0 3
+press SEQ
+wait 1100
+release SEQ
+wait 60
+expect trk_n0 0
+said TRACK 1 LOOP CLEARED
+# SEQ held a second: that track's loop cleared, nothing more (the rhythm its press started to play the loop again is
+# stopped again)
+expect running 0

@@ -1,8 +1,10 @@
-# His tracks and the rhythm's (fm1-organ/LOGIC.md, rule 9). A track the rhythm drives (the drum tracks' steps, the
-# automatic bass line, the backing) follows the rhythm until he adds, removes or records anything on it. From then on
-# it is his: the rhythm, its variations, its added voices and its fill-ins leave it alone, and the automatic part of
-# that track is silent. Cleared, it is the rhythm's again. And LENGTH counts a bar by the rhythm: sixteen steps, or as
-# many whole bars of the rhythm as fit in sixteen. From the repository's root:
+# His tracks and the rhythm's (fm1-organ/LOGIC.md). A track the rhythm drives (the drum tracks' steps, the automatic
+# bass line, the backing) follows the rhythm until he adds, removes or records anything on it. From then on it is his:
+# the rhythm, its variations, its added voices and its fill-ins leave it alone, and the automatic part of that track
+# is silent. Cleared (SEQ held a second: that track's loop), it is the rhythm's again. And LENGTH (the EDIT page's first
+# row, K2) counts a bar by the rhythm: sixteen steps, or as many whole bars of the rhythm as fit in sixteen. SEL held
+# and a white key picks a track; EDIT held a second is step mode; SEQ is the picked track's loop. From the
+# repository's root:
 #   app/build/host/dabke_host app/tests/his.txt OUTDIR
 # Maqsum at 100: a step 150 ms, a bar sixteen steps (2400 ms). Its kick on steps 1 and 9, its dum the same, its tek on
 # 3, 7, 13, its ka (soft) on 5, 11, 15, its riq every second step, its bass line on 1, 9, 15, its backing on 3, 7, 13.
@@ -13,27 +15,31 @@ wait 60
 expect rhythm 4
 expect tempo 100
 expect page_steps 16
-# FILL IS: BREAK (the rhythm page's row 3, K2): the rhythm's tracks fall silent for the bar's last two beats, then all
-# of them hit its last step together (a tek, a slap, a clap, the tabl's stick)
+# FILL IS: BREAK (the rhythm page's third row, K2: GLO opens the page, GLO again its next row): the rhythm's tracks fall
+# silent for the bar's last two beats, then all of them hit its last step together (a tek, a slap, a clap, the tabl's
+# stick)
 tap GLO
-turn SELECT -20
-turn SELECT 2
+tap GLO
+tap GLO
 wait 30
+expect page 5
+expect row 2
 turn K2 1
 wait 30
 expect ch22 1
 tap HOME
 
 # ---- the kick his (a hit written on step 5, in step mode); the other drum tracks the rhythm's
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w4
+release SEL
 wait 30
 expect track 5
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 30
+expect seq 1
 tapkey w4
 wait 60
 expect his4 1
@@ -41,8 +47,11 @@ expect his5 0
 expect trig4_0 1
 expect trig4_4 1
 expect trig4_8 1
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 30
+expect seq 0
 # PLAY, then PLAY held 0.4 s: a fill-in, in this bar's last two beats (steps 9 to 16). Near the bar's end: his kick
 # played all three of its steps (1, 5, 9: the last one inside the fill); the riq, the rhythm's, only its four before
 # the fill; the fill's last step gave the rhythm's darbuka its slap and a tek (teks: 3 and 7, then the fill's)
@@ -71,28 +80,42 @@ expect running 0
 expect hits9 7
 expect hits3 1
 
-# ---- the darbuka and tabl his too (a dum written on step 2); VARIATION: BUSY (the rhythm page's row 1, K3: the ka
-# fills every gap) and ADD CLAPS (row 2, K1). A bar with a fill-in again: his darbuka plays exactly what is written,
-# through the fill, no more and no less: three dums (1, 2, 9), three teks (3, 7, 13), three kas (5, 11, 15), no slap
-tap SEL
+# ---- the darbuka and tabl his too (a dum written on step 2); VARIATION: BUSY (the rhythm page's first row, K3: the ka
+# fills every gap) and ADD CLAPS (its second row, K1). A bar with a fill-in again: his darbuka plays exactly what is
+# written, through the fill, no more and no less: three dums (1, 2, 9), three teks (3, 7, 13), three kas (5, 11, 15), no
+# slap
+press SEL
+tapkey w5
+release SEL
 wait 30
 expect track 6
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 30
 tapkey w1
 wait 60
 expect his5 1
 expect tpat5_0_1 2
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 30
 tap GLO
-turn SELECT -20
+tap GLO
+tap GLO
+tap GLO
+tap GLO
+tap GLO
+tap GLO
 wait 30
+expect row 0
 turn K3 1
 wait 30
 expect ch16 1
-turn SELECT 1
+tap GLO
 wait 30
+expect row 1
 turn K1 1
 wait 30
 expect ch17 1
@@ -118,9 +141,16 @@ expect running 0
 # the variation and the added claps off again
 tap GLO
 turn K1 -1
-turn SELECT -1
+tap GLO
+tap GLO
+tap GLO
+tap GLO
+tap GLO
+tap GLO
+tap GLO
 turn K3 -1
 wait 30
+expect row 0
 expect ch16 0
 expect ch17 0
 tap HOME
@@ -147,22 +177,24 @@ wait 60
 expect rhythm 4
 expect trig6_6 0
 
-# ---- the automatic bass line and backing are the rhythm's (the left keys on BASS: the rhythm page's row 4, K1). ALL
-# picked, a left key held: the bass and the chord sound; PLAY: in a bar the bass line plays three notes (track 4), the
-# backing three chords of three (track 3)
+# ---- the automatic bass line and backing are the rhythm's (the left keys on BASS: the rhythm page's fourth row, K1).
+# Track 1 picked (the keys as set), a left key held: the bass and the chord sound; PLAY: in a bar the bass line plays
+# three notes (track 4), the backing three chords of three (track 3)
 tap GLO
-turn SELECT 3
+tap GLO
+tap GLO
+tap GLO
 wait 30
 expect row 3
 turn K1 2
 wait 30
 expect left 2
 tap HOME
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w0
+release SEL
 wait 30
-expect track 0
+expect track 1
 expect starts3 0
 expect starts2 0
 key 2 down
@@ -183,14 +215,15 @@ expect starts2 15
 # a note written on track 4 (step mode, its first step: the tonic, two octaves under the keys): the track is his, a bar
 # long. The same left key held: no automatic bass line with it, held or running: his one note a bar; the backing, still
 # the rhythm's, as before
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w3
+release SEL
 wait 30
 expect track 4
 expect his3 0
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 30
 expect trig3_0 2
 tapkey w0
@@ -200,15 +233,15 @@ expect trk_key3_0 38
 expect trk_len3 96
 expect trig3_0 1
 expect trig3_8 0
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 30
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w0
+release SEL
 wait 30
-expect track 0
+expect track 1
 key 2 down
 wait 100
 expect starts3 5
@@ -221,33 +254,40 @@ tap PLAY
 wait 60
 key 2 up
 wait 60
-# REC held a second on track 4: his note gone, the track empty of his: "BACK TO THE RHYTHM", and the automatic bass
-# line plays again
+# SEQ held a second on track 4 (PLAY first: the rhythm back, his note at its start; the hold stops the loop playing,
+# then clears it): his note gone, the track empty of his, the rhythm's again, and the automatic bass line plays again,
+# on step 9 as the rhythm goes on (on the left key's root, as last held) and with the left key held
 listen
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w3
+release SEL
 wait 30
 expect track 4
-press REC
+tap PLAY
+wait 20
+expect running 1
+expect starts3 7
+press SEQ
 wait 1100
-release REC
+release SEQ
 wait 60
 expect his3 0
 expect trk_len3 0
-said TRACK 4: BACK TO THE RHYTHM
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+said TRACK 4 LOOP CLEARED
+wait 300
+expect starts3 8
+tap PLAY
+wait 60
+expect running 0
+press SEL
+tapkey w0
+release SEL
 wait 30
-expect track 0
-expect starts3 6
+expect track 1
+expect starts3 8
 key 2 down
 wait 100
-expect starts3 7
+expect starts3 9
 key 2 up
 wait 60
 # the left keys as one keyboard again: track 4 cleared is empty, not the rhythm's
@@ -257,26 +297,29 @@ wait 30
 expect left 0
 tap HOME
 
-# ---- a recording on track 3 (the left hand) plays back as he played it, and nothing with it
-tap SEL
-tap SEL
-tap SEL
+# ---- a recording on track 3 (the left hand) plays back as he played it, and nothing with it. SEQ held a second: that
+# loop gone
+press SEL
+tapkey w2
+release SEL
 wait 30
 expect track 3
-tap REC
+tap SEQ
 wait 30
 expect rec_waiting 1
 tapkey 14
 wait 30
-tap REC
+tap SEQ
 wait 30
 expect his2 1
 expect trk_n2 1
-press REC
+press SEQ
 wait 1100
-release REC
+release SEQ
 wait 60
-said TRACK 3 EMPTY
+expect his2 0
+expect trk_n2 0
+said TRACK 3 LOOP CLEARED
 tap PLAY
 wait 60
 expect running 0
@@ -284,13 +327,9 @@ expect running 0
 # ---- LENGTH by the rhythm: a bar is sixteen steps (Maqsum, sixteen; Dabke Syria, twice its eight), or as many
 # whole bars of the rhythm as fit in sixteen: twelve in 6/8 (two of six), ten in 10/8, fourteen in 7/8 (two of
 # seven). Two bars: twice that. The kick, his, keeps the sixteen steps it has whatever the rhythm
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+press SEL
+tapkey w0
+release SEL
 wait 30
 expect track 1
 expect tn0 16
@@ -306,10 +345,10 @@ expect page_steps 12
 expect tn0 12
 expect tn6 12
 expect tn4 16
-tap FX
-turn SELECT -20
-turn SELECT 3
+tap EDIT
 wait 30
+expect page 6
+expect row 0
 listen
 turn K2 1
 wait 60
@@ -349,8 +388,11 @@ tap HOME
 # a step written in 6/8 on the lead: its loop twelve steps long (a step eight ticks: 96)
 turn PRESET 17
 wait 60
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 30
+expect seq 1
 expect track 1
 expect nsteps 12
 tapkey w11
@@ -361,7 +403,9 @@ expect trig0_11 1
 tapkey w12
 wait 60
 expect trk_n0 1
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 turn PRESET -17
 wait 60
 expect rhythm 0
