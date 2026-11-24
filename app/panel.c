@@ -1,36 +1,35 @@
 /* SPDX-License-Identifier: MPL-2.0
  * Copyright (C) 2026 STUDIOMORPHIK */
-/* DABKE's home page under the singer, and the step view. Included by app.c after scene.c (its drawing helpers, its ui,
- * the scenes' trap).
+/* DABKE's home page under the singer, and the step view, on RAGA MEOW's paper. Included by app.c after scene.c and the
+ * label's pieces (the drawing helpers, the paper's inks, the dots and the glasses).
  *
- * The home page: a top line (the picked track's sound, the maqam on its root, the tempo's metronome), the singer
- * (scene.c), then the eight tracks as lanes of steps, all at once: each lane its number (yellow: the picked one; red:
- * recording), a small bar by it when what it plays is his, its steps over its whole length (a block: something of his
- * begins there; a low grey one: the rhythm's; a blue strip: a lock; amber: the step playing), bright when it is picked,
- * and its steps counted at the right. A bottom line: the rhythm and the switches that are not tracks.
+ * The home page, under RAGA MEOW's top line and DABKE's scene: the eight tracks as lanes of steps, all at once, small
+ * (six rows each): each lane its number (on red: the picked one), a short bar by it when what it plays is his, its steps
+ * over its whole length (a block: something of his begins there; a low faint one: the rhythm's; a blue line on top: a
+ * lock; red: the step playing, and a lane recording), faint when it is silent, its steps counted at the right. Under
+ * them the rhythm (and the one added), the home page's rows as dots, the tempo with a metronome ticking on the beat.
  *
- * The step view (SEQ): the picked track alone, large. Its top line: "STEPS" and the page shown. What its steps play (a
- * drum sound: its drums lane by lane; a note sound: its notes by pitch, as long as they sound). The row of steps as
- * the white keys have them: filled, outlined (the rhythm's), empty; a blue padlock on a locked one; the step playing
- * underlined; the held one framed. Two lines of words: the track and whose it is, its length; what a tap adds, its
- * locks counted. The picked track's strip on K1 to K4, small. On a knob page in step mode the same row of steps and
- * words sit under the knobs.
+ * The step view (step mode on the home page): a label of its own, STEPS on its ribbon. The picked track alone: what its
+ * steps play (a drum sound: its drums lane by lane; a note sound: its notes by pitch, as long as they sound), the row of
+ * steps as the white keys have them (red: his; outlined: the rhythm's; dotted: empty; a padlock on a locked one; the
+ * step playing underlined; the held one framed), its bars at the left; the track and whose it is, its length; what a
+ * tap adds, its locks counted; the page shown. On a knob page in step mode the same row of steps and words sit under
+ * the knobs' pictures.
  *
  * Drawn in bands, each redrawn alone when what it shows moves. */
 
-static void knob_boxes(const uint8_t *row, int with_icons, int32_t top);   /* (app.c, below this file) */
-static void plock(int32_t x, int32_t y, uint16_t c);
-
-#define PN_Y 144                         /* the lanes: rows 144..221 */
-#define PN_FOOT_Y 222                    /* the bottom line: 222..239 */
-#define PN_DIM RGB(66, 60, 58)
-#define PN_LIVE C_YEL                    /* what is picked, what is his in the step view: the portrait's yellow */
-#define SQ_X 30                          /* the step view: its steps from here to the right edge */
-#define SQ_W 208
-#define SQ_ROW_Y 120                     /* its row of steps (the white keys) */
-#define SQ_ROW_H 26
-#define SQ_KNOB_Y 192                    /* its four knobs, small */
-#define SQ_BOT_Y 164                     /* the same row of steps at the bottom of a knob page, in step mode */
+#define HM_SCENE_Y 17                    /* the home page: the scene, rows 17..128 */
+#define HM_LANE_Y 131                    /* its lanes, six rows each: 130..178 */
+#define HM_FOOT_Y 184                    /* the rhythm, the dots, the tempo: 179..190 */
+#define PN_DIM K_DIM
+#define PN_LIVE K_RED                    /* what is picked, what is his in the step view */
+#define SQ_X 34                          /* the step view (inside the frame): its steps from here */
+#define SQ_W 192
+#define SQ_ROLL_Y 50                     /* what its steps play */
+#define SQ_ROLL_H 46
+#define SQ_ROW_Y 102                     /* its row of steps (the white keys) */
+#define SQ_ROW_H 22
+#define SQ_INFO_Y 143                    /* its lines of words */
 
 /* boxes with their corners cut (a pixel each), filled or drawn; dotted for a thing that is off */
 static void pbox(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t c)
@@ -57,18 +56,6 @@ static void pdots(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t c)
         box(x, i, 1, 1, c);
         box(x + w - 1, i, 1, 1, c);
     }
-}
-
-/* a word in a box: lit (white, the word black), or not (a dotted box, the word grey). Returns where it ends */
-static int32_t ptoggle(int32_t x, int32_t y, const char *s, int on)
-{
-    int32_t w = text_w(&FONT_T, s) + 7;
-    if (on)
-        pbox(x, y, w, 13, K_WH);
-    else
-        pdots(x, y, w, 13, PN_DIM);
-    T(s, x + 4, y + 11, 9, on ? K_BLACK : K_GR, 0, 0);
-    return x + w;
 }
 
 /* ---- K1 to K4 on the home page with ALL picked: the four parts' volumes, each said as it turns ---- */
@@ -171,83 +158,46 @@ static void track_icon(int t, int32_t x, int32_t y, uint16_t c)
     }
 }
 
-/* ---- the home page's top line: the picked track's sound, the maqam on its root, the tempo (its metronome ticks with
- * the beat) ---- */
-static void panel_head(void)
+/* the lanes' numbers: small digits, 3 x 5 (too small for a face), a row of three bits each, top to bottom */
+static const uint16_t DIG35[10] = {0x7B6F, 0x2C97, 0x73E7, 0x73CF, 0x5BC9, 0x79CF, 0x79EF, 0x7249, 0x7BEF, 0x7BCF};
+static void digits(int32_t x, int32_t y, int v, int right, uint16_t c)   /* v from x (right: ending at x), its top at y */
 {
-    const dabke_status_t *s = dabke_status();
-    const int32_t y0 = 8, yb = y0 + 12;
-    char b[40], t[8];
-    int32_t x, w, flat = set.ntune[set.ch[C_ROOT] % 12] < 0, ix = set.track ? 14 : 0;
-    if (!in_strip(0, 32))
-        return;
-    b[0] = 0;                            /* the picked track's sound, black on its box (all: the whole sound) */
-    if (set.track) {                     /* (its own name: the sign in front says its family; a lead sound's: its own) */
-        int f = set.tsnd[set.track - 1][0];
-        if (f == SF_LEAD)
-            lead_name(set.track - 1, b);
-        else
-            text_cat(b, FAM_LIST[f][set.tsnd[set.track - 1][1] % fam_size(f)]);
-    } else
-        sound_name(b);
-    w = text_w(&FONT_XS, b);
-    if (w > 80 - ix)
-        w = 80 - ix;
-    pbox(2, y0, w + 8 + ix, 15, K_WH);
-    if (set.track)
-        track_icon(set.tsnd[set.track - 1][0], 6, y0 + 2, K_BLACK);
-    T(b, 6 + ix, yb, 11, K_BLACK, 0, 80 - ix);
-    x = 2 + w + 8 + ix + 6;              /* the maqam, its root in a box */
-    maqam_name(b, 0);
-    x = T(b, x, yb, 11, K_WH, 0, 194 - x - 24);
-    w = text_w(&FONT_XS, NOTE_NAME[set.ch[C_ROOT] % 12]) + (flat ? 8 : 0) + 8;
-    pframe(x + 4, y0, w, 15, K_WH);
-    {
-        int32_t e = T(NOTE_NAME[set.ch[C_ROOT] % 12], x + 8, yb, 11, K_WH, 0, 0);
-        if (flat)
-            halfflat(e + 3, yb - 1, 10, K_WH);
-    }
-    if (!maqam_as_set() && x + w + 10 < 170)
-        T("CHANGED", x + w + 10, yb - 1, 9, K_AMB, 0, 194 - (x + w + 10));
-    {                                    /* the tempo: a metronome, its arm and weight left and right on the beats */
-        float mx = 207.0f, by = (float)yb - 1.0f, sw = s->running ? ((ui.beat_count & 1u) ? 5.0f : -5.0f) : 4.0f;
-        uint16_t ac = s->running ? PN_LIVE : K_WH;
-        pframe(197, y0, 41, 15, K_WH);
-        box(ri(mx) - 5, ri(by), 11, 1, K_WH);    /* its body: a box narrowing up */
-        seg(mx - 5.0f, by, mx - 2.0f, by - 8.0f, K_WH, 1);
-        seg(mx + 5.0f, by, mx + 2.0f, by - 8.0f, K_WH, 1);
-        box(ri(mx) - 2, ri(by) - 8, 5, 1, K_WH);
-        seg(mx, by - 1.0f, mx + sw, by - 10.0f, ac, 1);   /* the arm out of it, its weight */
-        box(ri(mx + sw * 0.6f) - 1, ri(by - 7.0f), 3, 2, ac);
-        int_text(set.par[P_TEMPO], t);
-        T(t, 234, yb, 11, K_WH, 2, 0);
+    char t[12];
+    int n, i, r, k;
+    int_text(v, t);
+    for (n = 0; t[n]; n++)
+        ;
+    if (right)
+        x -= 4 * n - 1;
+    for (i = 0; i < n; i++, x += 4) {
+        uint16_t g = t[i] >= '0' && t[i] <= '9' ? DIG35[t[i] - '0'] : 0;
+        for (r = 0; r < 5; r++)
+            for (k = 0; k < 3; k++)
+                if (g >> (14 - 3 * r - k) & 1u)
+                    box(x + k, y + r, 1, 1, c);
     }
 }
 
 /* ---- the lanes: the eight tracks, each the bar of its steps that is playing ---- */
-static void lane(int t, int32_t y)       /* a track's lane: its number (yellow: picked; red: recording), a small bar by
-                                          * it when what it plays is his, its steps over its whole length (a block: his;
-                                          * a low grey one: the rhythm's; a blue strip on top: a lock; amber: the step
-                                          * playing), bright when it is picked (ALL: every lane), and its steps counted
-                                          * at the right */
+static void lane(int t, int32_t y)       /* a track's lane, five rows from y: its number (on red: picked), a short bar by
+                                          * it when what it plays is his, its steps over its whole length (a block: his; a
+                                          * low faint one: the rhythm's; a blue line on top: a lock; red: the step
+                                          * playing), faint while it is silent, red while it records; its steps counted */
 {
     const dabke_status_t *s = dabke_status();
-    int P = page_steps(), n = trk_nsteps(t), pk = set.track == t + 1, his = trk_his(t), q = step_q();
-    int rec = s->rec_track == t, mute = (int)MUTED(t), cur = s->running ? (int)s->tstep[t] : -1, bright = pk || !set.track;
-    int div = gview_div < 1 ? 4 : gview_div, i;
+    int P = page_steps(), n = trk_nsteps(t), pk = picked() == t, his = trk_his(t), q = step_q();
+    int rec = s->rec_track == t, mute = mute_eff(t), cur = s->running ? (int)s->tstep[t] : -1, i;
+    int div = gview_div < 1 ? 4 : gview_div;
     uint32_t has[11] = {0}, lk[11] = {0};
-    uint16_t ink = mute ? PN_DIM : rec ? K_RED : bright ? K_WH : mixc(K_WH, K_BLACK, 0.4f);
-    uint16_t soft = mute ? PN_DIM : bright ? K_GR : mixc(K_GR, K_BLACK, 0.35f);
-    char num[8] = {(char)('1' + t), 0};
+    uint16_t ink = mute ? K_DIM : rec ? K_RED : pk ? K_INK : mixc(K_INK, K_PAPER, 0.3f);
+    uint16_t soft = mute ? mixc(K_DIM, K_PAPER, 0.4f) : pk ? K_GR : mixc(K_GR, K_PAPER, 0.3f);
     if (n > 352)
         n = 352;
-    if (rec)
-        pbox(1, y, 11, 9, K_RED);
-    else if (pk)
-        pbox(1, y, 11, 9, PN_LIVE);
-    T(num, 4, y + 8, 9, rec ? K_WH : pk ? K_BLACK : mute ? PN_DIM : K_GR, 0, 0);
-    if (his)                             /* what it plays is his: a small bar by its number */
-        box(13, y + 1, 2, 7, rec ? K_RED : PN_LIVE);
+    if (pk)
+        box(1, y - 1, 9, 7, K_RED);
+    digits(4, y, t + 1, 0, pk ? K_PAPER : mute ? K_DIM : rec ? K_RED : K_INK);
+    if (his)                             /* what it plays is his: a short bar by its number */
+        box(11, y, 1, 5, rec ? K_RED : K_INK);
     if (trk_loop(t)) {                   /* (a loop: its notes' steps, in one pass) */
         for (i = 0; i < s->trk_n[t] && i < DAB_LOOP_N; i++) {
             int p = (int)DAB_EV_POS(s->trk_ev[t][i]);
@@ -262,117 +212,61 @@ static void lane(int t, int32_t y)       /* a track's lane: its number (yellow: 
     }
     for (i = 0; i < n; i++) {
         int tr = trk_loop(t) ? (int)(has[i >> 5] >> (i & 31) & 1u) : step_trig(t, i);
-        int32_t x0 = 17 + (i * 202) / n, cw = 17 + ((i + 1) * 202) / n - x0 - (n <= 64 ? 1 : 0);
+        int32_t x0 = 14 + (i * 210) / n, cw = 14 + ((i + 1) * 210) / n - x0 - (n <= 64 ? 1 : 0);
         if (cw < 1)
             cw = 1;
         if (i && i % P == 0)             /* (a bar begins) */
-            box(x0 - 1, y + 1, 1, 7, K_DIM);
+            box(x0 - 1, y, 1, 5, K_DIM);
         if (tr == 1)
-            box(x0, y + 1, cw, 7, i == cur ? K_AMB : ink);
+            box(x0, y, cw, 5, i == cur ? K_RED : ink);
         else if (tr == 2)
-            box(x0, y + 3, cw, 3, i == cur ? K_AMB : soft);
+            box(x0, y + 1, cw, 3, i == cur ? K_RED : soft);
         else if (i == cur)
-            box(x0, y + 4, cw, 2, K_AMB);
+            box(x0, y + 2, cw, 2, K_RED);
         else if (n <= 32 || i % div == 0)
-            box(x0 + cw / 2, y + 4, 1, 1, i % div == 0 ? K_GR : PN_DIM);
+            box(x0 + cw / 2, y + 2, 1, 1, i % div == 0 ? K_GR : K_DIM);
         if (lk[i >> 5] >> (i & 31) & 1u)     /* a lock on it */
-            box(x0, y + 1, cw, 2, K_LK);
+            box(x0, y, cw, 1, K_LK);
     }
-    int_text(trk_nsteps(t), num);        /* its length */
-    T(num, 239, y + 8, 9, pk ? K_WH : K_GR, 2, 0);
+    digits(238, y, trk_nsteps(t), 1, pk ? K_INK : K_GR);   /* its length */
 }
 static void lanes(void)
 {
     int t;
     for (t = 0; t < DAB_NTRK; t++)
-        lane(t, PN_Y + 1 + (t * 19) / 2);
+        lane(t, HM_LANE_Y + t * 6);
 }
 
-/* ---- the bottom line: the rhythm (or the track recording); the switches that are not tracks ---- */
-static void panel_foot(void)
+/* ---- under the lanes: the rhythm (and the one added) at the left, the home page's rows as dots, the tempo at the
+ * right, its metronome's arm left and right on the beats ---- */
+static void home_foot(void)
 {
     const dabke_status_t *s = dabke_status();
-    char b[48], t[24];
-    int32_t x, w;
-    int o = set.ch[C_ORN];
-    const char *on = o && o != ORN_AUTO ? N_ORN[o] : "AUTO";
-    const char *pm = N_PLAY[set.ch[C_PLAY] % 3];
-    int rec = s->rec_track >= 0, armed = rec && s->rec_waiting;
-    if (!in_strip(PN_FOOT_Y, 240))
+    char b[56], t[24];
+    float mx, by = (float)(HM_FOOT_Y + 4), sw;
+    if (!in_strip(HM_FOOT_Y - 5, HM_FOOT_Y + 7))
         return;
-    box(0, PN_FOOT_Y, 240, 1, PN_DIM);
-    w = text_w(&FONT_T, pm) + text_w(&FONT_T, on) + text_w(&FONT_T, "ARP") + text_w(&FONT_T, "SYNC") + 4 * 7 + 3 * 3 +
-        (rec ? text_w(&FONT_T, "REC") + 10 : 0) + (set.ch[C_ARPLATCH] ? 7 : 0) + (s->hold ? 15 : 0);
-    x = 238 - w;
-    if (s->hold) {                       /* HOLD: keys held down under a bar, one a held note (three at most) */
-        int i, n = s->held_n > 3 ? 3 : s->held_n;
-        box(x, 225, 11, 2, PN_LIVE);
-        for (i = 0; i < 3; i++)
-            box(x + i * 4, i < n ? 229 : 228, 3, i < n ? 9 : 10, i < n ? PN_LIVE : PN_DIM);
-        x += 15;
-    }
-    {                                    /* how the lead plays: a mode, always one of three (framed, not a switch) */
-        int32_t pw = text_w(&FONT_T, pm) + 7;
-        pframe(x, 225, pw, 13, K_WH);
-        T(pm, x + 4, 236, 9, K_WH, 0, 0);
-        x += pw + 3;
-    }
-    x = ptoggle(x, 225, on, o != 0) + 3;
-    {                                    /* the arpeggio: lit when on; latched, a small padlock in it */
-        int32_t ax = ptoggle(x, 225, "ARP", set.arp);
-        if (set.ch[C_ARPLATCH]) {
-            uint16_t lc = set.arp ? K_BLACK : K_GR;
-            pbox(ax - 1, 225, 8, 13, set.arp ? K_WH : K_BLACK);
-            box(ax, 230, 5, 5, lc);
-            box(ax, 228, 1, 2, lc);
-            box(ax + 4, 228, 1, 2, lc);
-            box(ax + 1, 227, 3, 1, lc);
-            ax += 7;
-        }
-        x = ax + 3;
-    }
-    if (rec) {                           /* recording: red; waiting for its first key: framed red */
-        int32_t bw = text_w(&FONT_T, "REC") + 7;
-        if (armed)
-            pframe(x, 225, bw, 13, K_RED);
-        else
-            pbox(x, 225, bw, 13, K_RED);
-        T("REC", x + 4, 236, 9, armed ? K_RED : K_WH, 0, 0);
-        x += bw + 3;
-    }
-    ptoggle(x, 225, "SYNC", set.ch[C_SYNC]);
-    x = 238 - w;
-    if (rec) {                           /* recording: which track, said here, in red */
-        int rt = s->rec_track & 7;
-        b[0] = 0;
-        trk_name(rt, b);
-        if (armed)
-            text_cat(b, ": PLAY TO START");
-        else if (SF_DRUM(set.tsnd[rt][0]))
-            text_cat(b, ": RECORDING");
-        else if (s->overdub)
-            text_cat(b, ": ADDING");
-        else {
-            text_cat(b, ": BAR ");
-            int_text(s->trk_bars[rt], t);
-            text_cat(b, t);
-        }
-        T(b, 3, 236, 9, K_RED, 0, x - 7);
-        return;
-    }
-    ellipse(8.0f, 228.0f, 5.0f, 1.6f, K_WH);   /* the rhythm: a small darbuka, its name (and the one added) */
-    trap(229.0f, 233.0f, 3.0f, 13.0f, 6.0f, 10.0f, K_GR, 0, -1);
-    trap(233.0f, 237.0f, 6.0f, 10.0f, 4.0f, 12.0f, K_GR, 0, -1);
     rhythm_name_copy(b, ui.r0);
     if (ui.r1 >= 0) {
         text_cat(b, " + ");
         rhythm_name_copy(t, ui.r1);
         text_cat(b, t);
     }
-    T(b, 17, 236, 11, s->running ? K_WH : K_GR, 0, x - 21);
+    TXF(b, 6, HM_FOOT_Y + 4, 0, s->running ? K_INK : K_FAINT, 0, 98);
+    row_dots(3, ui.row[PG_HOME] % 3, 111.0f, (float)HM_FOOT_Y);
+    int_text(set.par[P_TEMPO], t);
+    TX(t, 234, HM_FOOT_Y + 4, 0, K_INK, 2, 0);
+    mx = (float)(234 - text_wf(t, 0)) - 9.0f;   /* the metronome: its body narrowing up, its arm out of it */
+    sw = s->running ? ((ui.beat_count & 1u) ? 4.0f : -4.0f) : 3.0f;
+    a_seg(mx - 4.5f, by, mx + 4.5f, by, 1.0f, K_INK);
+    a_seg(mx - 4.5f, by, mx - 1.8f, by - 8.0f, 1.0f, K_INK);
+    a_seg(mx + 4.5f, by, mx + 1.8f, by - 8.0f, 1.0f, K_INK);
+    a_seg(mx - 1.8f, by - 8.0f, mx + 1.8f, by - 8.0f, 1.0f, K_INK);
+    a_seg(mx, by - 1.0f, mx + sw, by - 9.0f, 1.2f, s->running ? K_RED : K_INK);
+    a_ell(mx + sw * 0.6f, by - 5.8f, 1.3f, 1.3f, s->running ? K_RED : K_INK);
 }
 
-/* the lanes' moving part (the steps playing) and the top line's (the metronome): a change, and each is drawn again */
+/* the lanes' moving part (the steps playing) and the metronome's: a change, and each is drawn again */
 static uint32_t panel_body_sig(void)
 {
     const dabke_status_t *s = dabke_status();
@@ -387,9 +281,9 @@ static uint32_t panel_head_sig(void) { return dabke_status()->running ? 1u + (ui
 
 static void home_panel(void)             /* (not "panel": the device platform has a variable of that name) */
 {
-    if (in_strip(PN_Y, PN_FOOT_Y))
+    if (in_strip(HM_LANE_Y - 1, HM_LANE_Y + 47))
         lanes();
-    panel_foot();
+    home_foot();
 }
 
 /* ================================================================ the step view ===== */
@@ -401,19 +295,6 @@ static void note_word(int note, char *b) /* a key by name: "D4", "F#3" */
     int_text(note / 12 - 1, o);
     text_cat(b, o);
 }
-static void seq_head(void)               /* its top line: "STEPS", and the page shown ("PAGE 1 OF 2") */
-{
-    char b[24] = "PAGE ", n[8];
-    if (!in_strip(0, 32))
-        return;
-    T("STEPS", 8, 22, 16, K_WH, 0, 120);
-    int_text(ui.spage + 1, n);
-    text_cat(b, n);
-    text_cat(b, " OF ");
-    int_text(trk_pages(picked()), n);
-    text_cat(b, n);
-    T(b, 232, 21, 11, K_GR, 2, 0);
-}
 static void seq_whose(int t, int32_t y)  /* a line: the track and whose it is ("TRACK 3: YOURS"), its length at the right */
 {
     const dabke_status_t *s = dabke_status();
@@ -423,10 +304,10 @@ static void seq_whose(int t, int32_t y)  /* a line: the track and whose it is ("
     text_cat(b, rec ? (s->rec_waiting ? ": PLAY TO START" : ": RECORDING") : trk_his(t) ? ": YOURS" : trk_rhythm(t) ? ": THE RHYTHM'S" : ": EMPTY");
     if ((set.mute >> t & 1u) && !rec)
         text_cat(b, ", MUTED");
-    T(b, 4, y, 11, rec ? K_RED : K_WH, 0, 160);
+    TXF(b, 14, y, 1, rec ? K_RED : K_INK, 0, 150);
     int_text(trk_nsteps(t), b);
     text_cat(b, " STEPS");
-    T(b, 236, y, 11, K_GR, 2, 0);
+    TX(b, 226, y, 0, K_FAINT, 2, 0);
 }
 static void seq_locks(int t, int32_t y)  /* its locks counted, at the right: "3 LOCKS" */
 {
@@ -436,7 +317,17 @@ static void seq_locks(int t, int32_t y)  /* its locks counted, at the right: "3 
         return;
     int_text(nl, b);
     text_cat(b, nl == 1 ? " LOCK" : " LOCKS");
-    T(b, 236, y, 11, K_LK, 2, 0);
+    TX(b, 226, y, 0, K_LK, 2, 0);
+}
+static void seq_page(int t, int32_t y)   /* the page of steps shown: "PAGE 1 OF 2" */
+{
+    char b[24] = "PAGE ", x[8];
+    int_text(ui.spage + 1, x);
+    text_cat(b, x);
+    text_cat(b, " OF ");
+    int_text(trk_pages(t), x);
+    text_cat(b, x);
+    TX(b, 14, y, 0, K_FAINT, 0, 120);
 }
 static void seq_drums(int t, int from, int cols, float cw)   /* a drum sound's steps: its drums lane by lane */
 {
@@ -453,11 +344,11 @@ static void seq_drums(int t, int from, int cols, float cw)   /* a drum sound's s
     }
     if (nl < 1)
         nl = 1;
-    rh = 80 / nl > 20 ? 20 : 80 / nl;
-    top = 36 + (80 - nl * rh) / 2;
+    rh = SQ_ROLL_H / nl > 14 ? 14 : SQ_ROLL_H / nl;
+    top = SQ_ROLL_Y + (SQ_ROLL_H - nl * rh) / 2;
     for (j = 0; j < nl; j++) {
         int32_t y = top + j * rh, bh = rh - 3;
-        T(DRUM_SHORT[dabke_sound_drum(f, j)], 3, y + bh / 2 + 4, 9, K_GR, 0, 25);
+        TX(DRUM_SHORT[dabke_sound_drum(f, j)], 13, y + bh / 2 + 4, 0, K_GR, 0, 20);
         for (w = 0; w < cols; w++) {
             int v = step_lane(t, from + w, j);
             int32_t bx = ri((float)SQ_X + (float)w * cw), bw = ri((float)SQ_X + (float)(w + 1) * cw) - bx - 2;
@@ -469,7 +360,7 @@ static void seq_drums(int t, int from, int cols, float cw)   /* a drum sound's s
             else
                 pframe(bx, by, bw, hh, K_GR);
             if (v == 3)                  /* an accent: a mark in it */
-                box(bx + 2, y + 2, bw - 4, 2, his ? K_BLACK : K_GR);
+                box(bx + 2, y + 1, bw - 4, 2, his ? K_PAPER : K_GR);
         }
     }
 }
@@ -478,14 +369,15 @@ static void seq_roll(int t, int from, int cols, float cw)   /* a note sound's st
 {
     const dabke_status_t *s = dabke_status();
     int q = step_q(), i, lo = 128, hi = -1, w, t0 = from * q, t1 = (from + cols) * q, span, base, div = gview_div < 1 ? 4 : gview_div;
+    const int H = SQ_ROLL_H - 10;        /* (the notes' heights: from the lowest up to the highest) */
     char b[8];
-    for (w = 0; w < cols; w++)           /* (the steps' places: a dot each, the beats' brighter) */
-        box(ri((float)SQ_X + ((float)w + 0.5f) * cw) - 1, 114, 1, 1, w % div == 0 ? K_GR : PN_DIM);
+    for (w = 0; w < cols; w++)           /* (the steps' places: a dot each, the beats' darker) */
+        box(ri((float)SQ_X + ((float)w + 0.5f) * cw) - 1, SQ_ROLL_Y + SQ_ROLL_H - 2, 1, 1, w % div == 0 ? K_GR : PN_DIM);
     if (!trk_loop(t)) {
         for (w = 0; w < cols; w++)
             if (step_trig(t, from + w) == 2) {
                 int32_t bx = ri((float)SQ_X + (float)w * cw), bw = ri((float)SQ_X + (float)(w + 1) * cw) - bx - 2;
-                pframe(bx, 72, bw, 6, K_GR);
+                pframe(bx, SQ_ROLL_Y + SQ_ROLL_H / 2 - 3, bw, 6, K_GR);
             }
         return;
     }
@@ -501,7 +393,7 @@ static void seq_roll(int t, int from, int cols, float cw)   /* a note sound's st
     if (hi < 0)
         return;
     span = hi - lo < 7 ? 7 : hi - lo;    /* (the page's notes from its lowest up to its highest; a few: in the middle) */
-    base = 74 + (span < hi - lo + 1 ? 34 : ((hi - lo) * 68 / span) / 2);
+    base = SQ_ROLL_Y + 2 + (span < hi - lo + 1 ? H : H / 2 + ((hi - lo) * H / span) / 2);
     for (i = 0; i < s->trk_n[t] && i < DAB_LOOP_N; i++) {
         uint32_t e = s->trk_ev[t][i];
         int p = (int)DAB_EV_POS(e), nt = (int)DAB_EV_NOTE(e);
@@ -510,16 +402,16 @@ static void seq_roll(int t, int from, int cols, float cw)   /* a note sound's st
             continue;
         x = (float)SQ_X + (float)(p - t0) * cw / (float)q;
         wd = (float)DAB_EV_LEN(e) * cw / (float)q - 2.0f;
-        if (x + wd > 238.0f)
-            wd = 238.0f - x;
-        boxf(x, (float)(base - ((nt - lo) * 68) / span), wd < 3.0f ? 3.0f : wd, 4.0f, PN_LIVE);
+        if (x + wd > (float)(SQ_X + SQ_W))
+            wd = (float)(SQ_X + SQ_W) - x;
+        boxf(x, (float)(base - ((nt - lo) * H) / span), wd < 3.0f ? 3.0f : wd, 4.0f, PN_LIVE);
     }
-    note_word(hi, b);                    /* (the highest and the lowest note on the page, by name, each at its height;
-                                          * in the size that has a small b for a flat) */
-    T(b, 2, base - ((hi - lo) * 68) / span + 6, 11, K_GR, 0, 27);
+    note_word(hi, b);                    /* (the highest and the lowest note on the page, by name, each at its height; in
+                                          * the face that has a small b for a flat) */
+    TX(b, 13, base - ((hi - lo) * H) / span + 7, 1, K_GR, 0, 21);
     if (lo != hi) {
         note_word(lo, b);
-        T(b, 2, base + 6, 11, K_GR, 0, 27);
+        TX(b, 13, base + 7, 1, K_GR, 0, 21);
     }
 }
 static void seq_row(int t, int from, int cols, float cw, int32_t ry)   /* the steps as the white keys have them, the
@@ -528,9 +420,8 @@ static void seq_row(int t, int from, int cols, float cw, int32_t ry)   /* the st
     const dabke_status_t *s = dabke_status();
     int w, P = page_steps(), cur = s->running ? (int)s->tstep[t] : -1, play = cur >= 0 ? cur - from : -1;
     int div = gview_div < 1 ? 4 : gview_div, pages = trk_pages(t), i;
-    for (i = 0; i < pages && i < 8 && pages > 1; i++)   /* its bars, at the left: the one shown white, the one playing
-                                                         * yellow */
-        box(4 + (i & 1) * 7, ry + 1 + (i >> 1) * 6, 5, 4, i == ui.spage ? K_WH : cur >= 0 && cur / P == i ? PN_LIVE : PN_DIM);
+    for (i = 0; i < pages && i < 8 && pages > 1; i++)   /* its bars, at the left: the one shown ink, the one playing red */
+        box(14 + (i & 1) * 7, ry + 1 + (i >> 1) * 6, 5, 4, i == ui.spage ? K_INK : cur >= 0 && cur / P == i ? PN_LIVE : PN_DIM);
     for (w = 0; w < cols; w++) {
         int st = from + w, tr = step_trig(t, st);
         int32_t bx = ri((float)SQ_X + (float)w * cw), bw = ri((float)SQ_X + (float)(w + 1) * cw) - bx - 2;
@@ -545,66 +436,62 @@ static void seq_row(int t, int from, int cols, float cw, int32_t ry)   /* the st
             plock(bx + (bw - 5) / 2, ry + 3, K_LK);
         if (w % div == 0) {              /* the beats' steps numbered */
             int_text(st + 1, n);
-            T(n, bx + bw / 2, ry + 22, 9, tr == 1 ? K_BLACK : K_GR, 1, 0);
+            TX(n, bx + bw / 2, ry + SQ_ROW_H - 4, 0, tr == 1 ? K_PAPER : K_GR, 1, 0);
         }
         if (step_held() && ui.skey == w)     /* the step held */
-            pframe(bx - 1, ry - 1, bw + 2, SQ_ROW_H + 2, K_WH);
+            pframe(bx - 1, ry - 1, bw + 2, SQ_ROW_H + 2, K_INK);
         if (w == play)                   /* the step playing */
-            box(bx, ry + SQ_ROW_H + 2, bw, 3, K_WH);
+            box(bx, ry + SQ_ROW_H + 2, bw, 3, K_INK);
     }
 }
-static void seq_info(int t)              /* two lines of words: the track and whose it is, its length; what a tap adds,
-                                          * its locks counted. A step held (its locks are named in the top line): the
-                                          * rest of them, when one line did not hold them */
+static void seq_info(int t)              /* the lines of words: the track and whose it is, its length; what a tap adds, its
+                                          * locks counted; the page. A step held (its locks are named in the top line):
+                                          * the rest of them, when one line did not hold them */
 {
     char a[72], b2[72], w[8];
     int i, n;
-    seq_whose(t, 167);
+    seq_whose(t, SQ_INFO_Y);
     if (step_held()) {
         step_words(t, ui.sstep, a, b2);
         if (b2[0])
-            T(b2, 4, 183, 11, K_AMB, 0, 232);
+            TXF(b2, 14, SQ_INFO_Y + 14, 0, K_RED, 0, 212);
         else
-            seq_locks(t, 183);
-        return;
-    }
-    a[0] = 0;
-    text_cat(a, "A TAP ADDS ");
-    if (trk_drum(t)) {
-        int f = set.tsnd[t][0];
-        n = dabke_sound_drums(f);
-        text_cat(a, DRUM_NAME[dabke_sound_drum(f, ui.tdrum[t] % (n ? n : 1))]);
+            seq_locks(t, SQ_INFO_Y + 14);
     } else {
-        uint8_t notes[4];
-        n = chord_for(t, notes);
-        for (i = 0; i < n; i++) {
-            note_word(notes[i], w);
-            text_cat(a, i ? " " : "");
-            text_cat(a, w);
+        a[0] = 0;
+        text_cat(a, "A TAP ADDS ");
+        if (trk_drum(t)) {
+            int f = set.tsnd[t][0];
+            n = dabke_sound_drums(f);
+            text_cat(a, DRUM_NAME[dabke_sound_drum(f, ui.tdrum[t] % (n ? n : 1))]);
+        } else {
+            uint8_t notes[4];
+            n = chord_for(t, notes);
+            for (i = 0; i < n; i++) {
+                note_word(notes[i], w);
+                text_cat(a, i ? " " : "");
+                text_cat(a, w);
+            }
         }
+        TX(a, 14, SQ_INFO_Y + 15, 1, K_GR, 0, 150);
+        seq_locks(t, SQ_INFO_Y + 15);
     }
-    T(a, 4, 183, 11, K_GR, 0, 170);
-    seq_locks(t, 183);
+    seq_page(t, SQ_INFO_Y + 28);
 }
 static void steps_bottom(void)           /* step mode on a knob page: the picked track's steps of the page shown, as the
                                           * white keys have them (locks marked, the step playing, the step held), under
-                                          * the knobs he turns; the track and whose it is, its length; the page, its locks */
+                                          * the knobs' pictures; the track and whose it is, its length; the page, its locks */
 {
     int t = picked(), P = page_steps(), n = trk_nsteps(t), from = ui.spage * P, cols = n - from < P ? n - from : P;
-    char b[24] = "PAGE ", x[8];
     if (cols < 0)
         cols = 0;
     if (gview_of != ui.r0)
         grid_view();
-    seq_row(t, from, cols, (float)SQ_W / (float)P, SQ_BOT_Y);
-    seq_whose(t, 213);
-    int_text(ui.spage + 1, x);
-    text_cat(b, x);
-    text_cat(b, " OF ");
-    int_text(trk_pages(t), x);
-    text_cat(b, x);
-    T(b, 4, 231, 11, K_GR, 0, 120);
-    seq_locks(t, 231);
+    if (in_strip(SQ_ROW_Y - 2, SQ_ROW_Y + SQ_ROW_H + 6))
+        seq_row(t, from, cols, (float)SQ_W / (float)P, SQ_ROW_Y);
+    seq_whose(t, SQ_INFO_Y);
+    seq_page(t, SQ_INFO_Y + 16);
+    seq_locks(t, SQ_INFO_Y + 16);
 }
 static uint32_t seq_sig(void)            /* its moving parts: the step playing, the locks holding the strip's knobs */
 {
@@ -615,7 +502,7 @@ static uint32_t seq_sig(void)            /* its moving parts: the step playing, 
         h = h * 131u + s->lk_at[strip_id(STRIP_ROW[k]) % DAB_NLK];
     return h;
 }
-static void seq_view(void)
+static void seq_view(void)               /* (inside the step view's frame) */
 {
     int t = picked(), P = page_steps(), n = trk_nsteps(t), from = ui.spage * P, cols = n - from < P ? n - from : P;
     float cw = (float)SQ_W / (float)P;
@@ -623,7 +510,7 @@ static void seq_view(void)
         cols = 0;
     if (gview_of != ui.r0)
         grid_view();
-    if (in_strip(32, 118)) {
+    if (in_strip(SQ_ROLL_Y - 2, SQ_ROLL_Y + SQ_ROLL_H + 2)) {
         if (trk_drum(t))
             seq_drums(t, from, cols, cw);
         else
@@ -631,8 +518,6 @@ static void seq_view(void)
     }
     if (in_strip(SQ_ROW_Y - 2, SQ_ROW_Y + SQ_ROW_H + 6))
         seq_row(t, from, cols, cw, SQ_ROW_Y);
-    if (in_strip(152, 190))
+    if (in_strip(SQ_INFO_Y - 14, SQ_INFO_Y + 32))
         seq_info(t);
-    if (in_strip(SQ_KNOB_Y, 240))
-        knob_boxes(STRIP_ROW, 0, SQ_KNOB_Y + 1);
 }

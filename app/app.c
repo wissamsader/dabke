@@ -4371,10 +4371,14 @@ int app_sysex(const uint8_t *p, uint32_t n)
 void app_input_only(void) { input(); }
 
 /* ================================================================ drawing ===== */
-/* The screen is drawn in strips (the canvas is at most 240 x 144), each in screen coordinates: the static parts when
- * something shown changes, the moving ones (the scene, the knobs' drawings, the wave) 25 to 30 times a second. */
+/* The screen is drawn in strips (the canvas is at most 240 x 144), each in screen coordinates: everything when
+ * something shown changes, the moving parts (the scene, the lanes, a page's picture) 25 or 15 times a second. Every
+ * page is RAGA MEOW's label (fm1-organ/LOGIC.md, 11-24): its paper, ink and red, its top line, its frame with the
+ * page's name on a red ribbon and a dot a row, its picture, its four glasses; the shapes there have soft edges (each
+ * pixel by how much of it the shape covers). The home page's scene (scene.c) keeps DABKE's own colours and pixels. */
 static int32_t reg_y0, reg_y1;
 static int32_t clip_x0, clip_y0, clip_x1 = 240, clip_y1 = 240;
+static uint8_t paper_on;                 /* drawing on the paper: lines, discs and ellipses soft (the scene: 0, its own) */
 
 static void clip_set(int32_t x, int32_t y, int32_t w, int32_t h)
 {
@@ -4422,12 +4426,185 @@ static void boxf(float x, float y, float w, float h, uint16_t c)
     box(x0, y0, x1 - x0, y1 - y0, c);
 }
 
+static uint16_t mixc(uint16_t a, uint16_t b, float f)
+{
+    int32_t ar = a >> 11, ag = (a >> 5) & 63, ab = a & 31, br = b >> 11, bg = (b >> 5) & 63, bb = b & 31;
+    int32_t q = ri(f * 256.0f);
+    q = clamp(q, 0, 256);
+    return (uint16_t)(((ar + ((br - ar) * q >> 8)) << 11) | ((ag + ((bg - ag) * q >> 8)) << 5) |
+                      (ab + ((bb - ab) * q >> 8)));
+}
+
+/* ---- RAGA MEOW's soft shapes: each pixel by how much of it the shape covers, inside the clip and the strip ---- */
+static int32_t rows_from(float y)
+{
+    int32_t r = (int32_t)fm_floorf(y), lo = reg_y0 > clip_y0 ? reg_y0 : clip_y0;
+    return r < lo ? lo : r;
+}
+static int32_t rows_to(float y)
+{
+    int32_t r = (int32_t)fm_floorf(y) + 1, hi = reg_y1 < clip_y1 ? reg_y1 : clip_y1;
+    return r > hi ? hi : r;
+}
+static inline void a_blend(int32_t x, int32_t y, uint16_t c, float a)
+{
+    int32_t row = y + cv_oy;
+    uint32_t i;
+    if (a <= 0.004f || x < clip_x0 || x >= clip_x1 || y < clip_y0 || y >= clip_y1 || row < 0 || row >= (int32_t)cv_h)
+        return;
+    i = (uint32_t)row * 240u + (uint32_t)x;
+    cv_px[i] = swap16(a >= 0.996f ? c : mixc(swap16(cv_px[i]), c, a));
+}
+static void a_span(int32_t y, float xl, float xr, uint16_t c, float a)   /* a row from xl to xr, its two ends soft; a:
+                                          * how much of the row the shape covers (its top and bottom rows) */
+{
+    int32_t il, ir;
+    if (xr <= xl || a <= 0.004f || y < clip_y0 || y >= clip_y1)
+        return;
+    il = (int32_t)fm_floorf(xl);
+    ir = (int32_t)fm_floorf(xr);
+    if (il == ir) {
+        a_blend(il, y, c, (xr - xl) * a);
+        return;
+    }
+    a_blend(il, y, c, ((float)(il + 1) - xl) * a);
+    if (ir > il + 1) {
+        if (a >= 0.996f) {
+            int32_t x0 = il + 1 < clip_x0 ? clip_x0 : il + 1, x1 = ir > clip_x1 ? clip_x1 : ir, row = y + cv_oy;
+            if (x1 > x0 && row >= 0 && row < (int32_t)cv_h) {
+                uint16_t sc = swap16(c), *p = &cv_px[(uint32_t)row * 240u + (uint32_t)x0];
+                int32_t k;
+                for (k = x0; k < x1; k++)
+                    *p++ = sc;
+            }
+        } else {
+            int32_t k;
+            for (k = il + 1; k < ir; k++)
+                a_blend(k, y, c, a);
+        }
+    }
+    a_blend(ir, y, c, (xr - (float)ir) * a);
+}
+static void a_ell(float cx, float cy, float rx, float ry, uint16_t c)   /* a filled ellipse, row by row */
+{
+    int32_t y, y1 = rows_to(cy + ry + 1.0f);
+    float iry = 1.0f / ry;
+    for (y = rows_from(cy - ry - 1.0f); y < y1; y++) {
+        float top = (float)y, bot = top + 1.0f, a = 1.0f, yc, dy, w;
+        if (top < cy - ry)                   /* (the shape's top and bottom rows: covered in part) */
+            a = bot - (cy - ry);
+        if (bot > cy + ry)
+            a = fm_minf(a, (cy + ry) - top);
+        if (a <= 0.0f)
+            continue;
+        yc = fm_clampf(top + 0.5f, cy - ry + 0.25f, cy + ry - 0.25f);
+        dy = (yc - cy) * iry;
+        w = 1.0f - dy * dy;
+        if (w <= 0.0f)
+            continue;
+        w = rx * fm_sqrtf(w);
+        a_span(y, cx - w, cx + w, c, fm_minf(a, 1.0f));
+    }
+}
+static void a_poly(const float *p, int n, uint16_t c)   /* a filled convex polygon, row by row */
+{
+    float lo_y = 1e9f, hi_y = -1e9f;
+    int i;
+    int32_t y, ya, yb;
+    for (i = 0; i < n; i++) {
+        lo_y = fm_minf(lo_y, p[2 * i + 1]);
+        hi_y = fm_maxf(hi_y, p[2 * i + 1]);
+    }
+    ya = rows_from(lo_y);
+    yb = rows_to(hi_y);
+    for (y = ya; y < yb; y++) {
+        float top = (float)y, bot = top + 1.0f, a = 1.0f, yc, xl = 1e9f, xr = -1e9f;
+        if (top < lo_y)
+            a = bot - lo_y;
+        if (bot > hi_y)
+            a = fm_minf(a, hi_y - top);
+        if (a <= 0.0f)
+            continue;
+        yc = fm_clampf(top + 0.5f, lo_y + 0.01f, hi_y - 0.01f);
+        for (i = 0; i < n; i++) {            /* where the row crosses each edge */
+            int j = (i + 1) % n;
+            float y0 = p[2 * i + 1], y1 = p[2 * j + 1];
+            if ((yc >= y0 && yc <= y1) || (yc >= y1 && yc <= y0)) {
+                if (y1 == y0) {
+                    xl = fm_minf(xl, fm_minf(p[2 * i], p[2 * j]));
+                    xr = fm_maxf(xr, fm_maxf(p[2 * i], p[2 * j]));
+                } else {
+                    float x = p[2 * i] + (p[2 * j] - p[2 * i]) * (yc - y0) / (y1 - y0);
+                    xl = fm_minf(xl, x);
+                    xr = fm_maxf(xr, x);
+                }
+            }
+        }
+        if (xr > xl)
+            a_span(y, xl, xr, c, fm_minf(a, 1.0f));
+    }
+}
+static void a_quad(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3, uint16_t c)
+{
+    float p[8] = {x0, y0, x1, y1, x2, y2, x3, y3};
+    a_poly(p, 4, c);
+}
+static void a_tri(float x0, float y0, float x1, float y1, float x2, float y2, uint16_t c)
+{
+    float p[6] = {x0, y0, x1, y1, x2, y2};
+    a_poly(p, 3, c);
+}
+static void a_seg(float x0, float y0, float x1, float y1, float w, uint16_t c)   /* a line w wide, its ends round */
+{
+    float dx = x1 - x0, dy = y1 - y0, ll = dx * dx + dy * dy, il = ll > 0.0001f ? 1.0f / ll : 0.0f, r = w * 0.5f;
+    int32_t y, x, ya = rows_from(fm_minf(y0, y1) - r - 1.0f), yb = rows_to(fm_maxf(y0, y1) + r + 1.0f);
+    int32_t xa = (int32_t)fm_floorf(fm_minf(x0, x1) - r - 1.0f), xb = (int32_t)fm_floorf(fm_maxf(x0, x1) + r + 2.0f);
+    if (xa < clip_x0)
+        xa = clip_x0;
+    if (xb > clip_x1)
+        xb = clip_x1;
+    for (y = ya; y < yb; y++)
+        for (x = xa; x < xb; x++) {
+            float px_ = (float)x + 0.5f - x0, py_ = (float)y + 0.5f - y0, t = (px_ * dx + py_ * dy) * il, ex, ey;
+            t = fm_clampf(t, 0.0f, 1.0f);
+            ex = px_ - t * dx;
+            ey = py_ - t * dy;
+            a_blend(x, y, c, r + 0.5f - fm_sqrtf(ex * ex + ey * ey));
+        }
+}
+static void a_rim(float x, float y, float w, float h, float lw, uint16_t c)   /* a box's edges, lw wide, centred on them */
+{
+    float a = lw * 0.5f;
+    a_quad(x - a, y - a, x + w + a, y - a, x + w + a, y + a, x - a, y + a, c);
+    a_quad(x - a, y + h - a, x + w + a, y + h - a, x + w + a, y + h + a, x - a, y + h + a, c);
+    a_quad(x - a, y - a, x + a, y - a, x + a, y + h + a, x - a, y + h + a, c);
+    a_quad(x + w - a, y - a, x + w + a, y - a, x + w + a, y + h + a, x + w - a, y + h + a, c);
+}
+static void a_arc(float cx, float cy, float r, float a0, float a1, float w, uint16_t c)   /* (in turns) */
+{
+    int k, n = 14;
+    float px_ = cx + r * fm_cosf(a0 * FM_TWO_PI), py_ = cy + r * fm_sinf(a0 * FM_TWO_PI);
+    for (k = 1; k <= n; k++) {
+        float a = (a0 + (a1 - a0) * (float)k / (float)n) * FM_TWO_PI, x = cx + r * fm_cosf(a), y = cy + r * fm_sinf(a);
+        a_seg(px_, py_, x, y, w, c);
+        px_ = x;
+        py_ = y;
+    }
+}
+
+/* ---- DABKE's own: hard pixels for its scene; on the paper the lines, discs and ellipses are the soft ones ---- */
 static void seg(float fx0, float fy0, float fx1, float fy1, uint16_t c, int lw)
 {
-    int32_t x0 = ri(fx0), y0 = ri(fy0), x1 = ri(fx1), y1 = ri(fy1);
-    int32_t dx = x1 > x0 ? x1 - x0 : x0 - x1, sx = x0 < x1 ? 1 : -1;
-    int32_t dy = y1 > y0 ? y0 - y1 : y1 - y0, sy = y0 < y1 ? 1 : -1;
-    int32_t err = dx + dy, guard = 1000, steep = -dy > dx;
+    int32_t x0, y0, x1, y1, dx, sx, dy, sy, err, guard = 1000, steep;
+    if (paper_on) {                          /* (its pixels' middles: as the hard line lands; a little bolder, as RAGA
+                                              * MEOW's ink) */
+        a_seg(fx0 + 0.5f, fy0 + 0.5f, fx1 + 0.5f, fy1 + 0.5f, lw <= 1 ? 1.6f : (float)lw + 0.4f, c);
+        return;
+    }
+    x0 = ri(fx0), y0 = ri(fy0), x1 = ri(fx1), y1 = ri(fy1);
+    dx = x1 > x0 ? x1 - x0 : x0 - x1, sx = x0 < x1 ? 1 : -1;
+    dy = y1 > y0 ? y0 - y1 : y1 - y0, sy = y0 < y1 ? 1 : -1;
+    err = dx + dy, steep = -dy > dx;
     while (guard--) {
         int32_t e2 = 2 * err;
         px(x0, y0, c);
@@ -4472,6 +4649,10 @@ static void disc(float cx, float cy, float r, uint16_t c)
         box(ri(cx - 0.5f), ri(cy - 0.5f), 1, 1, c);
         return;
     }
+    if (paper_on) {
+        a_ell(cx, cy, r, r, c);
+        return;
+    }
     for (; y <= y1; y++) {
         float dy = (float)y + 0.5f - cy, hw2 = r * r - dy * dy, hw;
         int32_t x0, x1;
@@ -4501,6 +4682,10 @@ static void circ(float cx, float cy, float r, uint16_t c, int lw) { arc(cx, cy, 
 static void ellipse(float cx, float cy, float rx, float ry, uint16_t c)   /* filled, upright: a row at a time */
 {
     int32_t y = ri(cy - ry - 0.5f), y1 = ri(cy + ry + 0.5f);
+    if (paper_on) {
+        a_ell(cx, cy, rx, ry, c);
+        return;
+    }
     for (; y <= y1; y++) {
         float dy = ((float)y + 0.5f - cy) / ry, w2 = 1.0f - dy * dy, hw;
         int32_t x0, x1;
@@ -4524,15 +4709,6 @@ static void frame(float x, float y, float w, float h, uint16_t c)
     box(x1, y0, 1, y1 - y0 + 1, c);
 }
 
-static uint16_t mixc(uint16_t a, uint16_t b, float f)
-{
-    int32_t ar = a >> 11, ag = (a >> 5) & 63, ab = a & 31, br = b >> 11, bg = (b >> 5) & 63, bb = b & 31;
-    int32_t q = ri(f * 256.0f);
-    q = clamp(q, 0, 256);
-    return (uint16_t)(((ar + ((br - ar) * q >> 8)) << 11) | ((ag + ((bg - ag) * q >> 8)) << 5) |
-                      (ab + ((bb - ab) * q >> 8)));
-}
-
 static uint32_t rnd_s = 0x9E3779B9u;
 static float rndf(void)
 {
@@ -4540,29 +4716,33 @@ static float rndf(void)
     return (float)(rnd_s >> 8) * (1.0f / 16777216.0f);
 }
 
-/* text at a baseline (its pixel size picks the face), in capitals; max: the widest it may be (a smaller face, then cut) */
+/* text at a baseline, in capitals but a note's flat ("Bb") a small b. T: its pixel size picks the face (DABKE's own
+ * drawings); TX: RAGA MEOW's, face 0 T, 1 XS, 2 B, 3 M, 4 L (M and L capitals only). align 0 left, 1 centre, 2 right;
+ * max: the widest it may be (T and TXF: a smaller face, then cut; TX: cut) */
 static const felucca_font_t *const FACE[5] = {&FONT_T, &FONT_XS, &FONT_B, &FONT_M, &FONT_L};
 static const uint8_t ASC[5] = {10, 12, 13, 19, 26};
-static int32_t T(const char *s, int32_t x, int32_t yb, int size, uint16_t c, int align, int32_t maxw)
+static int caps(const char *s, char *u, int f)   /* s in capitals into u (47 at most) as face f writes it; its length */
 {
-    char u[48];
-    int f = size <= 10 ? 0 : size <= 13 ? 1 : size <= 17 ? 2 : size <= 24 ? 3 : 4, n = 0, lo = 0;
-    int32_t w, top;
-    while (s[n] && n < 47) {             /* capitals, but a note's flat ("Bb") stays a small b */
+    int n = 0;
+    while (s[n] && n < 47) {
         int flat = s[n] == 'b' && n > 0 && s[n - 1] >= 'A' && s[n - 1] <= 'G' && (s[n + 1] < 'a' || s[n + 1] > 'z');
-        u[n] = flat ? 'b' : (char)up_char((uint8_t)s[n]);
+        u[n] = flat && FACE[f]->last >= 'b' ? 'b' : (char)up_char((uint8_t)s[n]);
         n++;
     }
     u[n] = 0;
-    w = text_w(FACE[f], u);
-    while (maxw && w > maxw && f > lo)
-        w = text_w(FACE[--f], u);
-    if (FACE[f]->last < 'b')             /* (a face of capitals only) */
-        for (n = 0; u[n]; n++)
-            u[n] = (char)up_char((uint8_t)u[n]);
+    return n;
+}
+static int32_t text_out(const char *u, int n, int32_t x, int32_t yb, int f, uint16_t c, int align, int32_t maxw)
+{
+    char v[48];
+    int32_t w, top;
+    int k;
+    for (k = 0; k <= n; k++)
+        v[k] = u[k];
+    w = text_w(FACE[f], v);
     while (maxw && w > maxw && n > 1) {
-        u[--n] = 0;
-        w = text_w(FACE[f], u);
+        v[--n] = 0;
+        w = text_w(FACE[f], v);
     }
     if (align == 1)
         x -= w / 2;
@@ -4571,7 +4751,36 @@ static int32_t T(const char *s, int32_t x, int32_t yb, int size, uint16_t c, int
     top = yb - ASC[f];
     if (!in_strip(top, top + FACE[f]->h))
         return x + w;
-    return cv_text(x, top, FACE[f], u, c);
+    return cv_text(x, top, FACE[f], v, c);
+}
+static int32_t T(const char *s, int32_t x, int32_t yb, int size, uint16_t c, int align, int32_t maxw)
+{
+    char u[48];
+    int f = size <= 10 ? 0 : size <= 13 ? 1 : size <= 17 ? 2 : size <= 24 ? 3 : 4, n;
+    n = caps(s, u, f);
+    while (maxw && text_w(FACE[f], u) > maxw && f > 0)
+        n = caps(s, u, --f);
+    return text_out(u, n, x, yb, f, c, align, maxw);
+}
+static int32_t TX(const char *s, int32_t x, int32_t yb, int face, uint16_t c, int align, int32_t maxw)
+{
+    char u[48];
+    int n = caps(s, u, face);
+    return text_out(u, n, x, yb, face, c, align, maxw);
+}
+static int32_t text_wf(const char *s, int face)   /* its width in that face, as TX writes it */
+{
+    char u[48];
+    caps(s, u, face);
+    return text_w(FACE[face], u);
+}
+static int32_t TXF(const char *s, int32_t x, int32_t yb, int face, uint16_t c, int align, int32_t maxw)   /* TX, fitted:
+                                          * a face smaller while the text is wider than maxw (L to M, M to B, B to XS, XS
+                                          * to T), cut only past the smallest */
+{
+    while (maxw && face > 0 && text_wf(s, face) > maxw)
+        face--;
+    return TX(s, x, yb, face, c, align, maxw);
 }
 
 /* the half-flat sign (a flat with a stroke through its stem), as maqam music writes it */
@@ -4587,8 +4796,6 @@ static void halfflat(int32_t x, int32_t yb, int32_t h, uint16_t c)
 static float fmodp(float a, float m) { return a - fm_floorf(a / m) * m; }   /* a % m, never below 0 */
 
 static int arp_panel_up(void) { return ui.arp_held && (ui.arp_used || ms_now - ui.arp_at >= 250u); }
-static void panel_head(void);
-static void seq_head(void);
 static void lock_name(int t, int id, char *b)   /* a locked knob by name, as seen from track t: its own strip's "FILTER",
                                                   * another track's "T2 FILTER", any other knob's own word */
 {
@@ -4646,210 +4853,449 @@ static int step_words(int t, int st, char *a, char *b2)   /* the held step: "STE
         text_cat(a, ": NO LOCKS");
     return n;
 }
-static void header(void)
-{
-    if (!in_strip(0, 32))
-        return;
-    if (ui.fresh) {
-        int m = ms_now < ui.msg_until;
-        T(m ? ui.msg : "START FRESH", 8, 22, 16, m ? K_AMB : K_WH, 0, 224);
-        box(0, 30, 240, 1, K_DIM);
-        return;
-    }
-    if (step_held() && !ui.save && !arp_panel_up()) {   /* a step held, on any page: its locks named here, whatever was
-                                              * said a moment ago ("STEP 5: REVERB 37") */
-        char a[72], b2[72];
-        step_words(picked(), ui.sstep, a, b2);
-        T(a, 8, 22, 16, K_AMB, 0, 224);
-    } else if (ms_now < ui.msg_until) {
-        T(ui.msg, 8, 22, 16, K_AMB, 0, 224);
-    } else if (ui.page == PG_HOME && !ui.save && !arp_panel_up()) {
-        if (ui.seq)
-            seq_head();                      /* the step view: "STEPS", the bar shown */
-        else
-            panel_head();                    /* the home page: the sound, the maqam, the tempo */
-    } else {
-        char info[32] = "", t[8], ttl[32] = "";
-        text_cat(ttl, ui.save ? "KEEP THE SOUND" : PAGE_TITLE[ui.page]);
-        if (!ui.save && set.track && (ui.page == PG_ENV || ui.page == PG_LFO)) {   /* (whose sound: "SOUND: TRACK 3";
-                                              * a track without a lead sound picked: "SOUND: TRACK 1") */
-            char tn[12];
-            trk_name(ed_trk(), tn);
-            text_cat(ttl, ": ");
-            text_cat(ttl, tn);
-        }
-        if (arp_panel_up()) {                /* ARP held: its panel */
-            ttl[0] = 0;
-            text_cat(ttl, set.arp ? "ARPEGGIO ON" : "ARPEGGIO OFF");
-        }
-        T(ttl, 8, 22, 16, K_WH, 0, 170);
-        if (ui.save)
-            ;
-        else if (arp_panel_up())
-            text_cat(info, "SEL: THE OTHER FOUR");
-        else if (ui.page == PG_SEL) {
-            text_cat(info, ui.edit_held ? "KEYS: FLAT OR BACK" : "EDIT + KEY: FLAT");
-        } else {
-            int pg = ui.page;
-            int_text(ui.row[pg] + 1, t);
-            text_cat(info, t);
-            text_cat(info, " / ");
-            int_text(PAGE_ROWS[pg], t);
-            text_cat(info, t);
-        }
-        T(info, 232, 21, 11, K_GR, 2, 0);
-    }
-    box(0, 30, 240, 1, K_DIM);
-}
+#include "scene.c"
 
-static void save_page(void)
+/* ---- the inks. The names DABKE's drawings use (K_WH their line, K_AMB what moves, K_GR and K_DIM fainter, K_BOX and
+ * K_KBG their ground, K_BLACK, K_RED, K_LK a lock) are its dark screen's at the top of this file, and the scene (scene.c,
+ * just above) keeps them. From here on they are the paper's: white is ink, black and the ground are the paper, amber
+ * and red RAGA MEOW's red, a lock a blue that reads on the paper; inks() fades them toward the paper (the ARP panel's
+ * other row) ---- */
+#undef K_BLACK
+#undef K_WH
+#undef K_AMB
+#undef K_GR
+#undef K_DIM
+#undef K_BOX
+#undef K_KBG
+#undef K_RED
+#undef K_LK
+#define K_PAPER RGB(239, 228, 200)       /* RAGA MEOW's (fm1-meend app.c): the label's paper, its grain, the ink, ... */
+#define K_GRAIN RGB(225, 212, 178)
+#define K_INK RGB(29, 27, 26)
+#define K_CREAM RGB(243, 234, 210)
+#define K_CREAM2 RGB(217, 205, 176)
+#define K_TEAL RGB(42, 127, 134)
+#define K_FOAM RGB(239, 138, 118)
+#define K_GLASS RGB(252, 249, 240)
+#define K_MOUTH RGB(122, 26, 18)
+#define K_WOOD RGB(150, 84, 40)
+#define K_WOOD2 RGB(108, 52, 21)
+#define K_FLAME RGB(250, 196, 70)
+#define K_SKIN RGB(196, 140, 98)         /* (the singer's, scene.c's) */
+#define K_FAINT mixc(K_INK, K_PAPER, 0.4f)   /* (the names under the glasses) */
+static const uint16_t INK_PAPER[9] = {K_PAPER, K_INK, RGB(210, 58, 42), RGB(113, 107, 96), RGB(150, 136, 112), K_CREAM2,
+                                      K_PAPER, RGB(210, 58, 42), RGB(38, 104, 170)};
+static uint16_t ink_now[9];
+#define K_BLACK ink_now[0]
+#define K_WH ink_now[1]
+#define K_AMB ink_now[2]
+#define K_GR ink_now[3]
+#define K_DIM ink_now[4]
+#define K_BOX ink_now[5]
+#define K_KBG ink_now[6]
+#define K_RED ink_now[7]
+#define K_LK ink_now[8]
+static void inks(float fade)             /* the paper's inks, faded that far toward the paper (0: as they are) */
 {
     int i;
-    T("SELECT SAYS WHERE", 120, 58, 13, K_GR, 1, 0);
-    T("SAVE KEEPS IT    HOME LEAVES", 120, 222, 11, K_GR, 1, 0);
-    for (i = 0; i < NKEPT; i++) {
-        int32_t x = 8 + (i % 4) * 57, y = 72 + (i / 4) * 66, on = i == ui.slot;
-        char t[2] = {(char)('1' + i), 0};
-        box(x, y, 52, 58, on ? K_AMB : K_BOX);
-        T(t, x + 26, y + 34, 24, on ? K_BLACK : K_WH, 1, 0);
-        T(kept.used[i] ? "USED" : "FREE", x + 26, y + 51, 9, on ? K_BLACK : K_GR, 1, 0);
+    for (i = 0; i < 9; i++)
+        ink_now[i] = mixc(INK_PAPER[i], K_PAPER, fade);
+}
+
+/* ---- RAGA MEOW's label: the paper, the frame, the ribbon, the dots, the top line, the glasses ---- */
+static void paper(void)                  /* the paper's grain (a strip starts as the paper): the same dots every time */
+{
+    uint32_t s = 9u, i;
+    for (i = 0; i < 600u; i++) {
+        int32_t x, y;
+        s = s * 1664525u + 1013904223u;
+        x = (int32_t)((s >> 16) * 240u >> 16);   /* (its top bits scaled to 0..239: no division) */
+        s = s * 1664525u + 1013904223u;
+        y = (int32_t)((s >> 16) * 240u >> 16);
+        if (y >= reg_y0 && y < reg_y1)
+            cv_pset(x, y, K_GRAIN);
+    }
+}
+static void label_frame(float y, float h)
+{
+    a_rim(5.0f, y, 230.0f, h, 2.0f, K_INK);
+    a_rim(9.0f, y + 4.0f, 222.0f, h - 8.0f, 1.0f, K_INK);
+}
+static void banner(const char *word, float cx, float y, float w, int face)   /* red, its ends notched, cream letters */
+{
+    float a = cx - w * 0.5f, b = cx + w * 0.5f;
+    if (!in_strip((int32_t)y - 2, (int32_t)y + 22))
+        return;
+    a_quad(a, y, cx, y, cx, y + 10.0f, a + 8.0f, y + 10.0f, K_RED);
+    a_quad(a + 8.0f, y + 10.0f, cx, y + 10.0f, cx, y + 20.0f, a, y + 20.0f, K_RED);
+    a_quad(cx, y, b, y, b - 8.0f, y + 10.0f, cx, y + 10.0f, K_RED);
+    a_quad(cx, y + 10.0f, b - 8.0f, y + 10.0f, b, y + 20.0f, cx, y + 20.0f, K_RED);
+    TXF(word, (int32_t)cx, (int32_t)(y + 15.0f), face, K_CREAM, 1, (int32_t)w - 20);
+}
+static void row_dots(int n, int sel, float x, float y)   /* a dot a row, the one shown red */
+{
+    int i;
+    float sp = n > 6 ? 6.5f : n > 3 ? 7.0f : 9.0f;
+    for (i = 0; i < n && n > 1; i++)
+        a_ell(x + (float)i * sp, y, n > 3 ? 2.6f : 3.0f, n > 3 ? 2.6f : 3.0f, i == sel ? K_RED : mixc(K_PAPER, K_INK, 0.25f));
+}
+static float dots_x(int n)               /* where a page's dots begin, at the right of its ribbon */
+{
+    return n > 6 ? 224.0f - 6.5f * (float)(n - 1) : n > 3 ? 214.0f - 7.0f * (float)(n - 1) : 194.0f;
+}
+static float ribbon_w(int n) { return n > 6 ? 100.0f : n > 3 ? 108.0f : 120.0f; }   /* (room for its dots) */
+static void top_line(int home)           /* RAGA MEOW's: at the left the picked track and its sound (the home page), else
+                                          * DABKE; at the right the maqam on its root (a root a quarter tone flat: its
+                                          * sign). A message, or a held step's locks, over both, in red */
+{
+    char b[72], b2[72];
+    int32_t end, room, flat = set.ntune[set.ch[C_ROOT] % 12] < 0;
+    if (!in_strip(0, 17))
+        return;
+    if (step_held() && !ui.save && !arp_panel_up()) {   /* a step held, on any page: its locks ("STEP 5: REVERB 37") */
+        step_words(picked(), ui.sstep, b, b2);
+        TXF(b, 6, 13, 1, K_RED, 0, 228);
+        return;
+    }
+    if (ms_now < ui.msg_until) {
+        TXF(ui.msg, 6, 13, 1, K_RED, 0, 228);
+        return;
+    }
+    if (home) {                          /* "3 SAZ" (its arpeggio on: "3 SAZ ARP") */
+        char n[32];
+        b[0] = (char)('1' + picked());
+        b[1] = ' ';
+        b[2] = 0;
+        track_sound(picked(), n);
+        text_cat(b, n);
+        if (set.arp)
+            text_cat(b, " ARP");
+        end = TXF(b, 6, 13, 1, K_INK, 0, 118);
+    } else
+        end = TXF(APP_NAME, 6, 13, 1, K_INK, 0, 110);
+    room = 234 - end - 8 - (flat ? 7 : 0);
+    maqam_name(b, 1);                    /* "BAYATI ON D" */
+    TX(b, flat ? 227 : 234, 12, 0, K_INK, 2, room > 40 ? room : 40);
+    if (flat)
+        halfflat(231, 12, 9, K_INK);
+}
+static void glass(float cx, float y, float fill, float h)   /* a glass of red: its top y + 6, h tall */
+{
+    float top = y + 6.0f, bot = top + h, lv = bot - fm_maxf(0.04f, fill) * (h - 2.0f), wl = 11.0f - (lv - top) * 3.0f / h;
+    a_quad(cx - 11.0f, top, cx + 11.0f, top, cx + 8.0f, bot, cx - 8.0f, bot, K_GLASS);
+    a_quad(cx - wl, lv, cx + wl, lv, cx + 8.0f, bot, cx - 8.0f, bot, K_RED);
+    box((int32_t)(cx - wl + 2.0f), (int32_t)lv, (int32_t)(2.0f * wl - 4.0f), 2, K_FOAM);
+    a_seg(cx - 11.0f, top, cx + 11.0f, top, 1.0f, K_INK);
+    a_seg(cx + 11.0f, top, cx + 8.0f, bot, 1.0f, K_INK);
+    a_seg(cx + 8.0f, bot, cx - 8.0f, bot, 1.0f, K_INK);
+    a_seg(cx - 8.0f, bot, cx - 11.0f, top, 1.0f, K_INK);
+}
+static int kv_locked;                    /* (the value knob_value just gave is a lock's) */
+static int32_t knob_shown(int pid, int *locked);
+static void knob_value(int id, char *b, const char **label);
+static float knob_fill(int id)           /* how full a knob's glass is, 0..1: where it is between its ends (a choice: its
+                                          * place among its choices; a switch: full when on) */
+{
+    int t = picked(), pid = strip_id(id) >= 0 ? strip_id(id) : id, lk;
+    if (knob_na(id))
+        return 0.0f;
+    if (id >= K_CH && id < K_CH + NCH) {
+        int c = id - K_CH, n = ch_count(c);
+        return n > 1 ? (float)(set.ch[c] % n) / (float)(n - 1) : 0.0f;
+    }
+    switch (id) {
+    case K_TSPACE: return (float)space_of(t) * 0.01f;
+    case K_BDSEND:
+    case K_BRSEND:
+    case K_BSPACE: return bg_send(id) < 0 ? 0.0f : (float)bg_send(id) * 0.01f;
+    case K_TFX: return trk_fx_set(t) && !(set.x.tfx >> t & 1u) ? 1.0f : 0.0f;
+    case K_BFX: return set.x.bfx ? 0.0f : 1.0f;
+    case K_TMUTE: return (float)(set.mute >> t & 1u);
+    case K_BMUTE: return (float)set.x.bmute;
+    case K_TSOLO: return (float)(ui.solo >> t & 1u);
+    case K_BSOLO: return (float)(ui.solo >> 8 & 1u);
+    case K_EQLOW:
+    case K_EQMID:
+    case K_EQHIGH: return (float)(set.x.eq[id - K_EQLOW] + 24) / 36.0f;
+    case K_TSOUND: {
+        int f = set.tsnd[t][0], n = sel_total();
+        return n > 1 ? (float)sel_pos(t, f, f == SF_LEAD ? lead_pos(t) : set.tsnd[t][1]) / (float)(n - 1) : 0.0f;
+    }
+    case K_DRUM: return (float)ui.drum / (float)(DAB_NDRUM - 1);
+    case K_DLEVEL: return (float)set.dlv[ui.drum] * 0.01f;
+    case K_DTUNE: return (float)(set.dtune[ui.drum] - 25) / 375.0f;
+    case K_DLEN: return (float)(set.dlen[ui.drum] - 20) / 480.0f;
+    case K_TLEN: return fm_minf(1.0f, (float)trk_nsteps(t) / (float)DAB_TSTEPS);
+    case K_SECOND: return (float)(ui.r1 + 1) / (float)rhythm_total();
+    case K_QDEPTH: return (float)(set.qdepth - 20) / 60.0f;
+    case K_CENTS: return (float)(set.ntune[ui.cur % 12] + 100) / 200.0f;
+    case K_NOTE: return (float)(ui.cur % 12) / 11.0f;
+    case K_TRACK: return (float)t / (float)(DAB_NPART - 1);
+    case K_TDRUM: {
+        int nd = dabke_sound_drums(set.tsnd[t][0]);
+        return trk_drum(t) && nd > 1 ? (float)(ui.tdrum[t] % nd) / (float)(nd - 1) : 0.0f;
+    }
+    case K_FADE: return (float)ui.master / 127.0f;
+    case K_TOPCLR: return set.top_mask ? 1.0f : 0.0f;
+    case K_MIXLVL: return (float)ui.mix_lvl * 0.01f;
+    }
+    if (id >= K_MUTE && id < K_MUTE + DAB_NPART)
+        return set.mute >> (id - K_MUTE) & 1u ? 0.0f : 1.0f;
+    if (IS_KNOB(pid)) {
+        const par_t *p = &PAR[pid];
+        return p->hi > p->lo ? fm_clampf((float)(knob_shown(pid, &lk) - p->lo) / (float)(p->hi - p->lo), 0.0f, 1.0f) : 0.0f;
+    }
+    return 0.0f;
+}
+static void plock(int32_t x, int32_t y, uint16_t c)   /* a lock's mark: a small padlock, 5 x 7 */
+{
+    box(x, y + 3, 5, 4, c);
+    box(x + 1, y, 3, 1, c);
+    box(x + 1, y + 1, 1, 2, c);
+    box(x + 3, y + 1, 1, 2, c);
+}
+static void glasses(const uint8_t *ids, int arp)   /* the row's four, K1 to K4: a glass each, as full as its knob is
+                                          * turned, its name and value under it ("--" and an empty glass: it does
+                                          * nothing here now); a lock's value blue, a padlock by the glass where the
+                                          * picked track has a lock of that knob. arp: the ARP panel's (no "ARP " in
+                                          * front of the names) */
+{
+    int k;
+    if (!in_strip(186, 240))
+        return;
+    for (k = 0; k < 4; k++) {
+        int id = ids[k], pid, na;
+        float cx = (float)(k * 60 + 30);
+        char v[40];
+        const char *label = "";
+        if (id == K_NONE)
+            continue;
+        knob_value(id, v, &label);
+        na = v[0] == '-' && v[1] == '-' && !v[2];
+        if (arp && label[0] == 'A' && label[1] == 'R' && label[2] == 'P' && label[3] == ' ')
+            label += 4;
+        glass(cx, 186.0f, na ? 0.0f : knob_fill(id), 24.0f);
+        TXF(label, (int32_t)cx, 226, 0, K_FAINT, 1, 58);
+        TXF(v, (int32_t)cx, 238, 1, na ? mixc(K_INK, K_PAPER, 0.55f) : kv_locked ? K_LK : K_INK, 1, 58);
+        pid = strip_id(id) >= 0 ? strip_id(id) : id;
+        if (set.track && lk_ok(pid) && lk_has(picked(), pid))
+            plock((int32_t)cx + 13, 192, K_LK);
     }
 }
 
-static void fresh_page(void)             /* START FRESH: what goes, and the two buttons */
+/* ---- him, small and in ink, where RAGA MEOW draws its cat: his keffiyeh (its red lattice, its red hem), its black
+ * agal, his dark glasses and moustache, his mouth open as he sings ---- */
+static float fig_fade;                   /* (his colours faded toward the paper: an echo of him) */
+static uint16_t fgc(uint16_t c) { return fig_fade > 0.0f ? mixc(c, K_PAPER, fig_fade) : c; }
+static void fig(float x, float y, float s, float open)   /* (x, y) the middle of his face, s his size (1: the face 18 high) */
+{
+    static const int8_t DOT[9][2] = {{-6, -12}, {0, -14}, {6, -12}, {-10, -7}, {10, -7}, {-11, 2}, {11, 2}, {-12, 9}, {12, 9}};
+    uint16_t cr = fgc(K_CREAM), rd = fgc(K_RED), ik = fgc(K_INK);
+    int k;
+    a_quad(x - 12.0f * s, y - 6.0f * s, x - 7.0f * s, y - 6.0f * s, x - 8.0f * s, y + 14.0f * s, x - 15.0f * s, y + 14.0f * s, cr);
+    a_quad(x + 7.0f * s, y - 6.0f * s, x + 12.0f * s, y - 6.0f * s, x + 15.0f * s, y + 14.0f * s, x + 8.0f * s, y + 14.0f * s, cr);
+    a_ell(x, y - 6.0f * s, 12.5f * s, 10.5f * s, cr);
+    for (k = 0; k < 9; k++)              /* its red lattice */
+        a_ell(x + (float)DOT[k][0] * s, y + (float)DOT[k][1] * s, 1.0f * s, 1.0f * s, rd);
+    a_seg(x - 15.0f * s, y + 13.0f * s, x - 8.0f * s, y + 13.0f * s, 1.3f * s, rd);   /* its hem */
+    a_seg(x + 8.0f * s, y + 13.0f * s, x + 15.0f * s, y + 13.0f * s, 1.3f * s, rd);
+    a_ell(x, y + 1.5f * s, 7.5f * s, 9.0f * s, fgc(K_SKIN));
+    a_seg(x - 12.0f * s, y - 8.0f * s, x + 12.0f * s, y - 8.0f * s, 2.2f * s, ik);   /* the agal */
+    a_seg(x - 11.0f * s, y - 5.4f * s, x + 11.0f * s, y - 5.4f * s, 1.6f * s, ik);
+    a_ell(x - 3.6f * s, y, 3.1f * s, 2.3f * s, ik);   /* the dark glasses */
+    a_ell(x + 3.6f * s, y, 3.1f * s, 2.3f * s, ik);
+    a_seg(x - 1.0f * s, y - 0.6f * s, x + 1.0f * s, y - 0.6f * s, 1.0f * s, ik);
+    a_ell(x - 2.4f * s, y + 4.6f * s, 2.8f * s, 1.25f * s, ik);   /* the moustache */
+    a_ell(x + 2.4f * s, y + 4.6f * s, 2.8f * s, 1.25f * s, ik);
+    if (open > 0.05f)
+        a_ell(x, y + 7.4f * s, 1.5f * s, (0.4f + open * 1.3f) * s, fgc(K_MOUTH));
+    else
+        a_seg(x - 1.5f * s, y + 7.2f * s, x + 1.5f * s, y + 7.2f * s, 0.9f * s, fgc(mixc(K_SKIN, K_INK, 0.5f)));
+}
+static void small_fig(float x, float y, float s, float open)   /* in his teal disc (the cat's) */
+{
+    a_ell(x, y - 2.0f * s, 22.0f * s, 22.0f * s, K_TEAL);
+    fig(x, y, s, open);
+}
+
+/* ---- KEEP THE SOUND and START FRESH ---- */
+static void keep_page(void)              /* SAVE: RAGA MEOW's shelf of eight places, the one SELECT points at slid out (red: a
+                                          * sound kept there); under the label what is there now */
+{
+    char b[48] = "KEEP IN ", n[8] = {(char)('1' + ui.slot), 0};
+    int i;
+    label_frame(18.0f, 164.0f);
+    top_line(0);
+    banner("KEEP THE SOUND", 120.0f, 26.0f, 150.0f, 2);
+    box(14, 150, 212, 5, K_WOOD);
+    for (i = 0; i < NKEPT; i++) {
+        float x = 18.0f + (float)i * 26.0f, out = i == ui.slot ? -14.0f : 0.0f;
+        int used = kept.used[i];
+        char d[4] = {(char)('1' + i), 0, 0, 0};
+        box((int32_t)x, (int32_t)(96.0f + out), 22, 54, used ? K_RED : K_CREAM2);
+        a_rim(x, 96.0f + out, 22.0f, 54.0f, 1.0f, K_INK);
+        if (used) {                      /* (a sound there: its label, a dot on it) */
+            box((int32_t)x + 4, (int32_t)(106.0f + out), 14, 10, K_CREAM2);
+            a_ell(x + 11.0f, 111.0f + out, 3.0f, 3.0f, K_INK);
+        }
+        TX(d, (int32_t)x + 11, (int32_t)(142.0f + out), 1, used ? K_CREAM : K_INK, 1, 0);
+    }
+    a_rim(18.0f + (float)ui.slot * 26.0f - 3.0f, 79.0f, 28.0f, 60.0f, 2.0f, K_RED);
+    text_cat(b, n);
+    TX(b, 120, 178, 4, K_RED, 1, 0);
+    if (in_strip(186, 240)) {
+        b[0] = 0;
+        if (kept.used[ui.slot]) {        /* "MY SOUND 3: SAZ" (its instrument) */
+            text_cat(b, "MY SOUND ");
+            text_cat(b, n);
+            text_cat(b, ": ");
+            text_cat(b, MODEL_NAME[kept.s[ui.slot].ch[C_MODEL] % MD_COUNT]);
+        } else
+            text_cat(b, "FREE");
+        TXF(b, 120, 202, 1, K_INK, 1, 176);
+        TX("SAVE KEEPS IT  HOME LEAVES", 120, 222, 0, mixc(K_INK, K_PAPER, 0.35f), 1, 0);
+    }
+    small_fig(206.0f, 214.0f, 0.75f, 0.2f);
+}
+static void fresh_page(void)             /* START FRESH (SAVE held at the start): a new cassette, its label empty; what goes
+                                          * back to how it was; SAVE starts fresh, HOME keeps everything */
 {
     static const char *const L[4] = {"EVERY SETTING, EVERY TRACK'S SOUND,", "THE LOOPS, THE STEPS, THE LOCKS",
                                      "AND THE MY SOUNDS GO BACK TO HOW", APP_NAME " WAS ON ITS FIRST START."};
     int i;
+    label_frame(18.0f, 164.0f);
+    banner("START FRESH", 120.0f, 26.0f, 130.0f, 2);
+    if (in_strip(0, 17))
+        TXF(ms_now < ui.msg_until ? ui.msg : APP_NAME, 6, 13, 1, ms_now < ui.msg_until ? K_RED : K_INK, 0, 228);
+    if (in_strip(54, 118)) {             /* the cassette: its shell, its empty label, its window and two reels, no tape */
+        box(70, 56, 100, 58, K_RED);
+        a_rim(70.0f, 56.0f, 100.0f, 58.0f, 1.5f, K_INK);
+        box(78, 62, 84, 38, K_CREAM2);
+        a_rim(78.0f, 62.0f, 84.0f, 38.0f, 1.0f, K_INK);
+        a_seg(84.0f, 69.0f, 156.0f, 69.0f, 1.0f, mixc(K_INK, K_CREAM2, 0.55f));
+        box(92, 76, 56, 18, K_INK);
+        for (i = 0; i < 2; i++) {
+            a_ell(i ? 134.0f : 106.0f, 85.0f, 6.0f, 6.0f, K_CREAM);
+            a_ell(i ? 134.0f : 106.0f, 85.0f, 2.0f, 2.0f, K_INK);
+        }
+        a_quad(88.0f, 114.0f, 152.0f, 114.0f, 146.0f, 104.0f, 94.0f, 104.0f, K_CREAM2);
+        a_ell(104.0f, 109.0f, 2.0f, 2.0f, K_INK);
+        a_ell(136.0f, 109.0f, 2.0f, 2.0f, K_INK);
+    }
     for (i = 0; i < 4; i++)
-        T(L[i], 120, 60 + i * 20, 13, K_WH, 1, 228);
-    box(8, 140, 108, 66, K_AMB);
-    T("SAVE", 62, 172, 24, K_BLACK, 1, 0);
-    T("STARTS FRESH", 62, 194, 11, K_BLACK, 1, 100);
-    box(124, 140, 108, 66, K_BOX);
-    T("HOME", 178, 172, 24, K_WH, 1, 0);
-    T("KEEPS EVERYTHING", 178, 194, 11, K_GR, 1, 100);
-    T("ANY OTHER BUTTON KEEPS EVERYTHING TOO", 120, 226, 11, K_GR, 1, 228);
+        TX(L[i], 120, 130 + i * 12, 0, K_INK, 1, 210);
+    box(22, 186, 94, 20, K_RED);
+    TX("SAVE: START FRESH", 69, 200, 0, K_CREAM, 1, 0);
+    a_rim(124.0f, 186.0f, 94.0f, 20.0f, 1.0f, K_INK);
+    TX("HOME: KEEP ALL", 171, 200, 0, K_INK, 1, 0);
+    small_fig(120.0f, 224.0f, 0.75f, 0.6f);
 }
-
-#include "scene.c"
 
 #include "panel.c"
 
-static void home_page(void)              /* the singer over the eight tracks' lanes; in step mode: the step view */
+static void home_page(void)              /* RAGA MEOW's top line; DABKE's singer (scene.c, its own colours and pixels), the
+                                          * eight tracks' lanes under him, the rhythm, the dots and the tempo; the home
+                                          * page's row on the four glasses. In step mode: the step view, a label of its own */
 {
+    top_line(1);
     if (ui.seq) {
+        label_frame(18.0f, 164.0f);
+        banner("STEPS", 120.0f, 26.0f, 120.0f, 2);
+        if (in_strip(30, 42))
+            row_dots(3, ui.row[PG_HOME] % 3, dots_x(3), 36.0f);
         seq_view();
+        glasses(STRIP_ROW, 0);
         return;
     }
-    if (in_strip(32, 144))
-        scene(0, 32, 240, 112);
-    if (in_strip(PN_Y, 240))
-        home_panel();
+    if (in_strip(HM_SCENE_Y, HM_SCENE_Y + 112)) {
+        paper_on = 0;
+        scene(0, HM_SCENE_Y, 240, 112);
+        paper_on = 1;
+        if (ui.mix_lvl < 100 && in_strip(HM_SCENE_Y + 98, HM_SCENE_Y + 112)) {   /* the MIDImix's master fader down: said
+                                          * on a corner of the picture, so a quiet FM-1 is never a mystery */
+            char b[32] = "MIDIMIX MASTER ", n[8];
+            int_text(ui.mix_lvl, n);
+            text_cat(b, n);
+            box(0, HM_SCENE_Y + 99, text_wf(b, 0) + 9, 13, K_PAPER);
+            TX(b, 4, HM_SCENE_Y + 109, 0, K_RED, 0, 0);
+        }
+    }
+    home_panel();
+    glasses(STRIP_ROW, 0);
 }
 
-/* the maqam page: the twelve keys, which are a quarter flat, the maqam and its root */
-static uint16_t key_colour(int pc, uint32_t sc)   /* key pc's colour there, on either row: retuned amber, in the maqam
-                                                   * white, outside it grey */
+/* the maqam page: the maqam on its root, as the maqam has it or changed by hand; the twelve keys (red: in the maqam;
+ * amber: retuned, its cents on it), the note TUNING points at framed on that row; the scale written out from its root,
+ * a quarter flat with its sign. RAGA MEOW's raag page's keys */
+static uint16_t key_colour(int pc, uint32_t sc)   /* key pc's state there, in DABKE's own inks' names (the simulator's
+                                                   * check mq_col reads it): K_AMB retuned, K_WH in the maqam, K_GR not */
 {
     return set.ntune[pc] ? K_AMB : (sc >> pc & 1u) ? K_WH : K_GR;
 }
-static void maqam_page(void)
+#define K_EYE RGB(232, 195, 58)          /* (RAGA MEOW's yellow: a retuned key) */
+static void pic_maqam(void)
 {
     static const uint8_t WK[7] = {0, 2, 4, 5, 7, 9, 11}, BK[5] = {1, 3, 6, 8, 10}, BX[5] = {1, 2, 4, 5, 6};
     uint32_t sc = dabke_maqam_scale(set.ch[C_MAQAM], set.ch[C_ROOT]);
+    int i, tun = ui.row[PG_SEL] == 1, as = maqam_as_set(), flat = set.ntune[set.ch[C_ROOT] % 12] < 0;
+    const float x0 = 22.0f, y0 = 90.0f;
     char b[40], t[12];
-    int i;
-    if (in_strip(32, 76)) {
-        maqam_name(b, 0);
-        T(b, 8, 58, 24, K_AMB, 0, 160);
-        b[0] = 0;
-        text_cat(b, "ON ");
-        text_cat(b, NOTE_NAME[set.ch[C_ROOT] % 12]);
-        {
-            int fl = set.ntune[set.ch[C_ROOT] % 12] < 0;
-            T(b, fl ? 220 : 232, 58, 16, K_WH, 2, 0);
-            if (fl)                              /* the tonic itself a quarter flat */
-                halfflat(225, 58, 13, K_WH);
-        }
-        T(maqam_as_set() ? "AS THE MAQAM HAS IT" : "CHANGED BY HAND", 8, 72, 9, maqam_as_set() ? K_GR : K_AMB, 0, 0);
+    if (in_strip(50, 88)) {
+        TX(as ? "AS THE MAQAM HAS IT" : "CHANGED BY HAND", 120, 62, 0, as ? K_FAINT : K_RED, 1, 0);
+        maqam_name(b, 1);                /* "BAYATI ON D" */
+        TX(b, flat ? 116 : 120, 82, 2, K_INK, 1, 200);
+        if (flat)
+            halfflat(120 + text_wf(b, 2) / 2 + 2, 82, 12, K_INK);
     }
-    if (in_strip(78, 160)) {                 /* one octave, C to B, each key with its cents. A key of the maqam is white and
-                                              * one outside it grey, a retuned one amber, on both rows: the black keys
-                                              * are told by their shape, short and narrow between the white ones, with
-                                              * a black gap round them */
+    if (in_strip(y0 - 2, y0 + 54)) {     /* one octave, C to B */
         for (i = 0; i < 7; i++) {
-            int pc = WK[i], cur = pc == ui.cur;
-            int32_t x = 8 + i * 32;
-            box(x, 80, 30, 76, key_colour(pc, sc));
-            if (cur) {
-                box(x - 2, 78, 34, 3, K_RED);
-                box(x - 2, 155, 34, 3, K_RED);
-                box(x - 2, 78, 3, 80, K_RED);
-                box(x + 29, 78, 3, 80, K_RED);
-            }
-            T(NOTE_NAME[pc], x + 15, 148, 13, K_BLACK, 1, 0);
-            if (set.ntune[pc]) {
+            int pc = WK[i], sel = tun && pc == ui.cur % 12;
+            uint16_t kc = key_colour(pc, sc), fill = kc == K_AMB ? K_EYE : kc == K_WH ? K_RED : K_CREAM2;
+            float x = x0 + (float)i * 28.0f;
+            box((int32_t)x, (int32_t)y0, 26, 50, fill);
+            a_rim(x, y0, 26.0f, 50.0f, sel ? 2.0f : 1.0f, K_INK);
+            TX(NOTE_NAME[pc], (int32_t)x + 13, (int32_t)y0 + 47, 1, fill == K_RED ? K_CREAM : K_INK, 1, 0);
+            if (set.ntune[pc]) {         /* (retuned: its cents, under the black keys) */
                 int_text(set.ntune[pc], t);
-                T(t, x + 15, 132, 11, K_BLACK, 1, 28);
+                TX(t, (int32_t)x + 13, (int32_t)y0 + 36, 0, K_INK, 1, 26);
             }
         }
         for (i = 0; i < 5; i++) {
-            int pc = BK[i], cur = pc == ui.cur;
-            int32_t x = 8 + BX[i] * 32 - 11;
-            box(x - 3, 80, 28, 43, K_BLACK);     /* (the gap ends above a white key's cents) */
-            box(x, 80, 22, 40, key_colour(pc, sc));
-            if (cur) {
-                frame((float)x - 2.0f, 78.0f, 25.0f, 42.0f, K_RED);
-                frame((float)x - 1.0f, 79.0f, 23.0f, 40.0f, K_RED);
-            }
-            T(NOTE_NAME[pc], x + 11, 99, 11, K_BLACK, 1, 20);
+            int pc = BK[i], sel = tun && pc == ui.cur % 12;
+            uint16_t kc = key_colour(pc, sc), fill = kc == K_AMB ? K_EYE : kc == K_WH ? K_RED : K_INK;
+            float x = x0 + (float)BX[i] * 28.0f - 10.0f;
+            box((int32_t)x - 1, (int32_t)y0, 20, 29, K_PAPER);   /* (a gap round it, as a black key's) */
+            box((int32_t)x, (int32_t)y0, 18, 28, fill);
+            a_rim(x, y0, 18.0f, 28.0f, sel ? 2.0f : 1.0f, sel ? K_RED : K_INK);
+            TX(NOTE_NAME[pc], (int32_t)x + 9, (int32_t)y0 + 13, 1, fill == K_EYE ? K_INK : K_CREAM, 1, 18);
             if (set.ntune[pc]) {
                 int_text(set.ntune[pc], t);
-                T(t, x + 11, 117, 11, K_BLACK, 1, 21);
+                TX(t, (int32_t)x + 9, (int32_t)y0 + 24, 0, fill == K_EYE ? K_INK : K_CREAM, 1, 18);
             }
         }
     }
-    if (in_strip(160, 240)) {                /* the scale written out, the knobs */
-        int32_t x = 8;
-        int k, r = set.ch[C_ROOT];
+    if (in_strip(142, 178)) {            /* the scale written out from its root; how a key is retuned */
+        int32_t x = 0, w = 0;
+        int k, r = set.ch[C_ROOT] % 12;
+        for (k = 0; k < 12; k++) {       /* (its width first, to sit in the middle) */
+            int pc = (r + k) % 12;
+            if (sc >> pc & 1u)
+                w += text_wf(NOTE_NAME[pc], 2) + (set.ntune[pc] < 0 && set.ntune[pc] > -100 ? 18 : 9);
+        }
+        x = 120 - (w - 9) / 2;
         for (k = 0; k < 12; k++) {
             int pc = (r + k) % 12;
             if (!(sc >> pc & 1u))
                 continue;
             if (set.ntune[pc] < 0 && set.ntune[pc] > -100) {   /* a quarter flat: its letter and the half-flat sign */
-                x = T(NOTE_NAME[pc], x, 184, 16, K_AMB, 0, 0);
-                halfflat(x + 4, 184, 13, K_AMB);
+                x = TX(NOTE_NAME[pc], x, 162, 2, K_RED, 0, 0);
+                halfflat(x + 4, 162, 12, K_RED);
                 x += 18;
             } else
-                x = T(NOTE_NAME[pc], x, 184, 16, K_WH, 0, 0) + 8;
-            if (x > 226)
-                break;
+                x = TX(NOTE_NAME[pc], x, 162, 2, K_INK, 0, 0) + 9;
         }
-        {
-            static const char *const LAB[4] = {"K1 CENTS", "K2 MAQAM", "K3 ROOT", "K4 DEPTH"};
-            for (k = 0; k < 4; k++) {
-                int32_t bx = 4 + k * 59;
-                box(bx, 196, 55, 40, K_BOX);
-                T(LAB[k], bx + 4, 210, 9, K_GR, 0, 50);
-                b[0] = 0;
-                if (k == 0) {
-                    text_cat(b, NOTE_NAME[ui.cur]);
-                    text_cat(b, " ");
-                    int_text(set.ntune[ui.cur], t);
-                    text_cat(b, t);
-                } else if (k == 1)
-                    maqam_name(b, 0);
-                else if (k == 2)
-                    text_cat(b, NOTE_NAME[set.ch[C_ROOT] % 12]);
-                else {
-                    int_text(set.qdepth, t);
-                    text_cat(b, t);
-                    text_cat(b, " CT");
-                }
-                T(b, bx + 4, 229, 13, K_AMB, 0, 50);
-            }
-        }
+        TX(ui.edit_held ? "KEYS: A QUARTER FLAT OR BACK" : "EDIT + KEY: A QUARTER FLAT", 120, 175, 0,
+           ui.edit_held ? K_RED : K_FAINT, 1, 0);   /* (how a key is made a quarter flat) */
     }
 }
 
@@ -5516,7 +5962,6 @@ static void icon(int id, float x, float y, float w, float h, float t)
     }
 }
 
-static int kv_locked;                    /* (the value knob_value just gave is a lock's) */
 static int32_t knob_shown(int pid, int *locked)   /* the value a knob shows: the held step's lock of it; else the lock
                                                    * that holds it now, while its step plays; else its own */
 {
@@ -5714,142 +6159,429 @@ static void knob_value(int id, char *b, const char **label)   /* a knob's name a
         *label = "";
 }
 
-static void scope(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t c)
+/* ---- the pages' pictures ---- */
+static const float ICX[4] = {37.0f, 90.0f, 150.0f, 203.0f};   /* the knobs' pictures' middles: over their glasses, the
+                                          * outer two kept inside the frame */
+static void knob_pics(const uint8_t *ids, float y, float h)   /* a row's four knobs' pictures (DABKE's own), ink and red */
 {
-    const int16_t *b = dabke_scope();
-    int32_t i, s = 0;
-    float mid = (float)y + (float)h * 0.5f, amp = (float)h * 0.5f - 1.0f;
-    pl_start(c, 1);
-    for (i = 1; i < DAB_SCOPE - w; i++)
-        if (b[i - 1] < 0 && b[i] >= 0) {
-            s = i;
-            break;
-        }
-    for (i = 0; i < w && s + i < DAB_SCOPE; i++)
-        pl_to((float)(x + i), mid - fm_clampf((float)b[s + i] * (2.4f / 32767.0f), -1.0f, 1.0f) * amp);
-}
-
-static void plock(int32_t x, int32_t y, uint16_t c)   /* a lock's mark: a small padlock, 5 x 7 */
-{
-    box(x, y + 3, 5, 4, c);
-    box(x + 1, y, 3, 1, c);
-    box(x + 1, y + 1, 1, 2, c);
-    box(x + 3, y + 1, 1, 2, c);
-}
-static void knob_boxes(const uint8_t *row, int with_icons, int32_t top)   /* a row of four knobs: with their pictures
-                                          * (a knob page), or small, from top down (the step view's strip) */
-{
-    int c;
-    for (c = 0; c < 4; c++) {
-        int32_t x = 3 + c * 59;
-        int id = row[c], pid;
-        char b[24], k[3] = {'K', (char)('1' + c), 0};
-        const char *label = "";
-        if (with_icons) {
-            box(x, 36, 56, 122, K_KBG);
-            T(k, x + 53, 154, 8, K_DIM, 2, 0);
-        } else {
-            box(x, top, 56, 46, K_KBG);
-            T(k, x + 53, top + 43, 8, K_DIM, 2, 0);
-        }
-        if (id == K_NONE)
+    int k;
+    for (k = 0; k < 4; k++) {
+        float x0 = ICX[k] - 27.0f;
+        int32_t a = ri(x0) + 2 < 12 ? 12 : ri(x0) + 2, b = ri(x0) + 52 > 228 ? 228 : ri(x0) + 52;   /* (a gap between
+                                          * them, and from the frame) */
+        if (ids[k] == K_NONE)
             continue;
-        if (with_icons && in_strip(38, 102)) {
-            clip_set(x + 1, 38, 54, 64);
-            icon(id, (float)(x + 1), 39.0f, 54.0f, 62.0f, t_now);
-            clip_all();
-        }
-        knob_value(id, b, &label);
-        pid = strip_id(id) >= 0 ? strip_id(id) : id;
-        if (set.track && lk_ok(pid) && lk_has(picked(), pid)) {   /* a lock of this knob somewhere on the picked track: a
-                                                                  * small padlock by its name */
-            plock(x + 49, with_icons ? 107 : top + 5, K_LK);
-            T(label, x + 3, with_icons ? 116 : top + 14, 9, K_GR, 0, 44);
-        } else
-            T(label, x + 3, with_icons ? 116 : top + 14, 9, K_GR, 0, 51);
-        T(b, x + 2, with_icons ? 134 : top + 33, 15, kv_locked ? K_LK : K_AMB, 0, 53);   /* (a lock's value: its blue) */
-        {                                /* (a bar: the knob's place; the track row's: the picked track's) */
-            float bv = id == K_FADE ? (float)ui.master / 127.0f : IS_KNOB(pid) ? par_norm(pid) : -1.0f;
-            if (with_icons && bv >= 0.0f) {
-                box(x + 3, 140, 50, 3, K_DIM);
-                box(x + 3, 140, ri(50.0f * bv), 3, K_WH);
-            }
-        }
+        clip_set(a, ri(y), b - a, ri(h));
+        icon(ids[k], x0, y, 54.0f, h, t_now);
+        clip_all();
     }
 }
-
-static void knob_page(void)
+static void who_words(int pg, char *b)   /* whose the row shown is: "TRACK 3  SAZ" (the SOUND and ORNAMENTS pages: the sound
+                                          * they change; the EDIT page's STEPS: the picked track); the RHYTHM page: its
+                                          * rhythms and its tempo. A row of the whole instrument's (the arpeggio, the drone,
+                                          * the settings, the scene): none */
 {
-    uint8_t row[4];
+    char n[40];
+    int t = pg == PG_ENV || pg == PG_LFO ? ed_trk() : picked(), r = ui.row[pg];
+    b[0] = 0;
+    if ((pg == PG_ENV && r >= 4) || (pg == PG_LFO && r >= 2) || (pg == PG_EDIT && r != 0))
+        return;
+    if (pg == PG_GLO) {
+        rhythm_name_copy(b, ui.r0);
+        if (ui.r1 >= 0) {
+            text_cat(b, " + ");
+            rhythm_name_copy(n, ui.r1);
+            text_cat(b, n);
+        }
+        text_cat(b, "  ");
+        int_text(set.par[P_TEMPO], n);
+        text_cat(b, n);
+        text_cat(b, " BPM");
+        return;
+    }
+    trk_name(t, b);
+    text_cat(b, "  ");
+    track_sound(t, n);
+    text_cat(b, n);
+}
+static void pic_knobs(int pg)            /* a page of DABKE's knobs: whose it is, the row's four pictures, the row's name. In
+                                          * step mode: the pictures smaller, the picked track's steps under them */
+{
+    uint8_t ids[4];
+    char b[64], rn[48];
     int k;
     for (k = 0; k < 4; k++)
-        row[k] = (uint8_t)kctl(k);
-    knob_boxes(row, 1, 0);
-    if (!in_strip(160, 240))
-        return;
-    if (ui.seq && set.track)                 /* step mode: the picked track's steps here, where he turns the knob */
+        ids[k] = (uint8_t)row_id(pg, ui.row[pg], k);
+    if (ui.seq && set.track) {
+        knob_pics(ids, 50.0f, 46.0f);
         steps_bottom();
-    else
-        scope(6, 166, 228, 66, ui.level > 0.02f ? K_AMB : K_GR);
+        return;
+    }
+    if (in_strip(52, 70)) {
+        who_words(pg, b);
+        TXF(b, 120, 66, 1, K_INK, 1, 204);
+    }
+    knob_pics(ids, 74.0f, 74.0f);
+    if (in_strip(158, 176))
+        TXF(row_title(pg, ui.row[pg], rn), 120, 168, 0, K_FAINT, 1, 204);
 }
 
-/* ARP held: the arpeggio's panel over any page, its two rows of four, the one the knobs turn now framed */
-static void arp_page(void)
+/* the EFFECTS page: the hall (the delay and reverb, the wedding PA, the MASTER EQ, the background's rows), the tape, the
+ * picked track (its sends, its tone) */
+static void horn(int right, float pa, float drv)   /* the wedding PA: a horn up in a corner, its sound going out into
+                                          * the hall as PA grows, rougher with DRIVE */
 {
-    int r, c;
-    for (r = 0; r < 2; r++) {
-        int32_t y0 = 34 + r * 102;
-        int act = r == (ui.arp_row & 1u);
-        if (!in_strip(y0, y0 + 100))
-            continue;
-        for (c = 0; c < 4; c++) {
-            int32_t x = 3 + c * 59;
-            int id = ARP_ROW[r][c];
-            char b[24], k[3] = {'K', (char)('1' + c), 0};
-            const char *label = "";
-            box(x, y0, 56, 98, K_KBG);
-            if (act)
-                frame((float)x, (float)y0, 55.0f, 97.0f, K_AMB);
-            if (in_strip(y0 + 2, y0 + 52)) {
-                clip_set(x + 1, y0 + 2, 54, 50);
-                icon(id, (float)(x + 1), (float)(y0 + 3), 54.0f, 48.0f, t_now);
-                clip_all();
-            }
-            knob_value(id, b, &label);
-            if (label[0] == 'A' && label[1] == 'R' && label[2] == 'P' && label[3] == ' ')  /* (its own panel: "ORDER", not "ARP ORDER") */
-                label += 4;
-            T(label, x + 3, y0 + 66, 9, act ? K_GR : RGB(100, 92, 86), 0, 51);
-            T(b, x + 3, y0 + 84, 13, act ? K_AMB : K_GR, 0, 51);
-            if (act)
-                T(k, x + 52, y0 + 95, 8, K_DIM, 2, 0);
+    float d = right ? -1.0f : 1.0f, x = right ? 226.0f : 14.0f, y = 60.0f;
+    uint16_t c = pa > 0.0f ? K_INK : K_DIM;
+    int k;
+    a_seg(x + d * 3.0f, 50.0f, x + d * 3.0f, y - 4.0f, 1.5f, c);   /* (hung from above) */
+    a_quad(x, y - 4.0f, x + d * 6.0f, y - 4.0f, x + d * 6.0f, y + 4.0f, x, y + 4.0f, c);
+    a_quad(x + d * 6.0f, y - 2.0f, x + d * 20.0f, y - 8.0f, x + d * 20.0f, y + 8.0f, x + d * 6.0f, y + 2.0f, c);
+    if (pa <= 0.0f)
+        return;
+    for (k = 0; k < 3; k++) {
+        float f = fmodp(t_now * 1.2f + (float)k / 3.0f, 1.0f);
+        a_arc(x + d * 20.0f, y, 4.0f + f * 28.0f, right ? 0.42f : -0.08f, right ? 0.58f : 0.08f, 1.2f + 1.6f * drv,
+              mixc(K_PAPER, K_RED, (1.0f - f) * (0.25f + 0.75f * pa)));
+    }
+}
+static void delay_words(char *b)         /* "300 MS  3 ECHOES" ("1/8": DELAY SYNC's), "NO DELAY" */
+{
+    char v[24];
+    int reps = 1 + set.par[P_ECHOFB] / 15;
+    b[0] = 0;
+    if (!set.par[P_ECHO]) {
+        text_cat(b, "NO DELAY");
+        return;
+    }
+    if (set.ch[C_DSYNC])
+        text_cat(b, N_DSYNC[set.ch[C_DSYNC] & 3]);
+    else {
+        par_text_at(P_ECHOTIME, set.par[P_ECHOTIME], v);
+        text_cat(b, v);
+    }
+    text_cat(b, "  ");
+    int_text(reps, v);
+    text_cat(b, v);
+    text_cat(b, reps == 1 ? " ECHO" : " ECHOES");
+}
+static void fx_space(void)               /* the hall, taller as REVERB grows; him in it, his echoes as the delay repeats him
+                                          * (smaller and fainter, as many as REPEATS gives, as far apart as DELAY TIME),
+                                          * his ensemble beside him as CHORUS grows; the wedding PA's two horns */
+{
+    float size = par_norm(P_REVERB), top = 118.0f + (1.0f - size) * 40.0f, ch = par_norm(P_CHORUS);
+    float beat = t_now / 1.2f - fm_floorf(t_now / 1.2f), sp = 22.0f + par_norm(P_ECHOTIME) * 34.0f;
+    int k, r = ui.row[PG_FX], reps = set.par[P_ECHO] ? 1 + set.par[P_ECHOFB] / 15 : 0;
+    char b[64], v[16];
+    a_seg(30.0f, 176.0f, 30.0f, top, 3.0f, K_RED);
+    a_seg(210.0f, 176.0f, 210.0f, top, 3.0f, K_RED);
+    a_arc(120.0f, top, 90.0f, 0.5f, 1.0f, 3.0f, K_RED);
+    horn(0, par_norm(P_PA), par_norm(P_DRIVE));
+    horn(1, par_norm(P_PA), par_norm(P_DRIVE));
+    if (ch > 0.0f) {                     /* his ensemble: two more singers, clearer as CHORUS grows */
+        float sw = fm_sinf(t_now * FM_TWO_PI * 0.6f) * 2.5f;
+        fig_fade = 0.75f - 0.55f * ch;
+        fig(52.0f + sw, 104.0f, 0.62f, beat < 0.45f ? 1.0f : 0.2f);
+        fig(90.0f - sw, 101.0f, 0.62f, beat > 0.1f && beat < 0.5f ? 1.0f : 0.2f);
+        fig_fade = 0.0f;
+    }
+    small_fig(72.0f, 134.0f, 1.1f, beat < 0.4f ? 1.0f : 0.2f);
+    for (k = 1; k <= reps && k <= 5; k++) {   /* his echoes: smaller and fainter */
+        float x = 72.0f + (float)k * sp, s = 1.1f - (float)k * 0.15f;
+        if (x > 188.0f || s < 0.3f)
+            break;
+        fig_fade = 0.18f * (float)k;
+        fig(x, 134.0f - (float)k * 4.0f, s, 1.0f);
+        fig_fade = 0.0f;
+    }
+    if (r == 1) {                        /* (the WEDDING PA row: its four) */
+        b[0] = 0;
+        text_cat(b, "DRIVE ");
+        int_text(set.par[P_DRIVE], v);
+        text_cat(b, v);
+        text_cat(b, "  CHORUS ");
+        int_text(set.par[P_CHORUS], v);
+        text_cat(b, v);
+        text_cat(b, "  PA ");
+        int_text(set.par[P_PA], v);
+        text_cat(b, v);
+    } else {
+        delay_words(b);
+        text_cat(b, "  REVERB ");
+        int_text(set.par[P_REVERB], v);
+        text_cat(b, v);
+    }
+    TX(b, 120, 172, 0, K_INK, 1, 200);
+}
+static void fx_tape(void)                /* the tape: two reels turning (WOBBLE makes them waver), its head glowing with
+                                          * DRIVE, the old record's specks with TAPE AGE, its hiss, BRIGHTNESS a tilted line */
+{
+    float wow = par_norm(P_WOW), drv = par_norm(P_DRIVE), age = par_norm(P_AGE), hiss = par_norm(P_HISS);
+    float br = par_norm(P_BRIGHT) - 1.0f, ph = t_now * 0.5f + wow * 0.06f * fm_sinf(t_now * 3.4f), px_ = 70.0f, py_ = 0.0f;
+    uint16_t reel = mixc(K_WOOD2, K_PAPER, age * 0.45f);
+    int k, i;
+    char b[64], v[16];
+    for (k = 0; k < 2; k++) {
+        float x = k ? 170.0f : 70.0f;
+        a_ell(x, 100.0f, 27.0f, 27.0f, K_INK);
+        a_ell(x, 100.0f, 24.0f, 24.0f, reel);
+        a_ell(x, 100.0f, 6.0f, 6.0f, K_CREAM);
+        for (i = 0; i < 3; i++) {
+            float a = (ph + (float)i / 3.0f) * FM_TWO_PI;
+            a_ell(x + 14.0f * fm_cosf(a), 100.0f + 14.0f * fm_sinf(a), 4.5f, 4.5f, K_CREAM);
         }
     }
+    for (i = 1; i <= 10; i++) {          /* the tape, between the reels, past the head: wavering with WOBBLE */
+        float x = 70.0f + (float)i * 10.0f, y = wow * 3.0f * fm_sinf(t_now * 6.0f + (float)i * 0.9f);
+        a_seg(px_, 127.0f + py_, x, 127.0f + y, 2.0f, K_INK);
+        px_ = x;
+        py_ = y;
+    }
+    box(110, 124, 20, 9, K_INK);
+    if (drv > 0.0f) {                    /* DRIVE: the head glows */
+        float fl = (6.0f + 16.0f * drv) * (1.0f + 0.15f * fm_sinf(t_now * 13.0f));
+        a_tri(112.0f, 124.0f, 128.0f, 124.0f, 120.0f, 124.0f - fl, K_FLAME);
+        a_tri(116.0f, 124.0f, 124.0f, 124.0f, 120.0f, 124.0f - fl * 0.55f, K_RED);
+    }
+    for (k = 0; k < (int)(40.0f * age); k++) {   /* TAPE AGE: the old record's specks, flickering */
+        uint32_t h = (uint32_t)k * 2654435761u ^ (uint32_t)(t_now * 7.0f) * 40503u;
+        a_ell(24.0f + (float)(h % 192u), 66.0f + (float)((h >> 8) % 100u), 0.9f, 0.9f, K_DIM);
+    }
+    for (k = 0; k < (int)(36.0f * hiss); k++) {   /* HISS: a fine noise along the tape */
+        uint32_t h = (uint32_t)(k + 77) * 2246822519u ^ (uint32_t)(t_now * 11.0f) * 3266489917u;
+        box(72 + (int32_t)(h % 96u), 121 + (int32_t)((h >> 9) % 13u), 1, 1, K_GR);
+    }
+    a_seg(40.0f, 152.0f + 8.0f * br, 200.0f, 152.0f - 8.0f * br, 2.0f, K_RED);   /* BRIGHTNESS: the highs lower as it goes down */
+    TX("LOW", 40, 164, 0, mixc(K_INK, K_PAPER, 0.35f), 0, 0);
+    TX("HIGH", 200, 164, 0, mixc(K_INK, K_PAPER, 0.35f), 2, 0);
+    b[0] = 0;
+    text_cat(b, "WOBBLE ");
+    int_text(set.par[P_WOW], v);
+    text_cat(b, v);
+    text_cat(b, "  AGE ");
+    int_text(set.par[P_AGE], v);
+    text_cat(b, v);
+    text_cat(b, "  HISS ");
+    int_text(set.par[P_HISS], v);
+    text_cat(b, v);
+    TX(b, 120, 175, 0, K_INK, 1, 210);
+}
+static void fx_track(void)               /* the picked track, by name: its LEVEL a fader, its FILTER and BASS drawn (how it
+                                          * sounds, low to high), its sends */
+{
+    int t = picked(), i, lv = par_eff(PART_PAR[t]);
+    float flt = (float)set.par[P_FILTER + t] / 50.0f, bass = (float)set.par[P_LOWEQ + t] / 50.0f, px_ = 0.0f, py_ = 0.0f;
+    char b[64], n[32];
+    trk_name(t, b);
+    text_cat(b, " ");
+    track_sound(t, n);
+    text_cat(b, n);
+    TXF(b, 120, 76, 3, K_INK, 1, 214);
+    box(46, 104, 9, 50, K_GLASS);        /* its LEVEL */
+    a_rim(46.0f, 104.0f, 9.0f, 50.0f, 1.0f, K_INK);
+    if (lv > 0)
+        box(47, 153 - lv * 48 / 100, 7, lv * 48 / 100, mute_eff(t) ? K_DIM : K_RED);
+    box(82, 92, 132, 62, K_GLASS);       /* how it sounds: FILTER (below 0 the highs close, above 0 the lows go) and BASS */
+    a_rim(82.0f, 92.0f, 132.0f, 62.0f, 1.0f, K_INK);
+    a_seg(84.0f, 123.0f, 212.0f, 123.0f, 1.0f, mixc(K_INK, K_PAPER, 0.7f));
+    for (i = 0; i <= 32; i++) {          /* (20 Hz .. 20 kHz across, +-12 dB up and down) */
+        float f = 20.0f * fm_exp2f((float)i * (9.97f / 32.0f)), db = 12.0f * bass / (1.0f + f * (1.0f / 250.0f)), x, y;
+        if (flt < 0.0f) {                /* (the highs: closing from 20 kHz down to 30 Hz) */
+            float r = f / (20000.0f * fm_exp2f(flt * 9.4f));
+            db -= 3.0103f * fm_log2f(1.0f + r * r * r * r);
+        } else if (flt > 0.0f) {         /* (the lows: going, up to 13 kHz) */
+            float r = 20.0f * fm_exp2f(flt * 9.4f) / f;
+            db -= 3.0103f * fm_log2f(1.0f + r * r * r * r);
+        }
+        x = 84.0f + (float)i * 4.0f;
+        y = fm_clampf(123.0f - 2.3f * db, 94.0f, 152.0f);
+        if (i)
+            a_seg(px_, py_, x, y, 2.0f, K_RED);
+        px_ = x;
+        py_ = y;
+    }
+    TX("LOW", 86, 151, 0, mixc(K_INK, K_PAPER, 0.35f), 0, 0);
+    TX("HIGH", 210, 151, 0, mixc(K_INK, K_PAPER, 0.35f), 2, 0);
+    b[0] = 0;                            /* its sends */
+    text_cat(b, "DELAY ");
+    int_text(set.par[P_SEND + t], n);
+    text_cat(b, n);
+    text_cat(b, "  REVERB ");
+    int_text(set.par[P_RSEND + t], n);
+    text_cat(b, n);
+    TX(b, 120, 174, 0, K_INK, 1, 216);
+}
+static void pic_fx(void)
+{
+    int r = ui.row[PG_FX];
+    if (ui.seq && set.track)
+        pic_knobs(PG_FX);
+    else if (r >= FX_TRK_ROW && r < FX_TRK_ROW + 2 && !ui.fx_bg)
+        fx_track();
+    else if (r == 2)
+        fx_tape();
+    else
+        fx_space();
+}
+static void pic_mixer(void)              /* (the EDIT page's last row) the MIXER: the eight tracks and the background side by
+                                          * side, each its LEVEL as a fader (red: heard; grey: silent, muted or another's
+                                          * SOLO), how loud it is now beside it, its effects (FX: in; faint: out; "-":
+                                          * none set), its MUTE and SOLO; the picked one red, its name on top */
+{
+    const dabke_status_t *s = dabke_status();
+    char b[64], v[32];
+    int i, t;
+    b[0] = 0;
+    if (ui.fx_bg) {
+        text_cat(b, "BACKGROUND ");
+        rhythm_name_copy(v, ui.r0);
+        text_cat(b, v);
+    } else {
+        trk_name(picked(), b);
+        text_cat(b, " ");
+        track_sound(picked(), v);
+        text_cat(b, v);
+    }
+    TXF(b, 120, 74, 1, K_INK, 1, 150);
+    if (ui.solo)                         /* (a SOLO on somewhere: said up top, red) */
+        TX("SOLO ON", 120, 62, 0, K_RED, 1, 0);
+    if (!in_strip(78, 172))
+        return;
+    for (i = 0; i <= DAB_NTRK; i++) {
+        int bg = i == DAB_NTRK, lvl, fx, has = 0, mute, solo = ui.solo >> i & 1u, silent, pk;
+        float cx = 24.0f + (float)i * 24.0f, live = 0.0f, m;
+        uint16_t faint = mixc(K_INK, K_PAPER, 0.6f), ink;
+        if (bg) {                        /* the background: the rhythm's drums (every track with a drum sound) */
+            lvl = set.par[P_DRUMS];
+            fx = !set.x.bfx;
+            for (t = 0; t < DAB_NTRK; t++)
+                if (trk_drum(t)) {
+                    has |= trk_fx_set(t);
+                    live = fm_maxf(live, s->tlevel[t]);
+                }
+            mute = set.x.bmute;
+            silent = mute || (ui.solo && !(ui.solo >> 8 & 1u)) || !s->running;
+            pk = ui.fx_bg;
+        } else {
+            lvl = set.par[PART_PAR[i]];
+            fx = !(set.x.tfx >> i & 1u);
+            has = trk_fx_set(i);
+            mute = set.mute >> i & 1u;
+            silent = mute_eff(i);
+            pk = !ui.fx_bg && i == picked();
+            live = s->tlevel[i];
+        }
+        ink = pk ? K_RED : K_INK;
+        if (bg)
+            TX("BG", (int32_t)cx, 88, 0, ink, 1, 0);
+        else {
+            v[0] = (char)('1' + i);
+            v[1] = 0;
+            TX(v, (int32_t)cx, 88, 0, ink, 1, 0);
+        }
+        box((int32_t)cx - 7, 92, 9, 50, K_GLASS);   /* its LEVEL: a fader */
+        a_rim(cx - 7.0f, 92.0f, 9.0f, 50.0f, pk ? 2.0f : 1.0f, ink);
+        {
+            int32_t h = (int32_t)(48.0f * (float)lvl * 0.01f);
+            if (h > 0)
+                box((int32_t)cx - 6, 141 - h, 7, h, silent ? K_DIM : K_RED);
+        }
+        m = live > 1e-5f ? (6.0206f * fm_log2f(live) + 48.0f) * (1.0f / 48.0f) : 0.0f;   /* (how loud now: -48 dB .. 0) */
+        m = m < 0.0f ? 0.0f : m > 1.0f ? 1.0f : m;
+        if (m > 0.0f && !silent)
+            box((int32_t)cx + 4, 142 - (int32_t)(50.0f * m), 3, (int32_t)(50.0f * m), K_TEAL);
+        TX(has ? "FX" : "-", (int32_t)cx, 153, 0, has && fx ? K_INK : faint, 1, 0);
+        if (mute) {                      /* M: a dark box; S: a red one */
+            box((int32_t)cx - 11, 157, 10, 11, K_INK);
+            TX("M", (int32_t)cx - 6, 166, 0, K_PAPER, 1, 0);
+        } else
+            TX("M", (int32_t)cx - 6, 166, 0, faint, 1, 0);
+        if (solo) {
+            box((int32_t)cx + 1, 157, 10, 11, K_RED);
+            TX("S", (int32_t)cx + 6, 166, 0, K_PAPER, 1, 0);
+        } else
+            TX("S", (int32_t)cx + 6, 166, 0, faint, 1, 0);
+    }
+}
+static void page_frame(int pg)           /* a page: RAGA MEOW's label, its name on the ribbon, a dot a row, its picture, the
+                                          * row's four glasses */
+{
+    uint8_t ids[4];
+    int n = PAGE_ROWS[pg], k;
+    label_frame(18.0f, 164.0f);
+    top_line(0);
+    banner(PAGE_TITLE[pg], 120.0f, 26.0f, ribbon_w(n), 2);
+    if (in_strip(30, 42))
+        row_dots(n, ui.row[pg], dots_x(n), 36.0f);
+    if (pg == PG_SEL)
+        pic_maqam();
+    else if (pg == PG_FX)
+        pic_fx();
+    else if (pg == PG_EDIT && ui.row[pg] == MIX_ROW)
+        pic_mixer();
+    else
+        pic_knobs(pg);
+    for (k = 0; k < 4; k++)
+        ids[k] = (uint8_t)row_id(pg, ui.row[pg], k);
+    glasses(ids, 0);
+}
+
+/* ARP held: the arpeggio's panel over any page, as a page: ARP on its ribbon, its two rows as dots, both rows' pictures
+ * (the other row faint), on or off; the row the knobs turn now on the glasses */
+static void arp_page(void)
+{
+    int r, k;
+    label_frame(18.0f, 164.0f);
+    top_line(0);
+    banner("ARP", 120.0f, 26.0f, 120.0f, 2);
+    if (in_strip(30, 42))
+        row_dots(2, ui.arp_row & 1u, dots_x(2), 36.0f);
+    for (r = 0; r < 2; r++) {
+        int act = r == (int)(ui.arp_row & 1u);
+        float y = 50.0f + (float)r * 58.0f;
+        if (!act)
+            inks(0.62f);
+        knob_pics(ARP_ROW[r], y, 40.0f);
+        if (in_strip((int32_t)y + 40, (int32_t)y + 54))
+            for (k = 0; k < 4; k++) {    /* (their names: "ORDER", not "ARP ORDER") */
+                char b[40];
+                const char *label = "";
+                knob_value(ARP_ROW[r][k], b, &label);
+                if (label[0] == 'A' && label[1] == 'R' && label[2] == 'P' && label[3] == ' ')
+                    label += 4;
+                TXF(label, (int32_t)ICX[k], (int32_t)y + 51, 0, act ? K_FAINT : mixc(K_FAINT, K_PAPER, 0.62f), 1, 54);
+            }
+        if (!act)
+            inks(0.0f);
+    }
+    TX(set.arp ? "ARP IS ON.  SEL: THE OTHER FOUR" : "ARP IS OFF: TAP ARP.  SEL: THE OTHER FOUR", 120, 174, 0, K_INK, 1, 214);
+    glasses(ARP_ROW[ui.arp_row & 1u], 1);
 }
 
 static void body(void)
 {
-    header();
+    paper();
     if (ui.fresh)
         fresh_page();
     else if (arp_panel_up())
         arp_page();
     else if (ui.save)
-        save_page();
+        keep_page();
     else if (ui.page == PG_HOME)
         home_page();
-    else if (ui.page == PG_SEL)
-        maqam_page();
     else
-        knob_page();
+        page_frame(ui.page);
 }
 
-static void strip(int32_t y0, int32_t h)
+static void strip(int32_t y0, int32_t h)     /* rows y0 .. y0 + h - 1 drawn and sent (144 at most) */
 {
-    cv_begin(240, (uint32_t)h, K_BLACK);
+    cv_begin(240, (uint32_t)h, K_PAPER);
     cv_oy = -y0;
     reg_y0 = y0;
     reg_y1 = y0 + h;
     clip_all();
+    inks(0.0f);
+    paper_on = 1;
     body();
     cv_oy = 0;
     cv_blit(0, (uint32_t)y0);
@@ -6076,7 +6808,7 @@ void app_ui_init(void)
             ui.btn = plat_buttons();
         }
     }
-    lcd_fill(0, 0, 240, 240, C_BLACK);
+    lcd_fill(0, 0, 240, 240, K_PAPER);
     ui.ver++;
     ui.drawn_ver = ui.ver - 1u;
 }
@@ -6096,16 +6828,15 @@ static void fresh_frame(void)            /* the START FRESH page's frame: its bu
     if (ui.ver != ui.drawn_ver && ms_now - ui.full_at >= 50u) {
         ui.drawn_ver = ui.ver;
         ui.full_at = ms_now;
-        strip(0, 32);
-        strip(32, 104);
-        strip(136, 104);
+        strip(0, 120);
+        strip(120, 120);
     }
 }
 
 void app_frame(void)
 {
     const dabke_status_t *s;
-    int full, anim;
+    int full, anim, home;
     ms_now = plat_ms();
     t_now = (float)(ms_now % 3600000u) * 0.001f;
     if (ui.fresh) {
@@ -6148,62 +6879,56 @@ void app_frame(void)
         ui.arp_shown = (uint8_t)arp_panel_up();
         ui.ver++;
     }
-    /* a whole redraw is 115 KB to the screen, about 21 ms the main loop waits for: twenty a second at most */
+    {                                        /* (EDIT held or let go on the maqam page: its hint says what the keys do) */
+        static uint8_t edit_shown;
+        if (ui.page == PG_SEL && ui.edit_held != edit_shown)
+            ui.ver++;
+        edit_shown = ui.edit_held;
+    }
+    /* a whole redraw is 115 KB to the screen, about 21 ms the main loop waits for: twenty a second at most, in two
+     * strips (the canvas holds 144 rows). Between them only what moves: the home page's scene 25 times a second, its
+     * lanes and its metronome when they move; a page's picture 15 times a second (as RAGA MEOW's); the step view's
+     * row of steps when the step playing moves */
+    home = ui.page == PG_HOME && !ui.save && !arp_panel_up();
     full = ui.ver != ui.drawn_ver && ms_now - ui.full_at >= 50u;
-    anim = ms_now - ui.anim_at >= (ui.page == PG_HOME && !ui.save ? 40u : 33u);
-    if (!full && !anim)
-        return;
-    if (anim)
-        ui.anim_at = ms_now;
+    anim = ms_now - ui.anim_at >= (home && !ui.seq ? 40u : 66u);
     if (full) {
         ui.drawn_ver = ui.ver;
         ui.full_at = ms_now;
+        ui.anim_at = ms_now;
+        ui.head_sig = panel_head_sig();
+        ui.body_sig = panel_body_sig();
+        ui.seq_sig = seq_sig();
+        strip(0, 120);
+        strip(120, 120);
+        return;
     }
-    if (full)
-        strip(0, 32);
-    if (arp_panel_up()) {                    /* ARP held: its panel; its pictures move */
-        if (full) {
-            strip(32, 104);
-            strip(136, 104);
-        } else {
-            strip(36, 50);
-            strip(138, 50);
-        }
-    } else if (ui.save || ui.page == PG_SEL) {
-        if (full) {
-            strip(32, 104);
-            strip(136, 104);
-        }
-    } else if (ui.page == PG_HOME && ui.seq) {   /* the step view: all of it on a change; the step playing and the
-                                              * strip's values (a lock holding one) when they move */
+    if (home && ui.seq) {                    /* the step view: the step playing (a lock that holds a knob now: a whole
+                                              * redraw, engine_watch) */
         uint32_t ss = seq_sig();
-        if (full) {
-            strip(32, 104);
-            strip(136, 104);
-        } else if (ss != ui.seq_sig) {
+        if (ss != ui.seq_sig) {
+            ui.seq_sig = ss;
             strip(SQ_ROW_Y - 2, SQ_ROW_H + 8);
-            strip(SQ_KNOB_Y, 240 - SQ_KNOB_Y);
         }
-        ui.seq_sig = ss;
-    } else if (ui.page == PG_HOME) {
+    } else if (home) {
         uint32_t hs = panel_head_sig(), bs = panel_body_sig();
-        if (full)
-            strip(PN_Y, 240 - PN_Y);
-        else {                               /* the moving parts, each alone, when they move: the metronome in the top
-                                              * line, the steps playing in the lanes */
-            if (hs != ui.head_sig)
-                strip(0, 32);
-            if (bs != ui.body_sig)
-                strip(PN_Y, PN_FOOT_Y - PN_Y);
+        if (bs != ui.body_sig) {             /* the steps playing in the lanes */
+            ui.body_sig = bs;
+            strip(HM_LANE_Y - 1, 49);
         }
-        ui.head_sig = hs;
-        ui.body_sig = bs;
-        strip(32, 112);                      /* the scene, every time */
-    } else {
-        if (full)
-            strip(104, 56);
-        strip(32, 72);
-        strip(160, 80);
+        if (hs != ui.head_sig) {             /* the metronome */
+            ui.head_sig = hs;
+            strip(HM_FOOT_Y - 5, 12);
+        }
+        if (anim) {                          /* the scene, every time */
+            ui.anim_at = ms_now;
+            strip(HM_SCENE_Y, 112);
+        }
+    } else if (!ui.save && (arp_panel_up() || ui.page != PG_SEL)) {
+        if (anim) {                          /* a page's picture (and in step mode its row of steps) */
+            ui.anim_at = ms_now;
+            strip(44, 140);
+        }
     }
 }
 
