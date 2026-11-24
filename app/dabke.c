@@ -317,6 +317,10 @@ static uint8_t tpat[DAB_NTRK][DAB_TLANE][DAB_TPAT], dedit;   /* the tracks' own 
                                          * sound's drums in turn); the tracks with them (his), a bit each */
 static uint8_t dn[DAB_NTRK], tl2;       /* how many steps his track has; LENGTH two bars, a bit a track */
 static uint8_t muteM;                   /* the tracks muted, a bit each */
+static uint8_t frz;                     /* the tracks frozen (REC), a bit each */
+static uint8_t loopOff, dJoin;          /* the tracks whose loop (or own steps) SEQ stopped; those that play again from
+                                         * the next bar (their own steps: the loops wait in their own way) */
+static uint8_t fxOff;                   /* the tracks whose effects are out (the MIXER's FX): no sends, no BASS */
 #define TP_GET(t, j, s) ((uint32_t)tpat[t][j][(s) >> 2] >> (((s) & 3) << 1) & 3u)
 static void tp_put(int t, int j, int s, int v)
 {
@@ -383,8 +387,12 @@ static struct { uint32_t ph1, ph2; float s1, s2, s3, s4; } DR;
 /* effects */
 static bq_t fBass, fBrL, fBrR, fBassT[DAB_NTRK];   /* (the bass sound's tone: one setting, a filter a track) */
 static float dlpT[DAB_NTRK];            /* the kit's tone, a track's drums */
-static float gm[4][BS];                 /* the mix's places: through the chorus, the left hand's, after; the effects'; the
-                                         * lead's (for its meter) */
+static float gm[5][BS];                 /* the mix's places: through the chorus, the left hand's, after; the delay's send;
+                                         * the reverb's send */
+static bq_t eqf[6];                     /* the MASTER EQ: LOW, MID, HIGH on the left, then on the right */
+static float eqDb[3], eqT[3];           /* its three gains as they sound now (gliding) and as set, dB; all 0: out */
+static uint8_t eqSet, eqOn;
+static float mgT = 1.0f, mgS = 1.0f;    /* the MIDImix's master fader: as set, as it sounds (gliding) */
 static float ensBuf[1024] PLAT_POOL, chBuf[1024] PLAT_POOL, wowL[1024] PLAT_POOL, wowR[1024] PLAT_POOL;
 static int16_t echoBuf[ECHO_N] PLAT_POOL;
 static int16_t slapBuf[SLAP_N] PLAT_POOL;
@@ -519,7 +527,8 @@ static uint32_t scopeW, scopeDiv;
 /* messages from the main loop */
 enum { M_KEY, M_PAR, M_NTUNE, M_RHY, M_RUN, M_SYNC, M_ACC, M_STYLE, M_FILL, M_FADE, M_DRUM, M_OWN,
        M_TRKREC, M_UNDO, M_CLEARALL, M_LOOPSET, M_STEP, M_DHIT, M_STEPSSET, M_HOLD, M_TSND, M_PANIC,
-       M_NADD, M_NDEL, M_TLEN, M_LOCK, M_LKCLEAR, M_MUTE, M_TPAR, M_HOLDOFF, M_HOLDMV };
+       M_NADD, M_NDEL, M_TLEN, M_LOCK, M_LKCLEAR, M_MUTE, M_TPAR, M_HOLDOFF, M_HOLDMV, M_FREEZE, M_LOOPOFF, M_TCLEAR,
+       M_FXOFF, M_MEQ, M_MASTER };
 typedef struct { uint8_t t; int16_t a, b; float f, g, h; } msg_t;
 #define QN 512u
 static msg_t q[QN];
@@ -759,7 +768,8 @@ static void shelf_set(int k, float v)   /* its lows under 150 Hz: x + g lp(x), g
 }
 static int par_plain(int id)            /* read where it is used: nothing to work out again when it moves */
 {
-    return id <= P_DRONE || (id >= P_GDRUM && id <= P_GMETAL) || (id >= P_SEND && id <= P_SEND_LAST) || id == P_ECHO ||
+    return id <= P_DRONE || (id >= P_GDRUM && id <= P_GMETAL) || (id >= P_SEND && id <= P_SEND_LAST) ||
+           (id >= P_RSEND && id <= P_RSEND_LAST) || id == P_ECHO ||
            id == P_ECHOFB || id == P_REVERB || id == P_CHORUS || id == P_PA || id == P_WOW || id == P_HISS;
 }
 static int par_glides(int id)           /* a jump of it would click: it goes along a line (the volumes and the effects'
@@ -772,7 +782,7 @@ static void par_now(int id, float v)    /* a knob at a value, now */
 {
     par[id] = v;
     if (id >= P_FILTER && id <= P_FILTER_LAST) strip_set(id - P_FILTER, v);
-    else if (id >= P_LOWEQ && id <= P_LOWEQ_LAST) shelf_set(id - P_LOWEQ, v);
+    else if (id >= P_LOWEQ && id <= P_LOWEQ_LAST) shelf_set(id - P_LOWEQ, fxOff >> (id - P_LOWEQ) & 1u ? 0.0f : v);
     else if (!par_plain(id)) dirty = 1;
 }
 static void par_to(int id, float v)     /* a knob to a value: at once, or in a few blocks */
@@ -1363,7 +1373,7 @@ static void fire(int a)
                                          * the rhythm's fills are for the tracks it drives) */
         int t, j;
         for (t = 0; t < DAB_NTRK; t++)
-            if (dedit >> t & 1u) {
+            if ((dedit >> t & 1u) && !((loopOff | dJoin) >> t & 1u)) {   /* (SEQ stopped them: kept, silent) */
                 int s2 = (int)(s % (dn[t] ? dn[t] : 1));
                 for (j = 0; j < DAB_TLANE; j++) {
                     uint32_t c = TP_GET(t, j, s2);
@@ -1636,6 +1646,21 @@ static int arp_keys(int m)              /* a manual whose keys go into the arpeg
     return m < DAB_NTRK && m != PART_DRONE && tfam[m] == SF_LEAD && par[P_ARPON] != 0.0f;
 }
 static void hold_off(int m, int n);
+static void held_count(void);
+static void hold_move(int m, int from, int to);
+#define FZTRK(m) ((m) < DAB_NTRK ? (m) : PART_LEAD)   /* the track a manual's notes freeze with (the left keys as set:
+                                         * track 1's, whose split they are) */
+static int frz_one(int m)               /* a frozen track that plays one note at a time: a lead sound's, not POLY, no
+                                         * arpeggio (a key moves its held note) */
+{
+    return m < DAB_NTRK && (frz >> m & 1u) && tfam[m] == SF_LEAD && (int)tpar[m][S_PLAY] != 2 && !arp_keys(m);
+}
+static int held_first(int m)            /* the lowest note held on a manual, -1: none */
+{
+    int n;
+    for (n = 0; n < 128; n++) if (BGET(heldK[m], n)) return n;
+    return -1;
+}
 static void key_on(int manual, int note, int vel, int norec)   /* (norec: heard, not recorded: a note given to a step) */
 {
     int t;
@@ -1650,6 +1675,19 @@ static void key_on(int manual, int note, int vel, int norec)   /* (norec: heard,
         return;
     }
     BCLR(eatK[manual], note);
+    if (!norec && frz_one(manual)) {    /* REC: a frozen track of one note at a time: its held note moves to this key's
+                                         * (no new attack, held still); the key's letting go does nothing */
+        int from = held_first(manual);
+        if (from >= 0) {
+            st.notes++;
+            trk_first_key();
+            hold_move(manual, from, note);
+            BSET(eatK[manual], note);
+            held_count();
+            st.hold_ver++;
+            return;
+        }
+    }
     st.notes++;
     if (!norec) trk_first_key();        /* (waiting to record: the first key starts) */
     if (!arp_keys(manual) && !norec)
@@ -1662,6 +1700,13 @@ static void key_on(int manual, int note, int vel, int norec)   /* (norec: heard,
         if (st.held_n) st.held_n--;
         st.hold = st.held_n != 0;
         if (manual == DAB_NTRK) lower_hold(note, 4, 0);
+    }
+    if (!norec && (frz >> FZTRK(manual) & 1u) && !SF_DRUM(tfam[t])) {   /* REC: a frozen track (POLY, the left hand, the
+                                         * bass line, the left keys of track 1): this key's note is held too */
+        BSET(heldK[manual], note);
+        if (arp_keys(manual)) BSET(heldArp, note);
+        held_count();
+        st.hold_ver++;
     }
     if (manual == DAB_NTRK) {           /* the left keys as set: the bass and backing's chord, or the left hand's notes */
         lower_hold(note, 1, 1);
@@ -1859,6 +1904,7 @@ static void trk_empty(int t)            /* track t's loop gone */
 {
     trk_off(t);
     kt[t].n = 0; kt[t].len = 0; kt[t].bars = 0; kt[t].takes = 0; kt[t].flen = 0;
+    if (!(dedit >> t & 1u)) { loopOff &= (uint8_t)~(1u << t); st.loop_off = loopOff; }
 }
 static uint32_t trk_time(int t, uint32_t k) { return kt[t].base + k * BEAT / DAB_TPB; }
 static void trk_join(int t, uint32_t base)   /* its first tick at base (a bar's start): on from where that puts it now */
@@ -1940,6 +1986,7 @@ static void trk_rec(int t)              /* REC, a REC ARM: track t records; agai
     if (recTrk >= 0 && (t < 0 || t == recTrk)) { trk_stop(); return; }
     if (t < 0 || t >= DAB_NPART) return;
     trk_stop();
+    loopOff &= (uint8_t)~(1u << t); dJoin &= (uint8_t)~(1u << t); st.loop_off = loopOff;   /* (a recording plays) */
     recTrk = (int8_t)t; recWait = !running;
     if (SF_DRUM(tfam[t])) { snapArm = (int8_t)t; if (drumTake == t + 1) drumTake = 0; }   /* (its first recorded hit begins
                                                                                          * a take) */
@@ -2028,6 +2075,46 @@ static void trk_undo(int t)             /* the last take gone (recording now: th
     if (!k->takes) { k->n = 0; k->len = 0; k->bars = 0; k->flen = 0; }
     trk_tell(1);
 }
+static void loop_off(int t, int off)    /* SEQ: track t's loop (a drum sound: its own steps) stopped, kept; or playing
+                                         * again, from the next bar */
+{
+    uint8_t b;
+    if (t < 0 || t >= DAB_NTRK) return;
+    b = (uint8_t)(1u << t);
+    if (off) {
+        loopOff |= b; dJoin &= (uint8_t)~b;
+        trk_off(t);
+    } else if (loopOff & b) {
+        loopOff &= (uint8_t)~b;
+        if (kt[t].len) { if (running) kt[t].wait = 1; }
+        else if (running) dJoin |= b;
+    }
+    st.loop_off = loopOff;
+}
+static void track_clear(int t)          /* SEQ held: track t's loop gone, all its takes (a drum sound: its own steps, the
+                                         * rhythm's again); a recording on it ends with nothing kept */
+{
+    int i;
+    uint8_t b;
+    if (t < 0 || t >= DAB_NTRK) return;
+    b = (uint8_t)(1u << t);
+    if (recTrk == t) {
+        for (i = 0; i < 128; i++) recOpen[i] = 0;
+        recTrk = -1; recWait = 0; recOver = 0;
+    }
+    if (snapArm == t) snapArm = -1;
+    trk_empty(t);
+    takeHand[t] = 0;
+    dedit &= (uint8_t)~b;
+    for (i = 0; i < (int)nSnap;) {
+        if (snaps[i].t == t) { int j; for (j = i; j < (int)nSnap - 1; j++) snaps[j] = snaps[j + 1]; nSnap--; }
+        else i++;
+    }
+    if (drumTake == t + 1) drumTake = 0;
+    loopOff &= (uint8_t)~b; dJoin &= (uint8_t)~b; st.loop_off = loopOff;
+    dsteps_tell();
+    trk_tell(1);
+}
 static void trk_runs(int go)            /* the rhythm started (the loops from their start) or stopped */
 {
     int t;
@@ -2044,6 +2131,7 @@ static void trk_bar(uint32_t t0)        /* the leading rhythm's bar begins, at t
 {
     int t;
     barAt = t0;
+    dJoin = 0;                          /* (a track's own steps SEQ played again: from this bar) */
     for (t = 0; t < DAB_NTRK; t++) if (kt[t].wait && kt[t].len) trk_join(t, t0);
     if (recTrk < 0 || SF_DRUM(tfam[recTrk]) || recOver || recWait) return;
     if (t0 == recAnchor) { recBars = 1; trk_tell(0); return; }   /* (the take's first bar) */
@@ -2070,7 +2158,7 @@ static void trk_run(void)               /* each block while the rhythm runs: the
     for (t = 0; t < DAB_NTRK; t++) {
         ktrack_t *k = &kt[t];
         int guard = 64;
-        if (!k->len || k->wait || (recTrk == t && !recOver)) continue;
+        if (!k->len || k->wait || (recTrk == t && !recOver) || (loopOff >> t & 1u)) continue;
         while ((int32_t)(beatFix - k->next) >= 0 && guard-- > 0) {
             uint32_t tick = k->tk;
             if (!SF_DRUM(tfam[t]) && tick % (uint32_t)q == 0u) {   /* a step of its own begins: where it is, its locks
@@ -2408,11 +2496,48 @@ static void hold_press(void)            /* HOLD pressed: the keys down held (ins
             }
     st.held_n = (uint8_t)c; st.hold = c != 0; st.hold_ver++;
 }
-static void held_count(void)            /* (the screen's count of the held notes) */
+static void held_count(void)            /* (the screen's count of the held notes; the tracks holding, frozen, and their
+                                         * notes, for PLAY to bring back: a frozen track that holds nothing any more is
+                                         * frozen no more) */
 {
-    int m, n, c = 0;
-    for (m = 0; m < NMAN; m++) for (n = 0; n < 4; n++) { uint32_t w = heldK[m][n]; while (w) { c++; w &= w - 1u; } }
-    st.held_n = (uint8_t)c; st.hold = c != 0;
+    int m, n, c = 0, t;
+    uint8_t hs = 0;
+    for (t = 0; t < DAB_NTRK; t++) st.fz_n[t] = 0;
+    for (m = 0; m < NMAN; m++)
+        for (n = 0; n < 4; n++) {
+            uint32_t w = heldK[m][n];
+            while (w) {
+                int b = 0, tt = FZTRK(m);
+                while (!(w >> b & 1u)) b++;
+                w &= w - 1u;
+                c++;
+                hs |= (uint8_t)(1u << tt);
+                if (st.fz_n[tt] < 4) st.fz_note[tt][st.fz_n[tt]++] = (uint8_t)((n * 32 + b) | (m == DAB_NTRK ? 0x80 : 0));
+            }
+        }
+    frz &= hs;
+    st.held_n = (uint8_t)c; st.hold = c != 0; st.holds = hs; st.frozen = frz;
+}
+static void freeze(int t, int on)       /* REC: track t frozen (the notes of its keys down held; track 1's: the left keys'
+                                         * as set too), or let go */
+{
+    int k, n;
+    if (t < 0 || t >= DAB_NTRK) return;
+    for (k = 0; k < 2; k++) {
+        int m = k ? DAB_NTRK : t;
+        if (k && t != PART_LEAD) break;
+        for (n = 0; n < 128; n++) {
+            if (on && BGET(keyDn[m], n) && !SF_DRUM(tfam[KTRK(m)])) {
+                BSET(heldK[m], n);
+                if (arp_keys(m) && arpDown[n]) BSET(heldArp, n);
+            } else if (!on && BGET(heldK[m], n))
+                held_end(m, n);
+        }
+    }
+    if (on) frz |= (uint8_t)(1u << t);
+    else frz &= (uint8_t)~(1u << t);
+    held_count();
+    st.hold_ver++;
 }
 static void hold_off(int m, int n)      /* a held note's own key pressed again: that note let go (out of the arpeggio's
                                          * set too, latched or not), the others held still */
@@ -2618,6 +2743,7 @@ static void take(const msg_t *m)
     case M_CLEARALL:                    /* every loop, every track's own steps, every lock */
         for (i = 0; i < DAB_NTRK; i++) trk_empty(i);
         recTrk = -1; recWait = 0; recOver = 0; dedit = 0; nSnap = 0; drumTake = 0; snapArm = -1;
+        loopOff = dJoin = 0; st.loop_off = 0;
         lock_clear(-1, 0);
         dsteps_tell(); trk_tell(1);
         break;
@@ -2675,6 +2801,15 @@ static void take(const msg_t *m)
         if (m->a) hold_press(); else { hold_release(); st.hold_ver++; }
         break;
     case M_HOLDOFF: hold_off(m->a, m->b); break;
+    case M_FREEZE: freeze(m->a, m->b); break;
+    case M_LOOPOFF: loop_off(m->a, m->b); break;
+    case M_TCLEAR: track_clear(m->a); break;
+    case M_FXOFF:                       /* the MIXER's FX: the tracks' sends to none (the mix glides there), their BASS flat */
+        fxOff = (uint8_t)m->a;
+        for (i = 0; i < DAB_NPART; i++) shelf_set(i, fxOff >> i & 1u ? 0.0f : par[P_LOWEQ + i]);
+        break;
+    case M_MEQ: eqT[0] = m->f; eqT[1] = m->g; eqT[2] = m->h; break;
+    case M_MASTER: mgT = clampf(m->f, 0.0f, 1.0f); break;
     case M_HOLDMV:
         hold_move(m->a >> 8 & 15, m->a & 255, m->b);
         if (m->f != 0.0f) st.hold_ver++;   /* (the last of them: the panel's lights may look again) */
@@ -2687,7 +2822,8 @@ static void take(const msg_t *m)
         for (k = 0; k < NMAN; k++) for (i = 0; i < 4; i++) { keyDn[k][i] = 0; heldK[k][i] = 0; eatK[k][i] = 0; }
         for (i = 0; i < 4; i++) heldArp[i] = 0;
         if (recWait) { recTrk = -1; recWait = 0; }
-        st.held_n = 0; st.hold = 0;
+        st.held_n = 0; st.hold = 0; frz = 0; st.frozen = 0; st.holds = 0;
+        for (i = 0; i < DAB_NTRK; i++) st.fz_n[i] = 0;
         nLower = 0; nAcc = 0; bassNote = -1; holding = 0; nArp = 0; nArpSnd = 0; nDown = 0; nms = 0; monoNote = -1;
         for (i = 0; i < 128; i++) arpDown[i] = 0;
         running = 0; st.running = 0; fadeDir = 0; droneG = 0.0f; chordRoot = -1; st.left_root = -1;
@@ -2978,11 +3114,58 @@ static inline float tap(const float *b, uint32_t w, uint32_t mask, float d)
     return b[ri & mask] * (1.0f - fr) + b[(ri + 1u) & mask] * fr;
 }
 
-static float volS[DAB_NTRK], sndS[DAB_NTRK];   /* each track's volume and share of the effects as the last block mixed them */
+static float volS[DAB_NTRK], sndS[DAB_NTRK], rsndS[DAB_NTRK];   /* each track's volume and shares of the delay and the
+                                         * reverb as the last block mixed them */
+enum { EQ_LSH, EQ_PEAK, EQ_HSH };
+static void bq_eq(bq_t *f, int type, float hz, float db)   /* a shelf (slope 1) or a wide bell, db at hz (RBJ's, q 0.7071) */
+{
+    float w = TWO_PI * hz / SR, c = fm_cosf(w), sn = fm_sinf(w), al = sn / (2.0f * 0.7071f);
+    float A = fm_exp2f(db * (0.166096405f * 0.5f)), a0, b0, b1, b2, a1, a2;
+    if (type == EQ_LSH) {
+        float r = 2.0f * fm_sqrtf(A) * al, p = A + 1.0f, m = A - 1.0f;
+        b0 = A * (p - m * c + r); b1 = 2.0f * A * (m - p * c); b2 = A * (p - m * c - r);
+        a0 = p + m * c + r; a1 = -2.0f * (m + p * c); a2 = p + m * c - r;
+    } else if (type == EQ_HSH) {
+        float r = 2.0f * fm_sqrtf(A) * al, p = A + 1.0f, m = A - 1.0f;
+        b0 = A * (p + m * c + r); b1 = -2.0f * A * (m + p * c); b2 = A * (p + m * c - r);
+        a0 = p - m * c + r; a1 = 2.0f * (m - p * c); a2 = p - m * c - r;
+    } else {
+        b0 = 1.0f + al * A; b1 = -2.0f * c; b2 = 1.0f - al * A; a0 = 1.0f + al / A; a1 = -2.0f * c; a2 = 1.0f - al / A;
+    }
+    a0 = 1.0f / a0;
+    f->b0 = b0 * a0; f->b1 = b1 * a0; f->b2 = b2 * a0; f->a1 = a1 * a0; f->a2 = a2 * a0;
+}
+static void eq_block(void)              /* the MASTER EQ for this block: each gain gliding to its knob (-24, OFF: 40 dB
+                                         * down, that band out), its filters set again while one moves; all flat: out */
+{
+    static const uint8_t EQK[3] = {EQ_LSH, EQ_PEAK, EQ_HSH};
+    static const float EQHZ[3] = {250.0f, 1000.0f, 3500.0f};
+    int k, on = 0;
+    if (!eqSet) {
+        for (k = 0; k < 6; k++) bq_eq(&eqf[k], EQK[k % 3], EQHZ[k % 3], 0.0f);
+        eqSet = 1;
+    }
+    for (k = 0; k < 3; k++) {
+        float t = clampf(eqT[k], -24.0f, 12.0f), g = eqDb[k];
+        if (t <= -23.5f) t = -40.0f;
+        if (g != t) {
+            g += (t - g) * 0.06f;
+            if (g - t < 0.01f && t - g < 0.01f) g = t;
+            eqDb[k] = g;
+            bq_eq(&eqf[k], EQK[k], EQHZ[k], g);
+            eqf[k + 3].b0 = eqf[k].b0; eqf[k + 3].b1 = eqf[k].b1; eqf[k + 3].b2 = eqf[k].b2;
+            eqf[k + 3].a1 = eqf[k].a1; eqf[k + 3].a2 = eqf[k].a2;
+        }
+        if (g != 0.0f) on = 1;
+    }
+    if (!on && eqOn)                    /* (flat again: out, its filters at rest) */
+        for (k = 0; k < 6; k++) eqf[k].z1 = eqf[k].z2 = 0.0f;
+    eqOn = (uint8_t)on;
+}
 static uint32_t busWas;                 /* the tracks that sounded in the last block */
 static void post_chain(int32_t *lr, int n, float gain, int lowAny, uint32_t busOn)
 {
-    float vol[DAB_NTRK], snd[DAB_NTRK], sq_sum = 0.0f, lsum = 0.0f, lvl;
+    float vol[DAB_NTRK], snd[DAB_NTRK], rsnd[DAB_NTRK], sq_sum = 0.0f, lsum = 0.0f, lvl, mg, dmg;
     float gd = par[P_DRUMS] * 0.34f * fadeG;   /* (the drums all together; the bass with them in a fade) */
     uint8_t act[DAB_NTRK], grp[DAB_NTRK];
     int on[DAB_NTRK], nact2 = 0, drumAny;
@@ -3022,9 +3205,13 @@ static void post_chain(int32_t *lr, int n, float gain, int lowAny, uint32_t busO
         vol[k] = muteM >> k & 1u ? 0.0f : par[PART_VOL[k]] * (f == SF_BASS ? fadeG : f == SF_DRONE && k == PART_DRONE ? droneLvl
                                                               : SF_DRUM(f) ? gd : 1.0f);
         snd[k] = vol[k] * par[P_SEND + k] * (f == SF_LEFT ? 1.1f : 1.0f);
+        rsnd[k] = vol[k] * par[P_RSEND + k] * (f == SF_LEFT ? 1.1f : 1.0f);
+        if (fxOff >> k & 1u) snd[k] = rsnd[k] = 0.0f;   /* (the MIXER's FX out: no sends, each kept as set) */
         if (!(busOn >> k & 1u)) {       /* (silent: its next sound begins at its volume as it is then) */
             if (f == SF_BASS && fBassT[k].z1 != 0.0f) fBassT[k].z1 = fBassT[k].z2 = 0.0f;
-            volS[k] = vol[k]; sndS[k] = snd[k];
+            volS[k] = vol[k]; sndS[k] = snd[k]; rsndS[k] = rsnd[k];
+            st.tlevel[k] *= 0.995f;
+            if (st.tlevel[k] < 1e-5f) st.tlevel[k] = 0.0f;
             continue;
         }
         if (f == SF_BASS) for (i = 0; i < n; i++) bus[k][i] = bq_run(&fBassT[k], bus[k][i] * 0.6f);
@@ -3032,34 +3219,50 @@ static void post_chain(int32_t *lr, int n, float gain, int lowAny, uint32_t busO
         grp[k] = (uint8_t)(f == SF_LEFT ? 1 : f == SF_BASS || SF_DRUM(f) ? 2 : 0);
         act[nact2++] = (uint8_t)k;
     }
-    for (i = 0; i < n; i++) gm[0][i] = gm[1][i] = gm[2][i] = gm[3][i] = 0.0f;
-    for (k = 0; k < nact2; k++) {        /* the tracks into their places in the mix, and the effects' share */
+    for (i = 0; i < n; i++) gm[0][i] = gm[1][i] = gm[2][i] = gm[3][i] = gm[4][i] = 0.0f;
+    for (k = 0; k < nact2; k++) {        /* the tracks into their places in the mix, and the effects' shares */
         int t = act[k];
         const float *x = bus[t];
-        float *o = gm[grp[t]], *e = gm[3], v = vol[t], e2 = snd[t], v0 = volS[t], e0 = sndS[t];
-        if (!(busWas >> t & 1u)) { v0 = v; e0 = e2; }
-        if (v0 == v && e0 == e2) {
+        float *o = gm[grp[t]], *e = gm[3], *r = gm[4], v = vol[t], e2 = snd[t], r2 = rsnd[t], v0 = volS[t], e0 = sndS[t];
+        float r0 = rsndS[t], pk = 0.0f;
+        if (!(busWas >> t & 1u)) { v0 = v; e0 = e2; r0 = r2; }
+        if (v0 == v && e0 == e2 && r0 == r2) {
             if (tfam[t] == SF_LEAD)      /* (the lead's level: for the singer's mouth) */
                 for (i = 0; i < n; i++) { float q = x[i] * v; o[i] += q; lsum += q * q; }
             else
                 for (i = 0; i < n; i++) o[i] += x[i] * v;
             if (e2 != 0.0f)
                 for (i = 0; i < n; i++) e[i] += x[i] * e2;
-        } else {                         /* its volume or its share moved (a fader, a mute, a lock) while it sounds:
-                                          * half the way in this block, along a line, so nothing clicks */
-            float v1 = v0 + (v - v0) * 0.5f, e1 = e0 + (e2 - e0) * 0.5f, dv, de;
+            if (r2 != 0.0f)
+                for (i = 0; i < n; i++) r[i] += x[i] * r2;
+        } else {                         /* its volume or a share moved (a fader, a mute, a lock) while it sounds: half
+                                          * the way in this block, along a line, so nothing clicks */
+            float v1 = v0 + (v - v0) * 0.5f, e1 = e0 + (e2 - e0) * 0.5f, r1 = r0 + (r2 - r0) * 0.5f, dv, de, dr;
             if (v1 - v < 0.002f && v - v1 < 0.002f) v1 = v;
             if (e1 - e2 < 0.002f && e2 - e1 < 0.002f) e1 = e2;
-            dv = (v1 - v0) / (float)n; de = (e1 - e0) / (float)n;
+            if (r1 - r2 < 0.002f && r2 - r1 < 0.002f) r1 = r2;
+            dv = (v1 - v0) / (float)n; de = (e1 - e0) / (float)n; dr = (r1 - r0) / (float)n;
             for (i = 0; i < n; i++) {
                 float q = x[i] * v0;
-                o[i] += q; e[i] += x[i] * e0;
+                o[i] += q; e[i] += x[i] * e0; r[i] += x[i] * r0;
                 if (tfam[t] == SF_LEAD) lsum += q * q;
-                v0 += dv; e0 += de;
+                v0 += dv; e0 += de; r0 += dr;
             }
-            v = v1; e2 = e1;
+            v = v1; e2 = e1; r2 = r1;
         }
-        volS[t] = v; sndS[t] = e2;
+        volS[t] = v; sndS[t] = e2; rsndS[t] = r2;
+        for (i = 0; i < n; i += 4) { float a = x[i] < 0.0f ? -x[i] : x[i]; if (a > pk) pk = a; }   /* (how loud it is now:
+                                          * the MIXER's live bar) */
+        pk *= v;
+        st.tlevel[t] = pk > st.tlevel[t] ? pk : st.tlevel[t] * 0.995f;
+    }
+    eq_block();
+    {                                    /* the MIDImix's master: a quarter of the way each block, along a line through it */
+        float to = mgS + (mgT - mgS) * 0.25f;
+        if (to - mgT < 0.0005f && mgT - to < 0.0005f) to = mgT;
+        dmg = (to - mgS) / (float)n;
+        mg = mgS;
+        mgS = to;
     }
     busWas = busOn;
     ensOn = ensLive > 0 && !lite;
@@ -3076,7 +3279,7 @@ static void post_chain(int32_t *lr, int n, float gain, int lowAny, uint32_t busO
     else if (slapStale) { for (i = 0; i < SLAP_N; i++) slapBuf[i] = 0; paH = paL = paB = paLp = 0.0f; slapStale = 0; }
 
     for (i = 0; i < n; i++) {
-        float pre = gm[0][i], low = gm[1][i], post = gm[2][i], send = gm[3][i];
+        float pre = gm[0][i], low = gm[1][i], post = gm[2][i], send = gm[3][i], rsend = gm[4][i];
         float eL, eR, oL, oR, ew = 0.0f, wet = 0.0f, xL, xR, m;
         /* the left hand's sound through three swept taps: an ensemble */
         ensBuf[ensW] = low;
@@ -3113,7 +3316,7 @@ static void post_chain(int32_t *lr, int n, float gain, int lowAny, uint32_t busO
             oL += ew; oR += ew;
         }
         if (revOn) {                /* a hall: four combs, two all-passes; the drums a little in it */
-            float in = send + ew;
+            float in = rsend + ew;
             for (k = 0; k < 4; k++) {
                 float *cb = COMB[k], y = cb[combI[k]];
                 combLp[k] += (y - combLp[k]) * 0.3f;
@@ -3158,10 +3361,18 @@ static void post_chain(int32_t *lr, int n, float gain, int lowAny, uint32_t busO
         }
         if (hissAmt != 0.0f) { xL += noise() * hissAmt; xR += noise() * hissAmt; }
         if (brightOn) { xL = bq_run(&fBrL, xL); xR = bq_run(&fBrR, xR); }
+        if (eqOn) {                 /* the MASTER EQ, the last on the whole sound (after every effect, before the limit):
+                                     * a mixer's three, a low shelf at 250 Hz, a wide bell at 1 kHz, a high shelf at
+                                     * 3.5 kHz (RAGA MEOW's) */
+            xL = bq_run(&eqf[2], bq_run(&eqf[1], bq_run(&eqf[0], xL)));
+            xR = bq_run(&eqf[5], bq_run(&eqf[4], bq_run(&eqf[3], xR)));
+        }
         xL = clip3(xL * 0.75f); xR = clip3(xR * 0.75f);
         m = (xL + xR) * 0.5f;
         sq_sum += m * m;
         if ((scopeDiv++ & 3u) == 0u) { scopeRing[scopeW] = (int16_t)(m * 32767.0f); scopeW = (scopeW + 1u) % DAB_SCOPE; }
+        mg += dmg;
+        if (mg != 1.0f) { xL *= mg; xR *= mg; }
         lr[2 * i] = (int32_t)(xL * gain);
         lr[2 * i + 1] = (int32_t)(xR * gain);
     }
@@ -3280,6 +3491,7 @@ static int base_units(void)             /* what the render costs before its note
     int u = 67 + (drumLive > 0 ? 158 : 0) + (droneG > 0.0f ? 20 : 0);
     u += 16 * ((par[P_CHORUS] > 0.001f) + (par[P_DRIVE] > 0.001f) + (par[P_PA] > 0.001f) + (par[P_WOW] > 0.001f) +
                (par[P_AGE] > 0.001f) + (par[P_HISS] > 0.001f) + (par[P_ECHO] > 0.001f) + (par[P_BRIGHT] < 0.999f));
+    if (eqOn || eqT[0] != 0.0f || eqT[1] != 0.0f || eqT[2] != 0.0f) u += 18;   /* (the MASTER EQ: six biquads a frame) */
     return u;
 }
 static int render_units(void)
@@ -3433,6 +3645,12 @@ void dabke_track_len(int track, int two, int ticks) { post(M_TLEN, track, two, (
 void dabke_lock(int place, uint32_t lock, float unit) { post(M_LOCK, (int16_t)(lock & 0xFFFFu), (int16_t)(lock >> 16), (float)place, unit, 0); }
 void dabke_lock_clear(int track, int take) { post(M_LKCLEAR, track, take, 0, 0, 0); }
 void dabke_mute(int mask) { post(M_MUTE, mask & 255, 0, 0, 0, 0); }
+void dabke_freeze(int track, int on) { post(M_FREEZE, track, on ? 1 : 0, 0, 0, 0); }
+void dabke_loop_off(int track, int off) { post(M_LOOPOFF, track, off ? 1 : 0, 0, 0, 0); }
+void dabke_track_clear(int track) { post(M_TCLEAR, track, 0, 0, 0, 0); }
+void dabke_fx_off(int mask) { post(M_FXOFF, mask & 255, 0, 0, 0, 0); }
+void dabke_master_eq(float low, float mid, float high) { post(M_MEQ, 0, 0, low, mid, high); }
+void dabke_master(float level) { post(M_MASTER, 0, 0, level, 0, 0); }
 void dabke_track_hit(int track, int lane, int record) { post(M_DHIT, track, (lane & 255) | (record ? 256 : 0), 0, 0, 0); }
 void dabke_track_hit_audio(int track, int lane, int record) { dhit(track, lane, record); }
 void dabke_track_sound(int track, int family, int index) { post(M_TSND, track, ((family & 255) << 8) | (index & 255), 0, 0, 0); }
@@ -3590,7 +3808,7 @@ void dabke_init(void)
     par[P_VELAMT] = 0.5f; par[P_BASSTONE] = 600.0f; par[P_BASSDECAY] = 1.0f; par[P_ACCENT] = 0.5f;
     par[P_KITTUNE] = 1.0f; par[P_KITDECAY] = 1.0f; par[P_KITTONE] = 1.0f;
     par[P_GDRUM] = par[P_GKICK] = par[P_GCLAP] = par[P_GMETAL] = 1.0f;
-    for (i = 0; i < DAB_NPART; i++) par[P_SEND + i] = i < PART_KICK ? (i == PART_BASS ? 0.0f : 1.0f) : 0.3f;
+    for (i = 0; i < DAB_NPART; i++) par[P_SEND + i] = par[P_RSEND + i] = i < PART_KICK ? (i == PART_BASS ? 0.0f : 1.0f) : 0.3f;
     clapV = -1;
     for (i = 0; i < DAB_NTRK; i++) st.trk_ev[i] = kt[i].ev;
     st.rec_track = -1;

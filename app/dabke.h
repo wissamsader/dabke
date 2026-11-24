@@ -75,8 +75,10 @@ enum {
     P_FILTER, P_FILTER_LAST = P_FILTER + DAB_NPART - 1, /* each part's filter (PART_* order), -1 .. 1: below 0 the highs
                                                          * close, 0 open, above 0 the lows go */
     P_LOWEQ, P_LOWEQ_LAST = P_LOWEQ + DAB_NPART - 1,    /* each part's bass, -1 .. 1: less low end, 0 as it is, more */
-    P_SEND, P_SEND_LAST = P_SEND + DAB_NPART - 1,       /* each part into the delay and the reverb, 0..1 */
+    P_SEND, P_SEND_LAST = P_SEND + DAB_NPART - 1,       /* each part into the delay, 0..1 (its DELAY SEND; up to 0.19 one
+                                                         * send fed the delay and the reverb: P_RSEND took its value) */
     P_PITCH, P_PITCH_LAST = P_PITCH + DAB_NPART - 1,    /* each part's pitch, semitones -12..12 (the drums' too) */
+    P_RSEND, P_RSEND_LAST = P_RSEND + DAB_NPART - 1,    /* each part into the reverb, 0..1 (its REVERB SEND; 0.20) */
     /* choices, as whole numbers */
     P_MODEL, P_PLAY, P_DOUBLE,                          /* MD_*; 0 legato, 1 mono, 2 poly; 0 off, 1 octave down, 2 up */
     P_ORNAMENT, P_TRILLTO, P_PICKING,                   /* ORN_*; 0 the scale's next note, 1 a half step, 2 a quarter tone; 0 single, 1 tremolo */
@@ -102,9 +104,9 @@ enum {
 enum { ORN_OFF, ORN_MORDENT, ORN_TURN, ORN_SCOOP, ORN_TRILL, ORN_SHAKE, ORN_AUTO, ORN_COUNT };
 /* A lock: a step of a track holds a knob at a value of its own, from that step until the track's next step with a hit
  * or a note (or another lock of the same knob); then the knob is back at its normal value. The knobs a lock can hold
- * are the first DAB_NLK (up to the tracks' pitches). One word each: the step (0..127), the track, the knob, its value
+ * are the first DAB_NLK (up to the tracks' reverb sends). One word each: the step (0..127), the track, the knob, its value
  * in the knob's own steps (-64..447), the take it was recorded in (0: made by hand) */
-#define DAB_NLK (P_PITCH_LAST + 1)
+#define DAB_NLK (P_RSEND_LAST + 1)
 #define DAB_LK(trk, step, id, val, take) (0x80000000u | (uint32_t)((take) & 31) << 26 | (uint32_t)(((val) + 64) & 511) << 17 | \
                                           (uint32_t)((id) & 127) << 10 | (uint32_t)((trk) & 7) << 7 | (uint32_t)((step) & 127))
 #define DAB_LK_STEP(l) ((int)((l) & 127u))
@@ -215,7 +217,25 @@ void dabke_lock(int place, uint32_t lock, float unit);   /* a lock (DAB_LK) in i
                                          * now. unit: one step of its knob, in the engine's units */
 void dabke_lock_clear(int track, int take);   /* a track's locks gone (-1: every track's); take > 0: only those
                                          * recorded in that take or a later one */
-void dabke_mute(int mask);              /* the tracks muted, a bit each */
+void dabke_mute(int mask);              /* the tracks muted, a bit each (the panel's MUTE, the background's and the SOLOs
+                                         * together: a track silent from its next note's first sample) */
+/* ---- the one logic (fm1-organ/LOGIC.md version 2, as RAGA MEOW): freezing, the loops' own stop and clear, the MIXER's
+ * effects out, the MASTER EQ, the MIDImix's master ---- */
+void dabke_freeze(int track, int on);   /* REC: the track frozen: the notes of its keys down now sound on without the
+                                         * keys (on 0: its held notes let go). On a frozen track a key of a one-note
+                                         * sound moves the held note there (no new attack, held still); a POLY sound's,
+                                         * the left hand's and the bass line's keys are held too; the key of a held note
+                                         * again lets that note go (the last one: the track no longer frozen) */
+void dabke_loop_off(int track, int off);   /* SEQ: the track's loop (a drum sound: its own steps) stopped, kept (off 1);
+                                         * playing again (0), from the next bar */
+void dabke_track_clear(int track);      /* SEQ held: the track's loop gone, every take (a drum sound: its own steps, the
+                                         * rhythm's again); a recording on it ends with nothing kept */
+void dabke_fx_off(int mask);            /* the tracks whose effects are out (the MIXER's FX), a bit each: their delay and
+                                         * reverb sends and their BASS, each kept as set */
+void dabke_master_eq(float low, float mid, float high);   /* the MASTER EQ, dB each, -24 (that band out, about 40 dB
+                                         * down) .. +12: a shelf under 250 Hz, a wide bell at 1 kHz, a shelf over 3.5 kHz,
+                                         * the last on the whole sound, after every effect; out when all three are 0 */
+void dabke_master(float level);         /* the MIDImix's master fader: the whole level, 0..1, gliding */
 #ifdef PLAT_HOST
 int dabke_host_voices(int track);
 int dabke_host_cpu(int scale_pct);      /* (the tests: the render's measured time as if this % of it; the cap now) */
@@ -293,6 +313,12 @@ typedef struct {
     uint8_t lead_on;                    /* a lead note sounds */
     uint32_t starts[DAB_NPART];         /* each track's notes and hits since the start (the drone's: none) */
     uint32_t late;                      /* renders that ran past the guard's budget (its model too low) */
+    uint8_t frozen;                     /* the tracks REC holds (frozen), a bit each */
+    uint8_t holds;                      /* the tracks with a note held now, a bit each */
+    uint8_t fz_n[DAB_NTRK], fz_note[DAB_NTRK][4];   /* each track's held notes (four at most; the left keys' with track
+                                         * 1's), for PLAY to bring back */
+    uint8_t loop_off;                   /* the tracks whose loop (or own steps) SEQ stopped, a bit each */
+    float tlevel[DAB_NTRK];             /* how loud each track is now (after its level), 0..1: the MIXER's live bars */
 } dabke_status_t;
 const dabke_status_t *dabke_status(void);
 const int16_t *dabke_scope(void);                       /* the last DAB_SCOPE samples of the output, +-32767 full scale */
