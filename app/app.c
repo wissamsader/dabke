@@ -2900,6 +2900,12 @@ static void knob_step(int id, int n)
         return;
     }
     pid = strip_id(id) >= 0 ? strip_id(id) : id;
+    if (step_held() && id == K_TSPACE) {     /* (SPACE, a step held: both its sends locked there, each moved by as much) */
+        int t = picked(), d = n * 2, a = P_SEND + t, b = P_RSEND + t, ia = lk_find(t, ui.sstep, a), ib = lk_find(t, ui.sstep, b);
+        step_lock(a, clamp((ia >= 0 ? DAB_LK_VAL(sq.lock[ia]) : par_eff(a)) + d, 0, 100));
+        step_lock(b, clamp((ib >= 0 ? DAB_LK_VAL(sq.lock[ib]) : par_eff(b)) + d, 0, 100));
+        return;
+    }
     if (step_held()) {                       /* a step held: this knob locked on it, from its value there (or as it
                                               * sounds), if it is one a lock can hold */
         if (lk_ok(pid)) {
@@ -2977,14 +2983,8 @@ static void knob_step(int id, int n)
             track_pick(clamp(set.track + n, 1, DAB_NPART));
         return;
     case K_TSPACE: {                         /* SPACE: the picked track's delay and reverb sends together, each moved by
-                                              * as much (at an end, each stops at its own); a step held: both locked */
+                                              * as much (at an end, each stops at its own) */
         int t = picked(), d = n * 2, a = P_SEND + t, b = P_RSEND + t;
-        if (step_held()) {
-            int ia = lk_find(t, ui.sstep, a), ib = lk_find(t, ui.sstep, b);
-            step_lock(a, clamp((ia >= 0 ? DAB_LK_VAL(sq.lock[ia]) : par_eff(a)) + d, 0, 100));
-            step_lock(b, clamp((ib >= 0 ? DAB_LK_VAL(sq.lock[ib]) : par_eff(b)) + d, 0, 100));
-            return;
-        }
         ctl_move(a, clamp(ctl_from(a) + d, 0, 100));
         ctl_move(b, clamp(ctl_from(b) + d, 0, 100));
         space_say(t);
