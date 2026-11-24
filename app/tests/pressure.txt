@@ -4,22 +4,25 @@
 # PRESSURE (the ornaments page, row 2, K4), whatever note sound is on that track: the lead, the left hand's sound, the
 # bass line. Up to 0.12 the pressure was read only from keys playing track 1, and only the lead's family of sounds
 # bent: with another track picked a lean did nothing (his report, 11-15: "i put bend down and it doesn't bend down").
-# A drum track's keys have no pressure. (key K down VEL LEAN: the lean in %; pitch_x10: what sounds, tenths of a hertz)
+# A drum track's keys have no pressure. A track is picked with SEL held and its white key (the first eight: tracks 1 to
+# 8). (key K down VEL LEAN: the lean in %; pitch_x10: what sounds, tenths of a hertz)
 wait 900
-expect track 0
+expect track 1
 expect ch11 1
 expect ch12 1
 # (the lead's automatic ornaments off, so a held note's pitch is the note's: the ornaments page, row 1, K4)
 tap LFO
-turn SELECT -20
 wait 30
+expect page 4
+expect row 0
 turn K4 -20
 wait 30
 expect ch3 0
 tap HOME
 wait 30
 
-# ---- ALL picked: the lead, BEND UP as it starts. Leant on: up; eased off: back
+# ---- track 1 picked (as it starts: the keys as set, ONE KEYBOARD: all of them the lead), BEND UP as it starts.
+# Leant on: up; eased off: back
 key 12 down 100 0
 wait 900
 expect pitch_x10 >3456
@@ -37,10 +40,10 @@ expect pitch_x10 <3516
 key 12 up
 wait 300
 
-# ---- track 3 picked (the left hand's sound, not the lead's family): the same
-tap SEL
-tap SEL
-tap SEL
+# ---- track 3 picked (SEL held and the third white key: the left hand's sound, not the lead's family): the same
+press SEL
+tapkey w2
+release SEL
 wait 30
 expect track 3
 key 12 down 100 0
@@ -61,11 +64,13 @@ expect pitch_x10 <3516
 key 12 up
 wait 300
 
-# ---- BEND DOWN: track 3 goes down
+# ---- BEND DOWN (the ornaments page again, its next row: row 2, K4): track 3 goes down
 tap LFO
-turn SELECT -20
-turn SELECT 1
 wait 30
+expect row 0
+tap LFO
+wait 30
+expect row 1
 turn K4 1
 wait 30
 expect ch11 2
@@ -82,8 +87,10 @@ expect pitch_x10 <3360
 key 12 up
 wait 300
 
-# ---- the bass line (track 4), two octaves down: it bends down too
-tap SEL
+# ---- the bass line (track 4, the fourth white key), two octaves down: it bends down too
+press SEL
+tapkey w3
+release SEL
 wait 30
 expect track 4
 key 12 down 100 0
@@ -97,8 +104,10 @@ expect pitch_x10 <845
 key 12 up
 wait 300
 
-# ---- a drum track (the kick): its keys have no pressure
-tap SEL
+# ---- a drum track (the kick, track 5): its keys have no pressure
+press SEL
+tapkey w4
+release SEL
 wait 30
 expect track 5
 key 12 down 100 90
@@ -107,17 +116,17 @@ expect pressure 0
 key 12 up
 wait 300
 
-# ---- NOTHING: a lean on the lead changes nothing, and is not counted
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+# ---- NOTHING: track 1 picked again, a lean on the lead changes nothing, and is not counted (the ornaments page opens
+# on the row it showed last: row 2)
+press SEL
+tapkey w0
+release SEL
 wait 30
-expect track 0
+expect track 1
 tap LFO
-turn SELECT -20
-turn SELECT 1
 wait 30
+expect page 4
+expect row 1
 turn K4 -5
 wait 30
 expect ch11 0
@@ -138,15 +147,19 @@ wait 300
 # ---- KEY TOUCH: PLAIN (the ornaments page, row 4, K4) is the velocity only: a lean still does what PRESSURE says.
 # (Up to 0.14 KEY TOUCH had to be on VEL+PRESS for PRESSURE to do anything: on PLAIN a lean did nothing, his unit 11-15)
 tap LFO
-turn SELECT -20
-turn SELECT 3
 wait 30
+expect row 1
+tap LFO
+tap LFO
+wait 30
+expect row 3
 turn K4 -5
 wait 30
 expect ch12 0
-turn SELECT -20
-turn SELECT 1
+tap LFO
+tap LFO
 wait 30
+expect row 1
 turn K4 2
 wait 30
 expect ch11 2
@@ -165,6 +178,8 @@ key 12 up
 wait 300
 # PRESSURE: NOTHING with KEY TOUCH: PLAIN: the keys are plain switches again, a lean reads nothing
 tap LFO
+wait 30
+expect row 1
 turn K4 -5
 wait 30
 expect ch11 0

@@ -1,19 +1,21 @@
-# HOLD (EDIT tapped on any page, SOLO on the MIDImix), as he plays it. From the repository's root:
+# REC freezes the picked track, a MIDImix strip's REC ARM its own track, as he plays it. From the repository's root:
 #   app/build/host/dabke_host app/tests/hold.txt OUTDIR
-# Pressed with keys down, their notes sound on after the keys are let go; with other keys down, those are held
-# instead; with none down, the held notes go. Played meanwhile, a key is not held. 0.19: the key of a held note,
-# pressed again, lets that note go at once and plays nothing (whatever the octave or the track picked now); OCT- and
-# OCT+ move the held notes with their keys (the left keys as set stay, as their keys do), and they stay held; the
-# track's PITCH, TRANSPOSE and a quarter tone move them too; a track's new sound takes its held notes over; nothing
-# stays stuck. Up to 0.18 a held key pressed again struck its note anew and let it go only when lifted, after OCT- or
-# OCT+ the held notes stayed where they were and their keys could no longer let them go, a held key pressed with
-# another track picked darkened its light and left its note held, and a new sound on a track let its held notes go.
+# Tapped with keys down, their notes sound on after the keys are let go ("TRACK 1 FROZEN", REC lit); with none down,
+# the note or chord played last on the track (nothing played there yet: the maqam's tonic). On a frozen track a POLY
+# sound's keys are held too, a one-note sound's (LEGATO or MONO, no arpeggio) move its held note to the key's note (no
+# new note, held still); the key of a held note pressed again lets that note go and plays nothing (the last one:
+# "TRACK 1 LET GO"); REC again lets them all go. A new sound on the track keeps them; PLAY stops everything, the frozen
+# tracks too, and brings them back; each track freezes on its own. Up to 0.19 this was HOLD (EDIT tapped, the MIDImix's
+# SOLO): HOLD with other keys down held those instead, a key played over the held notes was not held, OCT- and OCT+
+# moved the held notes with their keys, "HOLD: 3 NOTES" and "HOLD OFF" were said, and a lit key let its held note go
+# whatever track was picked. Now the frozen notes stay where they are (the key that plays one now is lit, and lets it
+# go), and the keys play the picked track only. Nothing stays stuck.
 # (toneC: the output's level at the pitch C cents above MIDI note 0, 6000 middle C, dB of full scale, measured on the
 # last 186 ms: a held note of the ORGAN reads about -30, one gone below -60; an octave above a note sounding reads its
 # harmonic, so a note moved up is checked by its old pitch gone. Key 7 is C4, 9 D4, 11 E (a quarter flat in BAYATI),
-# 14 G4, 19 C5)
+# 14 G4, 19 C5. fz_noteT_I: track T+1's frozen note I, lowest first; frozen: the frozen tracks, a bit each)
 wait 900
-expect track 0
+expect track 1
 # the lead on the ORGAN (an even sound to measure), POLY (sound page, row 1, K1 and K2); the automatic ornaments off
 # (ornaments page, row 1, K4), the drone off (row 3, K1)
 tap ENV
@@ -25,44 +27,55 @@ wait 30
 expect ch0 7
 expect ch1 2
 tap LFO
-turn SELECT -20
 wait 30
+expect row 0
 turn K4 -20
 wait 30
-turn SELECT 2
+expect ch3 0
+tap LFO
+tap LFO
 wait 30
+expect row 2
 turn K1 -5
 wait 30
+expect ch6 0
 tap HOME
 wait 30
 listen
 
-# ---- a chord held: C, E, G; let go, they sound on, their keys lit
+# ---- a chord frozen: C, E, G down, REC; let go, they sound on, their keys lit
 key 7 down
 key 11 down
 key 14 down
 wait 100
-tap EDIT
+tap REC
 wait 60
-said HOLD: 3 NOTES
+said TRACK 1 FROZEN
 key 7 up
 key 11 up
 key 14 up
 wait 400
+expect frozen 1
 expect held_n 3
 expect voices0 3
 expect tone6000 >-40
 expect tone6350 >-40
 expect tone6700 >-40
-expect held_keys 18560
+expect fz_n0 3
+expect fz_note0_0 60
+expect fz_note0_1 64
+expect fz_note0_2 67
+expect lit_keys 18560
 expect lit_key11 1
 
-# ---- the held E's key again: E goes at once, nothing new starts, the others sound on
+# ---- the frozen E's key again: E goes at once, nothing new starts, the others sound on (not the last: nothing said)
 key 11 down
 wait 400
-said HOLD: 2 NOTES
+unsaid LET GO
 expect held_n 2
 expect voices0 2
+expect fz_n0 2
+expect frozen 1
 expect tone6350 <-60
 expect tone6000 >-40
 expect tone6700 >-40
@@ -71,67 +84,98 @@ wait 200
 expect lit_key11 0
 expect voices0 2
 expect held_n 2
-# its next press is a plain note again: it sounds while down, not held
+# its next press, a POLY sound on a frozen track: held too (it sounds on when let go, its key lit); again: let go
 key 11 down
 wait 200
 expect voices0 3
 key 11 up
 wait 400
+expect voices0 3
+expect held_n 3
+expect lit_key11 1
+key 11 down
+wait 200
+key 11 up
+wait 400
 expect voices0 2
 expect held_n 2
+expect lit_key11 0
 
-# ---- OCT+: the held C and G go up an octave with their keys, and stay held and lit
+# ---- OCT+: the frozen C and G stay where they are (their own pitches still sound: moved up, they would be gone), and
+# stay frozen; the keys play an octave up, so the key lit is the one that plays a frozen note now (G3's key plays G4),
+# and it lets that note go
 tap OCT+
 wait 400
 said OCTAVE +1
 expect held_n 2
 expect voices0 2
-expect tone6000 <-60
-expect tone6700 <-60
-expect tone7200 >-40
-expect tone7900 >-40
-expect held_keys 16512
-# the held C's key (C5 now) lets it go; G5 sounds on
-key 7 down
+expect tone6000 >-40
+expect tone6700 >-40
+expect fz_note0_0 60
+expect fz_note0_1 67
+expect lit_key7 0
+expect lit_key14 0
+expect lit_key2 1
+key 2 down
 wait 400
-said HOLD: 1 NOTE
 expect held_n 1
-expect tone7200 <-60
-expect tone7900 >-40
-key 7 up
+expect tone6700 <-60
+expect tone6000 >-40
+key 2 up
 wait 200
 expect voices0 1
-# OCT- back: the held G with it
+expect held_n 1
+# OCT- back: the frozen C's own key lit again
 tap OCT-
 wait 400
 said OCTAVE 0
-expect tone6700 >-40
+expect tone6000 >-40
 expect voices0 1
-expect lit_key14 1
+expect lit_key7 1
 expect held_n 1
 
-# ---- HOLD with keys down, among them the key whose press has just let its note go: both held
-key 14 down
-wait 30
+# ---- REC with keys down, among them the key whose press has just let the last frozen note go: both frozen (the notes
+# of the keys down, as 0.19's HOLD held them)
 key 7 down
+wait 300
+said TRACK 1 LET GO
+expect frozen 0
+expect held_n 0
+key 14 down
 wait 60
-tap EDIT
+tap REC
 wait 60
-said HOLD: 2 NOTES
+said TRACK 1 FROZEN
 key 14 up
 key 7 up
 wait 400
+expect frozen 1
+# (key 7's press played nothing, so the engine never had it down: REC sounds its note again, frozen with the other.
+# Up to the first 0.20 build only G froze; with key 7 alone down REC said FROZEN, then LET GO, nothing frozen)
 expect held_n 2
 expect voices0 2
 expect tone6000 >-40
 expect tone6700 >-40
-expect held_keys 16512
+expect lit_keys 16512
+# (the checks below from a plain freeze: REC lets go, then C and G frozen as two keys down)
+tap REC
+wait 300
+expect frozen 0
+key 7 down
+key 14 down
+wait 60
+tap REC
+wait 60
+key 7 up
+key 14 up
+wait 400
+expect held_n 2
+expect tone6000 >-40
+expect tone6700 >-40
 
-# ---- the track's PITCH (track 1 picked, K3 on the home page): the held notes go up a tone, stay held, and back
-tap SEL
-wait 30
+# ---- the track's PITCH (track 1 picked, K1 on the home page): the frozen notes go up a tone, stay frozen, and back
 expect track 1
-turn K3 2
+turn K1 2
 wait 400
 said TRACK 1: UP 2
 expect tone6200 >-40
@@ -139,17 +183,20 @@ expect tone6900 >-40
 expect tone6000 <-60
 expect tone6700 <-60
 expect held_n 2
-turn K3 -2
+turn K1 -2
 wait 400
 said TRACK 1: IN TUNE
 expect tone6000 >-40
 expect tone6700 >-40
 expect tone6200 <-60
-# TRANSPOSE (sound page, row 3, K4): +2, and back
+# TRANSPOSE (sound page, row 3, K4: the page's button again, its next row): +2, and back
 tap ENV
-turn SELECT -20
-turn SELECT 2
 wait 30
+expect row 0
+tap ENV
+tap ENV
+wait 30
+expect row 2
 turn K4 2
 wait 400
 expect tone6200 >-40
@@ -161,7 +208,7 @@ expect tone6000 >-40
 expect tone6200 <-60
 tap HOME
 wait 30
-# a quarter tone: EDIT held and a G: the held G a quarter flat (lower by 50 cents), and back
+# a quarter tone: EDIT held and a G: the frozen G a quarter flat (lower by 50 cents), and back
 press EDIT
 wait 30
 key 2 down
@@ -185,105 +232,189 @@ said G: AS IT IS
 expect held_n 2
 expect tone6700 >-40
 
-# ---- another track picked: the keys play it, but a lit key still lets its own held note go
-tap SEL
-wait 30
-tap SEL
+# ---- another track picked (SEL held and the third white key): the keys play it, track 1's frozen notes sound on (a
+# key no longer lets another track's note go: up to 0.19 a lit key let its held note go whatever track was picked).
+# REC freezes the picked track, each track on its own
+press SEL
+tapkey w2
+release SEL
 wait 30
 expect track 3
+expect lit_key7 0
 key 7 down
 wait 300
-said HOLD: 1 NOTE
-expect voices2 0
-expect voices0 1
-expect held_n 1
-expect tone6000 <-60
-key 7 up
-wait 100
-key 7 down
-wait 200
 expect voices2 1
+expect voices0 2
+expect held_n 2
+expect tone6000 >-40
 key 7 up
 wait 300
+expect voices2 0
+expect voices0 2
+key 9 down
+wait 60
+tap REC
+wait 60
+said TRACK 3 FROZEN
+key 9 up
+wait 300
+expect frozen 5
+expect voices2 1
+expect voices0 2
+expect fz_n2 1
+expect fz_note2_0 62
+expect lit_key9 1
+# its key again: track 3's last note let go, track 1 frozen still
+key 9 down
+wait 300
+said TRACK 3 LET GO
+expect frozen 1
+expect voices2 0
+expect voices0 2
+key 9 up
+wait 100
 
-# ---- a new sound on the track that holds notes: they go on in it, held still
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
+# ---- a new sound on the track that is frozen (track 1 picked again, SELECT on the home page): its notes go on in it,
+# frozen still
+press SEL
+tapkey w0
+release SEL
 wait 30
 expect track 1
 turn SELECT 1
 wait 400
 said TRACK 1: BUZUQ
-expect held_n 1
-expect voices0 1
+expect held_n 2
+expect voices0 2
+# a new sound keeps the track frozen: its notes go on in it, frozen still (REC lit, their keys lit)
+expect frozen 1
 expect tone6700 >-45
 expect lit_key14 1
 turn SELECT -1
 wait 400
-expect held_n 1
+expect held_n 2
 expect tone6700 >-40
-# its key lets it go
+# their keys let them go: G, then C (the last: said)
 key 14 down
 wait 400
-said HOLD OFF
-expect held_n 0
-expect voices0 0
+expect held_n 1
 key 14 up
 wait 100
+key 7 down
+wait 400
+said TRACK 1 LET GO
+expect held_n 0
+expect voices0 0
+expect frozen 0
+key 7 up
+wait 100
 
-# ---- SOLO on the MIDImix: the same HOLD; a held key lets its note go after it too
+# ---- REC ARM on the MIDImix (note 3 + 3 x the strip): REC for its strip's track, which it does not pick; again:
+# let go
 key 19 down
 wait 60
-midi 90 1B 7F
-midi 80 1B 7F
+midi 90 03 7F
+midi 80 03 7F
 wait 60
-said HOLD: 1 NOTE
+said TRACK 1 FROZEN
 key 19 up
 wait 400
 expect tone7200 >-40
 expect held_n 1
-midi 90 1B 7F
-midi 80 1B 7F
+expect frozen 1
+midi 90 03 7F
+midi 80 03 7F
 wait 400
-said HOLD OFF
+said TRACK 1 LET GO
 expect held_n 0
 expect tone7200 <-60
+# REC ARM 4 (note 12) with no key down, nothing played on the bass line yet: the maqam's tonic frozen (D, as its keys
+# play it: two octaves down, 38); track 1 stays picked; again: let go
+midi 90 0C 7F
+midi 80 0C 7F
+wait 300
+said TRACK 4 FROZEN
+expect track 1
+expect frozen 8
+expect fz_n3 1
+expect fz_note3_0 38
+expect voices3 1
+midi 90 0C 7F
+midi 80 0C 7F
+wait 300
+said TRACK 4 LET GO
+expect frozen 0
+expect voices3 0
+# REC ARM 5 (note 15): the kick's track, a drum sound: nothing to hold, said
+midi 90 0F 7F
+midi 80 0F 7F
+wait 100
+said TRACK 5: A DRUM SOUND HOLDS NO NOTE
+expect frozen 0
 
-# ---- notes from MIDI (they play the picked track): held, and a held one's note again lets it go, its note off then
-# does nothing
+# ---- no key down: REC freezes the note or chord played last on the track (C, E, G played together, then let go)
+key 7 down
+key 11 down
+key 14 down
+wait 100
+key 7 up
+key 11 up
+key 14 up
+wait 400
+expect voices0 0
+tap REC
+wait 400
+said TRACK 1 FROZEN
+expect held_n 3
+expect voices0 3
+expect fz_note0_0 60
+expect fz_note0_1 64
+expect fz_note0_2 67
+expect tone6000 >-40
+expect tone6700 >-40
+tap REC
+wait 400
+said TRACK 1 LET GO
+expect held_n 0
+expect voices0 0
+
+# ---- notes from MIDI (they play the picked track): frozen, and a frozen one's note again lets it go, its note off
+# then does nothing
 midi 90 3C 64
 midi 90 43 64
 wait 60
-tap EDIT
+tap REC
 wait 60
-said HOLD: 2 NOTES
+said TRACK 1 FROZEN
 midi 80 3C 00
 midi 80 43 00
 wait 300
 expect held_n 2
 midi 90 3C 64
 wait 300
-said HOLD: 1 NOTE
 expect held_n 1
 expect tone6000 <-60
 expect tone6700 >-40
 midi 80 3C 00
 wait 200
 expect held_n 1
-tap EDIT
+tap REC
 wait 300
-said HOLD OFF
+said TRACK 1 LET GO
 expect voices0 0
 
-# ---- the lead as it starts (LEGATO, one note at a time): held, OCT+ moves it, its key lets it go
+# ---- the lead as it starts (LEGATO, one note at a time): frozen; a key moves the held note to its note (no new note)
+# and it stays there when the key is let go (up to 0.19 the key took the voice and gave it back); OCT+ leaves it where
+# it is; its own key lets it go
 tap ENV
-turn SELECT -20
 wait 30
+expect row 2
+tap ENV
+tap ENV
+tap ENV
+tap ENV
+wait 30
+expect row 0
 turn K2 -2
 wait 30
 expect ch1 0
@@ -291,43 +422,49 @@ tap HOME
 wait 30
 key 7 down
 wait 200
-tap EDIT
+tap REC
 wait 60
 key 7 up
 wait 400
 expect held_n 1
 expect tone6000 >-40
-# a key over it takes the voice, and when let go the held note again
 key 9 down
 wait 300
 expect tone6200 >-40
 expect tone6000 <-60
+expect fz_note0_0 62
+expect voices0 1
 key 9 up
 wait 400
-expect tone6000 >-40
+expect tone6200 >-40
+expect tone6000 <-60
+expect held_n 1
+expect voices0 1
 tap OCT+
 wait 400
-expect tone7200 >-40
-expect tone6000 <-60
-key 7 down
-wait 400
-said HOLD OFF
-expect held_n 0
-expect tone7200 <-60
-expect voices0 0
-key 7 up
-wait 100
+expect tone6200 >-40
+expect fz_note0_0 62
+expect held_n 1
 tap OCT-
+wait 400
+key 9 down
+wait 400
+said TRACK 1 LET GO
+expect held_n 0
+expect tone6200 <-60
+expect voices0 0
+key 9 up
 wait 100
 
-# ---- the arpeggio: a held note arpeggiates; its key again takes it out of the set, latched or not
+# ---- the arpeggio: a frozen note arpeggiates (its keys held too, not moved); its key again takes it out of the set,
+# latched or not
 tap ARP
 wait 60
 expect arp 1
 key 7 down
 key 14 down
 wait 100
-tap EDIT
+tap REC
 wait 60
 key 7 up
 key 14 up
@@ -359,6 +496,7 @@ key 14 up
 wait 400
 expect arp_n 0
 expect held_n 0
+said TRACK 1 LET GO
 press ARP
 wait 20
 tap SEL
@@ -377,51 +515,81 @@ wait 60
 expect arp 0
 expect voices0 0
 
-# ---- PLAY and stop, REC while held: the held notes stay; HOLD with no key down lets them go; nothing left sounding
+# ---- PLAY: the rhythm started, a note frozen while it runs; SEQ records and closes meanwhile, the note frozen still.
+# PLAY stops everything, the frozen note too ("ALL STOPPED"); PLAY again brings it all back ("ALL BACK"); stopped
+# again, REC ARM on the stopped track freezes it afresh (its note), again lets it go; nothing left sounding
+tap PLAY
+wait 400
+said DABKE SYRIA PLAYS
+expect running 1
 key 7 down
 wait 60
-tap EDIT
+tap REC
 wait 60
 key 7 up
 wait 200
-tap PLAY
-wait 600
 expect running 1
+expect frozen 1
 expect held_n 1
 expect tone6000 >-40
-tap REC
+tap SEQ
 wait 400
 expect rec_track 0
 expect held_n 1
-tap REC
+tap SEQ
 wait 200
 expect rec_track -1
+expect held_n 1
 tap PLAY
 wait 400
+said ALL STOPPED
 expect running 0
+expect frozen 0
+expect held_n 0
+expect kept_frozen 1
+expect tone6000 <-60
+tap PLAY
+wait 600
+said ALL BACK
+expect running 1
+expect frozen 1
+expect held_n 1
+expect kept_frozen 0
+expect tone6000 >-40
+tap PLAY
+wait 400
+said ALL STOPPED
+expect running 0
+expect kept_frozen 1
+expect tone6000 <-60
+midi 90 03 7F
+midi 80 03 7F
+wait 400
+said TRACK 1 FROZEN
+expect frozen 1
+expect kept_frozen 0
 expect held_n 1
 expect tone6000 >-40
-tap EDIT
+expect running 0
+midi 90 03 7F
+midi 80 03 7F
 wait 600
+said TRACK 1 LET GO
 expect held_n 0
 expect gated 0
 expect tone6000 <-60
 
-# ---- ALL picked, the left keys on BASS (rhythm page, row 4, K1): a left key held keeps its chord's root; OCT+ leaves
-# it where it is (the left keys keep their pitch), and its key still lets it go
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-tap SEL
-wait 30
-expect track 0
+# ---- the left keys on BASS (rhythm page, row 4, K1; track 1 picked plays the keys as set): a left key frozen keeps
+# its chord's root; OCT+ leaves it where it is (the left keys keep their pitch), and its key still lets it go
 tap GLO
-turn SELECT -20
-turn SELECT 3
+wait 30
+expect page 5
+expect row 0
+tap GLO
+tap GLO
+tap GLO
+wait 30
+expect row 3
 turn K1 2
 wait 30
 expect left 2
@@ -429,7 +597,7 @@ tap HOME
 wait 30
 key 2 down
 wait 60
-tap EDIT
+tap REC
 wait 60
 key 2 up
 wait 200
@@ -442,7 +610,7 @@ expect held_n 1
 expect lit_key2 1
 key 2 down
 wait 200
-said HOLD OFF
+said TRACK 1 LET GO
 expect held_n 0
 key 2 up
 wait 200
@@ -450,19 +618,27 @@ expect left_root -1
 tap OCT-
 wait 30
 tap GLO
-turn SELECT -20
-turn SELECT 3
+wait 30
+expect row 3
 turn K1 -2
 wait 30
 expect left 0
 tap HOME
 wait 30
 
-# ---- leaning on a key bends the held notes of its track (PRESSURE as it starts: BEND UP), and they come back when
-# the lean ends
+# ---- leaning on a key bends the frozen notes of its track (PRESSURE as it starts: BEND UP), and they come back when
+# the lean ends (POLY again: the key leant on is held too)
+tap ENV
+wait 30
+expect row 0
+turn K2 2
+wait 30
+expect ch1 2
+tap HOME
+wait 30
 key 7 down 100 0
 wait 60
-tap EDIT
+tap REC
 wait 60
 key 7 up
 wait 400
@@ -475,31 +651,37 @@ wait 900
 key 14 up
 wait 400
 expect tone6000 >-40
-expect held_n 1
+expect held_n 2
 
-# ---- step mode: the keys are its steps (a held key there is a step); a step tapped takes the held note, moved by
-# the octave as it was
-tap SEL
-wait 30
-expect track 1
+# ---- step mode (EDIT held a second): the keys are its steps (a key there is a step, never a frozen note's key); a
+# step tapped takes the frozen notes as they sound (the octave does not move them: up to 0.19 OCT+ moved the held note
+# and the step took it moved)
 tap OCT+
 wait 300
-expect tapn0 1
-expect tap0_0 72
-tap SEQ
+expect tapn0 2
+expect tap0_0 60
+expect tap0_1 67
+press EDIT
+wait 1100
+release EDIT
 wait 100
-expect held_n 1
+expect seq 1
+expect held_n 2
 key 7 down
 wait 60
 key 7 up
 wait 100
-expect held_n 1
-tap SEQ
+expect held_n 2
+expect trig0_4 1
+press EDIT
+wait 1100
+release EDIT
 wait 100
+expect seq 0
 tap OCT-
 wait 300
 expect tap0_0 60
-tap EDIT
+tap REC
 wait 600
 expect held_n 0
 expect gated 0

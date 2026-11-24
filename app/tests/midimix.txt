@@ -1,19 +1,25 @@
 # Every control of the Akai MIDImix, one by one (made by a script, tools/gen_midimix_test.py; the numbers are the
-# MIDImix's factory ones), and its lights. The eight strips are DABKE's eight tracks: fader its volume, top knob its
-# effect (delay and reverb), middle knob its filter, bottom knob its pitch, MUTE it off and on. A fader or a knob
-# never picks its track: it moves its own strip's track whatever the keys play, and the screen says what moved, once
-# it is plain that one control moved alone ("TRACK 6: VOLUME 70"), without changing the page. REC ARM is REC for its
-# track and picks it (it records when let go, again stops at once, held a second its last take goes). The master
-# fader is the scene fader; SOLO is HOLD; BANK the rhythms (both together: the top sound cleared). No light blinks:
-# each shows what its label says. In step mode a strip's knob moved with a step held is locked on that step; a knob
-# of the recording track is kept as locks on the steps the recording passes.
+# MIDImix's factory ones), and its lights. RAGA MEOW's map (fm1-organ/LOGIC.md version 2): the eight strips are DABKE's
+# eight tracks, fader its LEVEL, top knob its PITCH, middle knob its FILTER, bottom knob its SPACE (its delay and
+# reverb sends together), MUTE it off and on, REC ARM freezes it or lets it go (as REC). Nothing on a strip picks its
+# track: it moves its own strip's track whatever the keys play, and the screen says what moved, once it is plain that
+# one control moved alone ("TRACK 6: LEVEL 70"), without changing the page. SOLO tapped: the knobs' EFFECTS layer (top
+# DELAY SEND, middle DELAY TIME, the one delay's, bottom REVERB SEND; BANK LEFT and RIGHT lit), again: back. BANK LEFT
+# and RIGHT: the picked track's sound before and after. The master fader: the whole level, live, never kept. No light
+# blinks: each shows what its label says. In step mode a strip's knob moved with a step held is locked on that step; a
+# knob of the recording track (SEQ) is kept as locks on the steps the recording passes. (Up to 0.19: top knob the
+# effect, bottom the pitch, SOLO was HOLD, REC ARM recorded and picked its track, BANK the rhythms, both together
+# cleared the top sound, the master fader was the scene fader.)
 #   app/build/host/dabke_host app/tests/midimix.txt OUTDIR
 wait 900
-expect track 0
-# SEND ALL: the 33 control changes (16..31, 46..62) in one burst, no note: all of them taken, every light sent, no
-# track picked, nothing said
+expect track 1
+expect mix_lvl 100
+# SEND ALL: the 33 control changes (16..31, 46..62) in one burst, no note: all of them taken, every light sent, the
+# picked track as it was, nothing said (the page a reader hears when it starts listening aside); the master fader
+# halfway: the whole level at 50, the scene fader (FADE, the EDIT page's) left as it is
 out
 listen
+said DABKE
 midi B0 10 40
 midi B0 11 40
 midi B0 12 40
@@ -48,7 +54,7 @@ midi B0 3C 40
 midi B0 3D 40
 midi B0 3E 40
 wait 200
-unsaid TRACK
+said_none
 expect par0 50
 expect par4 50
 expect par1 50
@@ -57,22 +63,6 @@ expect par43 50
 expect par42 50
 expect par44 50
 expect par45 50
-expect par63 50
-expect par64 50
-expect par65 50
-expect par66 50
-expect par67 50
-expect par68 50
-expect par69 50
-expect par70 50
-expect par47 0
-expect par48 0
-expect par49 0
-expect par50 0
-expect par51 0
-expect par52 0
-expect par53 0
-expect par54 0
 expect par71 0
 expect par72 0
 expect par73 0
@@ -81,10 +71,35 @@ expect par75 0
 expect par76 0
 expect par77 0
 expect par78 0
+expect par47 0
+expect par48 0
+expect par49 0
+expect par50 0
+expect par51 0
+expect par52 0
+expect par53 0
+expect par54 0
+expect par63 50
+expect par64 50
+expect par65 50
+expect par66 50
+expect par67 50
+expect par68 50
+expect par69 50
+expect par70 50
+expect par79 50
+expect par80 50
+expect par81 50
+expect par82 50
+expect par83 50
+expect par84 50
+expect par85 50
+expect par86 50
 expect maqam 2
 expect root 2
-expect master 64
-expect track 0
+expect mix_lvl 50
+expect master 0
+expect track 1
 expect top_mask 0
 expect_out USB 90 01 00
 expect_out USB 90 16 00
@@ -93,14 +108,14 @@ expect_out USB 90 18 00
 expect_out USB 90 19 00
 expect_out USB 90 1A 00
 expect_out USB 90 1B 00
-# the scene fader down (no top sound yet: nothing changes)
-midi B0 3E 00
+# the master fader up: the whole level full again
+midi B0 3E 7F
 wait 30
-expect master 0
+expect mix_lvl 100
 
-# strip 1: fader (CC 19) its volume, top knob (CC 16) its effect, middle (CC 17)
-# its filter, bottom (CC 18) its pitch (quarter tones: 48 an octave). No track is picked by them. One of them
-# moved alone is said a moment later, and said on as it moves; the page stays (here: the sound page)
+# strip 1 (lead): fader (CC 19) its LEVEL, top knob (CC 16) its PITCH (quarter tones: 48 an octave, whole semitones as
+# it starts), middle (CC 17) its FILTER, bottom (CC 18) its SPACE (its two sends moved together). No track is picked by
+# them. One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the sound page)
 midi B0 13 7F
 wait 30
 expect par0 100
@@ -112,13 +127,13 @@ wait 30
 expect par0 50
 midi B0 10 7F
 wait 30
-expect par63 100
+expect par71 48
 midi B0 10 00
 wait 30
-expect par63 0
+expect par71 -48
 midi B0 10 40
 wait 30
-expect par63 50
+expect par71 0
 midi B0 11 7F
 wait 30
 expect par47 50
@@ -130,26 +145,28 @@ wait 30
 expect par47 0
 midi B0 12 7F
 wait 30
-expect par71 48
+expect par63 100
+expect par79 100
 midi B0 12 00
 wait 30
-expect par71 -48
+expect par63 0
+expect par79 0
 midi B0 12 40
 wait 30
-expect par71 0
+expect par63 50
+expect par79 50
 wait 300
-expect track 0
+expect track 1
 tap ENV
 wait 30
-listen
 midi B0 13 59
 wait 200
 expect par0 70
-said TRACK 1: VOLUME 70
+said TRACK 1: LEVEL 70
 midi B0 13 40
 wait 30
 expect par0 50
-said TRACK 1: VOLUME 50
+said TRACK 1: LEVEL 50
 wait 300
 midi B0 11 20
 wait 200
@@ -162,19 +179,31 @@ said TRACK 1: FILTER OPEN
 wait 300
 midi B0 10 59
 wait 200
-expect par63 70
-said TRACK 1: EFFECT 70
+expect par71 20
+said TRACK 1: UP 5
 midi B0 10 40
 wait 30
+expect par71 0
+said TRACK 1: IN TUNE
+wait 300
+midi B0 12 59
+wait 200
+expect par63 70
+expect par79 70
+said TRACK 1: SPACE 70
+midi B0 12 40
+wait 30
 expect par63 50
-expect track 0
+expect par79 50
+said TRACK 1: SPACE 50
+expect track 1
 expect page 3
 tap HOME
 wait 300
 
-# strip 2: fader (CC 23) its volume, top knob (CC 20) its effect, middle (CC 21)
-# its filter, bottom (CC 22) its pitch (quarter tones: 48 an octave). No track is picked by them. One of them
-# moved alone is said a moment later, and said on as it moves; the page stays (here: the sound page)
+# strip 2 (drone): fader (CC 23) its LEVEL, top knob (CC 20) its PITCH (quarter tones: 48 an octave, whole semitones as
+# it starts), middle (CC 21) its FILTER, bottom (CC 22) its SPACE (its two sends moved together). No track is picked by
+# them. One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the sound page)
 midi B0 17 7F
 wait 30
 expect par4 100
@@ -186,13 +215,13 @@ wait 30
 expect par4 50
 midi B0 14 7F
 wait 30
-expect par64 100
+expect par72 48
 midi B0 14 00
 wait 30
-expect par64 0
+expect par72 -48
 midi B0 14 40
 wait 30
-expect par64 50
+expect par72 0
 midi B0 15 7F
 wait 30
 expect par48 50
@@ -204,26 +233,28 @@ wait 30
 expect par48 0
 midi B0 16 7F
 wait 30
-expect par72 48
+expect par64 100
+expect par80 100
 midi B0 16 00
 wait 30
-expect par72 -48
+expect par64 0
+expect par80 0
 midi B0 16 40
 wait 30
-expect par72 0
+expect par64 50
+expect par80 50
 wait 300
-expect track 0
+expect track 1
 tap ENV
 wait 30
-listen
 midi B0 17 59
 wait 200
 expect par4 70
-said TRACK 2: VOLUME 70
+said TRACK 2: LEVEL 70
 midi B0 17 40
 wait 30
 expect par4 50
-said TRACK 2: VOLUME 50
+said TRACK 2: LEVEL 50
 wait 300
 midi B0 15 20
 wait 200
@@ -236,19 +267,32 @@ said TRACK 2: FILTER OPEN
 wait 300
 midi B0 14 59
 wait 200
-expect par64 70
-said TRACK 2: EFFECT 70
+expect par72 20
+said TRACK 2: UP 5
 midi B0 14 40
 wait 30
+expect par72 0
+said TRACK 2: IN TUNE
+wait 300
+midi B0 16 59
+wait 200
+expect par64 70
+expect par80 70
+said TRACK 2: SPACE 70
+midi B0 16 40
+wait 30
 expect par64 50
-expect track 0
+expect par80 50
+said TRACK 2: SPACE 50
+expect track 1
 expect page 3
 tap HOME
 wait 300
 
-# strip 3: fader (CC 27) its volume, top knob (CC 24) its effect, middle (CC 25)
-# its filter, bottom (CC 26) its pitch (quarter tones: 48 an octave). No track is picked by them. One of them
-# moved alone is said a moment later, and said on as it moves; the page stays (here: the sound page)
+# strip 3 (left hand): fader (CC 27) its LEVEL, top knob (CC 24) its PITCH (quarter tones: 48 an octave, whole
+# semitones as it starts), middle (CC 25) its FILTER, bottom (CC 26) its SPACE (its two sends moved together). No track
+# is picked by them. One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the
+# sound page)
 midi B0 1B 7F
 wait 30
 expect par1 100
@@ -260,13 +304,13 @@ wait 30
 expect par1 50
 midi B0 18 7F
 wait 30
-expect par65 100
+expect par73 48
 midi B0 18 00
 wait 30
-expect par65 0
+expect par73 -48
 midi B0 18 40
 wait 30
-expect par65 50
+expect par73 0
 midi B0 19 7F
 wait 30
 expect par49 50
@@ -278,26 +322,28 @@ wait 30
 expect par49 0
 midi B0 1A 7F
 wait 30
-expect par73 48
+expect par65 100
+expect par81 100
 midi B0 1A 00
 wait 30
-expect par73 -48
+expect par65 0
+expect par81 0
 midi B0 1A 40
 wait 30
-expect par73 0
+expect par65 50
+expect par81 50
 wait 300
-expect track 0
+expect track 1
 tap ENV
 wait 30
-listen
 midi B0 1B 59
 wait 200
 expect par1 70
-said TRACK 3: VOLUME 70
+said TRACK 3: LEVEL 70
 midi B0 1B 40
 wait 30
 expect par1 50
-said TRACK 3: VOLUME 50
+said TRACK 3: LEVEL 50
 wait 300
 midi B0 19 20
 wait 200
@@ -310,19 +356,32 @@ said TRACK 3: FILTER OPEN
 wait 300
 midi B0 18 59
 wait 200
-expect par65 70
-said TRACK 3: EFFECT 70
+expect par73 20
+said TRACK 3: UP 5
 midi B0 18 40
 wait 30
+expect par73 0
+said TRACK 3: IN TUNE
+wait 300
+midi B0 1A 59
+wait 200
+expect par65 70
+expect par81 70
+said TRACK 3: SPACE 70
+midi B0 1A 40
+wait 30
 expect par65 50
-expect track 0
+expect par81 50
+said TRACK 3: SPACE 50
+expect track 1
 expect page 3
 tap HOME
 wait 300
 
-# strip 4: fader (CC 31) its volume, top knob (CC 28) its effect, middle (CC 29)
-# its filter, bottom (CC 30) its pitch (quarter tones: 48 an octave). No track is picked by them. One of them
-# moved alone is said a moment later, and said on as it moves; the page stays (here: the sound page)
+# strip 4 (bass line): fader (CC 31) its LEVEL, top knob (CC 28) its PITCH (quarter tones: 48 an octave, whole
+# semitones as it starts), middle (CC 29) its FILTER, bottom (CC 30) its SPACE (its two sends moved together). No track
+# is picked by them. One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the
+# sound page)
 midi B0 1F 7F
 wait 30
 expect par2 100
@@ -334,13 +393,13 @@ wait 30
 expect par2 50
 midi B0 1C 7F
 wait 30
-expect par66 100
+expect par74 48
 midi B0 1C 00
 wait 30
-expect par66 0
+expect par74 -48
 midi B0 1C 40
 wait 30
-expect par66 50
+expect par74 0
 midi B0 1D 7F
 wait 30
 expect par50 50
@@ -352,26 +411,28 @@ wait 30
 expect par50 0
 midi B0 1E 7F
 wait 30
-expect par74 48
+expect par66 100
+expect par82 100
 midi B0 1E 00
 wait 30
-expect par74 -48
+expect par66 0
+expect par82 0
 midi B0 1E 40
 wait 30
-expect par74 0
+expect par66 50
+expect par82 50
 wait 300
-expect track 0
+expect track 1
 tap ENV
 wait 30
-listen
 midi B0 1F 59
 wait 200
 expect par2 70
-said TRACK 4: VOLUME 70
+said TRACK 4: LEVEL 70
 midi B0 1F 40
 wait 30
 expect par2 50
-said TRACK 4: VOLUME 50
+said TRACK 4: LEVEL 50
 wait 300
 midi B0 1D 20
 wait 200
@@ -384,19 +445,31 @@ said TRACK 4: FILTER OPEN
 wait 300
 midi B0 1C 59
 wait 200
-expect par66 70
-said TRACK 4: EFFECT 70
+expect par74 20
+said TRACK 4: UP 5
 midi B0 1C 40
 wait 30
+expect par74 0
+said TRACK 4: IN TUNE
+wait 300
+midi B0 1E 59
+wait 200
+expect par66 70
+expect par82 70
+said TRACK 4: SPACE 70
+midi B0 1E 40
+wait 30
 expect par66 50
-expect track 0
+expect par82 50
+said TRACK 4: SPACE 50
+expect track 1
 expect page 3
 tap HOME
 wait 300
 
-# strip 5: fader (CC 49) its volume, top knob (CC 46) its effect, middle (CC 47)
-# its filter, bottom (CC 48) its pitch (quarter tones: 48 an octave). No track is picked by them. One of them
-# moved alone is said a moment later, and said on as it moves; the page stays (here: the sound page)
+# strip 5 (kick): fader (CC 49) its LEVEL, top knob (CC 46) its PITCH (quarter tones: 48 an octave, whole semitones as
+# it starts), middle (CC 47) its FILTER, bottom (CC 48) its SPACE (its two sends moved together). No track is picked by
+# them. One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the sound page)
 midi B0 31 7F
 wait 30
 expect par43 100
@@ -408,13 +481,13 @@ wait 30
 expect par43 50
 midi B0 2E 7F
 wait 30
-expect par67 100
+expect par75 48
 midi B0 2E 00
 wait 30
-expect par67 0
+expect par75 -48
 midi B0 2E 40
 wait 30
-expect par67 50
+expect par75 0
 midi B0 2F 7F
 wait 30
 expect par51 50
@@ -426,26 +499,28 @@ wait 30
 expect par51 0
 midi B0 30 7F
 wait 30
-expect par75 48
+expect par67 100
+expect par83 100
 midi B0 30 00
 wait 30
-expect par75 -48
+expect par67 0
+expect par83 0
 midi B0 30 40
 wait 30
-expect par75 0
+expect par67 50
+expect par83 50
 wait 300
-expect track 0
+expect track 1
 tap ENV
 wait 30
-listen
 midi B0 31 59
 wait 200
 expect par43 70
-said TRACK 5: VOLUME 70
+said TRACK 5: LEVEL 70
 midi B0 31 40
 wait 30
 expect par43 50
-said TRACK 5: VOLUME 50
+said TRACK 5: LEVEL 50
 wait 300
 midi B0 2F 20
 wait 200
@@ -458,19 +533,32 @@ said TRACK 5: FILTER OPEN
 wait 300
 midi B0 2E 59
 wait 200
-expect par67 70
-said TRACK 5: EFFECT 70
+expect par75 20
+said TRACK 5: UP 5
 midi B0 2E 40
 wait 30
+expect par75 0
+said TRACK 5: IN TUNE
+wait 300
+midi B0 30 59
+wait 200
+expect par67 70
+expect par83 70
+said TRACK 5: SPACE 70
+midi B0 30 40
+wait 30
 expect par67 50
-expect track 0
+expect par83 50
+said TRACK 5: SPACE 50
+expect track 1
 expect page 3
 tap HOME
 wait 300
 
-# strip 6: fader (CC 53) its volume, top knob (CC 50) its effect, middle (CC 51)
-# its filter, bottom (CC 52) its pitch (quarter tones: 48 an octave). No track is picked by them. One of them
-# moved alone is said a moment later, and said on as it moves; the page stays (here: the sound page)
+# strip 6 (darbuka and tabl): fader (CC 53) its LEVEL, top knob (CC 50) its PITCH (quarter tones: 48 an octave, whole
+# semitones as it starts), middle (CC 51) its FILTER, bottom (CC 52) its SPACE (its two sends moved together). No track
+# is picked by them. One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the
+# sound page)
 midi B0 35 7F
 wait 30
 expect par42 100
@@ -482,13 +570,13 @@ wait 30
 expect par42 50
 midi B0 32 7F
 wait 30
-expect par68 100
+expect par76 48
 midi B0 32 00
 wait 30
-expect par68 0
+expect par76 -48
 midi B0 32 40
 wait 30
-expect par68 50
+expect par76 0
 midi B0 33 7F
 wait 30
 expect par52 50
@@ -500,26 +588,28 @@ wait 30
 expect par52 0
 midi B0 34 7F
 wait 30
-expect par76 48
+expect par68 100
+expect par84 100
 midi B0 34 00
 wait 30
-expect par76 -48
+expect par68 0
+expect par84 0
 midi B0 34 40
 wait 30
-expect par76 0
+expect par68 50
+expect par84 50
 wait 300
-expect track 0
+expect track 1
 tap ENV
 wait 30
-listen
 midi B0 35 59
 wait 200
 expect par42 70
-said TRACK 6: VOLUME 70
+said TRACK 6: LEVEL 70
 midi B0 35 40
 wait 30
 expect par42 50
-said TRACK 6: VOLUME 50
+said TRACK 6: LEVEL 50
 wait 300
 midi B0 33 20
 wait 200
@@ -532,19 +622,31 @@ said TRACK 6: FILTER OPEN
 wait 300
 midi B0 32 59
 wait 200
-expect par68 70
-said TRACK 6: EFFECT 70
+expect par76 20
+said TRACK 6: UP 5
 midi B0 32 40
 wait 30
+expect par76 0
+said TRACK 6: IN TUNE
+wait 300
+midi B0 34 59
+wait 200
+expect par68 70
+expect par84 70
+said TRACK 6: SPACE 70
+midi B0 34 40
+wait 30
 expect par68 50
-expect track 0
+expect par84 50
+said TRACK 6: SPACE 50
+expect track 1
 expect page 3
 tap HOME
 wait 300
 
-# strip 7: fader (CC 57) its volume, top knob (CC 54) its effect, middle (CC 55)
-# its filter, bottom (CC 56) its pitch (quarter tones: 48 an octave). No track is picked by them. One of them
-# moved alone is said a moment later, and said on as it moves; the page stays (here: the sound page)
+# strip 7 (claps): fader (CC 57) its LEVEL, top knob (CC 54) its PITCH (quarter tones: 48 an octave, whole semitones as
+# it starts), middle (CC 55) its FILTER, bottom (CC 56) its SPACE (its two sends moved together). No track is picked by
+# them. One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the sound page)
 midi B0 39 7F
 wait 30
 expect par44 100
@@ -556,13 +658,13 @@ wait 30
 expect par44 50
 midi B0 36 7F
 wait 30
-expect par69 100
+expect par77 48
 midi B0 36 00
 wait 30
-expect par69 0
+expect par77 -48
 midi B0 36 40
 wait 30
-expect par69 50
+expect par77 0
 midi B0 37 7F
 wait 30
 expect par53 50
@@ -574,26 +676,28 @@ wait 30
 expect par53 0
 midi B0 38 7F
 wait 30
-expect par77 48
+expect par69 100
+expect par85 100
 midi B0 38 00
 wait 30
-expect par77 -48
+expect par69 0
+expect par85 0
 midi B0 38 40
 wait 30
-expect par77 0
+expect par69 50
+expect par85 50
 wait 300
-expect track 0
+expect track 1
 tap ENV
 wait 30
-listen
 midi B0 39 59
 wait 200
 expect par44 70
-said TRACK 7: VOLUME 70
+said TRACK 7: LEVEL 70
 midi B0 39 40
 wait 30
 expect par44 50
-said TRACK 7: VOLUME 50
+said TRACK 7: LEVEL 50
 wait 300
 midi B0 37 20
 wait 200
@@ -606,19 +710,32 @@ said TRACK 7: FILTER OPEN
 wait 300
 midi B0 36 59
 wait 200
-expect par69 70
-said TRACK 7: EFFECT 70
+expect par77 20
+said TRACK 7: UP 5
 midi B0 36 40
 wait 30
+expect par77 0
+said TRACK 7: IN TUNE
+wait 300
+midi B0 38 59
+wait 200
+expect par69 70
+expect par85 70
+said TRACK 7: SPACE 70
+midi B0 38 40
+wait 30
 expect par69 50
-expect track 0
+expect par85 50
+said TRACK 7: SPACE 50
+expect track 1
 expect page 3
 tap HOME
 wait 300
 
-# strip 8: fader (CC 61) its volume, top knob (CC 58) its effect, middle (CC 59)
-# its filter, bottom (CC 60) its pitch (quarter tones: 48 an octave). No track is picked by them. One of them
-# moved alone is said a moment later, and said on as it moves; the page stays (here: the sound page)
+# strip 8 (riq and sagat): fader (CC 61) its LEVEL, top knob (CC 58) its PITCH (quarter tones: 48 an octave, whole
+# semitones as it starts), middle (CC 59) its FILTER, bottom (CC 60) its SPACE (its two sends moved together). No track
+# is picked by them. One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the
+# sound page)
 midi B0 3D 7F
 wait 30
 expect par45 100
@@ -630,13 +747,13 @@ wait 30
 expect par45 50
 midi B0 3A 7F
 wait 30
-expect par70 100
+expect par78 48
 midi B0 3A 00
 wait 30
-expect par70 0
+expect par78 -48
 midi B0 3A 40
 wait 30
-expect par70 50
+expect par78 0
 midi B0 3B 7F
 wait 30
 expect par54 50
@@ -648,26 +765,28 @@ wait 30
 expect par54 0
 midi B0 3C 7F
 wait 30
-expect par78 48
+expect par70 100
+expect par86 100
 midi B0 3C 00
 wait 30
-expect par78 -48
+expect par70 0
+expect par86 0
 midi B0 3C 40
 wait 30
-expect par78 0
+expect par70 50
+expect par86 50
 wait 300
-expect track 0
+expect track 1
 tap ENV
 wait 30
-listen
 midi B0 3D 59
 wait 200
 expect par45 70
-said TRACK 8: VOLUME 70
+said TRACK 8: LEVEL 70
 midi B0 3D 40
 wait 30
 expect par45 50
-said TRACK 8: VOLUME 50
+said TRACK 8: LEVEL 50
 wait 300
 midi B0 3B 20
 wait 200
@@ -680,60 +799,70 @@ said TRACK 8: FILTER OPEN
 wait 300
 midi B0 3A 59
 wait 200
-expect par70 70
-said TRACK 8: EFFECT 70
+expect par78 20
+said TRACK 8: UP 5
 midi B0 3A 40
 wait 30
+expect par78 0
+said TRACK 8: IN TUNE
+wait 300
+midi B0 3C 59
+wait 200
+expect par70 70
+expect par86 70
+said TRACK 8: SPACE 70
+midi B0 3C 40
+wait 30
 expect par70 50
-expect track 0
+expect par86 50
+said TRACK 8: SPACE 50
+expect track 1
 expect page 3
 tap HOME
 wait 300
 
-# the bottom knob, the track's pitch: its middle (CC 60 to 67) in tune; FULL (as it starts) whole semitones, an
-# octave either way at its ends; said in words
-listen
-midi B0 1A 3C
+# the top knob, the track's pitch: its middle (CC 60 to 67) in tune; FULL (as it starts) whole semitones, an octave
+# either way at its ends; said in words
+midi B0 18 3C
 wait 30
 expect par73 0
-midi B0 1A 43
+midi B0 18 43
 wait 30
 expect par73 0
-midi B0 1A 3B
+midi B0 18 3B
 wait 200
 expect par73 -4
 said TRACK 3: DOWN 1
-midi B0 1A 50
+midi B0 18 50
 wait 30
 expect par73 12
 said TRACK 3: UP 3
-# MICRO (PITCH STEPS, the effects page's row 4, K3): quarter tones
-tap FX
+# MICRO (PITCH STEPS, the EDIT page's row 1, K4): quarter tones
+tap EDIT
 wait 30
-turn SELECT -20
-turn SELECT 3
-wait 30
-expect row 3
-turn K3 1
+expect page 6
+expect row 0
+turn K4 1
 wait 30
 expect ch44 1
 tap HOME
 wait 30
-midi B0 1A 3B
+midi B0 18 3B
 wait 200
 expect par73 -1
 said TRACK 3: DOWN A QUARTER
-midi B0 1A 50
+midi B0 18 50
 wait 30
 expect par73 10
 said TRACK 3: UP 2 AND A HALF
-midi B0 1A 40
+midi B0 18 40
 wait 30
 expect par73 0
 said TRACK 3: IN TUNE
-tap FX
+tap EDIT
 wait 30
-turn K3 -1
+expect row 0
+turn K4 -1
 wait 30
 expect ch44 0
 tap HOME
@@ -747,7 +876,7 @@ wait 150
 midi B0 1B 66
 wait 30
 wait 150
-expect track 0
+expect track 1
 press SEL
 tapkey w2
 release SEL
@@ -757,96 +886,68 @@ key 9 down
 wait 400
 expect pitch_x10 >2900
 expect pitch_x10 <2975
-midi B0 1A 5B
+midi B0 18 5B
 wait 300
 expect par73 20
 expect pitch_x10 >3870
 expect pitch_x10 <3970
-midi B0 1A 50
+midi B0 18 50
 wait 300
 expect par73 12
 expect pitch_x10 >3450
 expect pitch_x10 <3530
-key 9 up
-midi B0 1A 40
-wait 30
+midi B0 18 40
+wait 300
 expect par73 0
+expect pitch_x10 >2900
+expect pitch_x10 <2975
+
+# BANK RIGHT and LEFT (notes 26, 25): the picked track's sound after and before (the left hand's: STRINGS, then
+# ORGAN), said, the note under the finger playing on (RAGA MEOW's: the new sound takes it over); the rhythm as it was
+# (0.19: BANK was the rhythms)
+expect ksnd2 206
+midi 90 1A 7F
+midi 80 1A 7F
+wait 300
+said TRACK 3: LEFT HAND ORGAN
+expect ksnd2 207
+expect rhythm 0
+expect track 3
+# (the key held through BANK: its note in the new sound, playing on)
+expect voices2 1
+midi 90 19 7F
+midi 80 19 7F
+wait 300
+said TRACK 3: LEFT HAND STRINGS
+expect ksnd2 206
+expect rhythm 0
+key 9 up
 midi B0 17 40
 wait 30
 expect par4 50
 midi B0 1B 40
 wait 30
 wait 600
-
-# the master fader, the scene fader. At its top (its last 3 %) a control moved sets that control's top value, not
-# the sound as set; anywhere else the sound as set; between, the fader goes from the one to the other
-listen
-midi B0 3E 7F
-wait 30
-expect master 127
-said FADER UP: THIS IS THE TOP SOUND
-midi B0 10 7F
-wait 30
-expect par63 50
-expect top0 100
-expect eff63 100
-midi B0 13 00
-wait 30
-expect par0 50
-expect top3 0
-expect eff0 0
-expect top_mask 9
-midi B0 1A 7F
-wait 30
-expect par73 0
-expect top10 48
-expect eff73 48
-expect top_mask 1033
-midi B0 3E 00
-wait 30
-expect master 0
-said FADER DOWN: THE SOUND AS SET
-expect eff63 50
-expect eff0 50
-expect eff73 0
-midi B0 3E 40
-wait 30
-expect master 64
-expect eff63 75
-expect eff0 25
-expect eff73 24
-# below the top, a knob moves the sound as set; the fader still goes towards the top
-midi B0 10 20
-wait 30
-expect par63 25
-expect top0 100
-expect eff63 63
-# BANK LEFT and RIGHT together: the top sound cleared (the rhythm stays)
-midi 90 19 7F
-midi 90 1A 7F
-wait 30
-midi 80 19 7F
-midi 80 1A 7F
-wait 30
-expect top_mask 0
-expect rhythm 0
-said TOP SOUND CLEARED
-expect eff63 25
-expect eff0 50
-midi B0 3E 00
-wait 30
-expect master 0
-midi B0 10 40
-wait 30
-expect par63 50
-expect track 3
+# on track 1, the lead's ready sounds: the next, and back
 press SEL
 tapkey w0
 release SEL
 wait 30
 expect track 1
+expect sound 0
+midi 90 1A 7F
+midi 80 1A 7F
+wait 300
+expect sound 1
+said TRACK 1: MIJWIZ BUZZ
+midi 90 19 7F
+midi 80 19 7F
+wait 300
+expect sound 0
+said TRACK 1: MIJWIZ
+expect track 1
 
-# MUTE 1-8: each part off and on again; its light lit while it is muted, dark again; after each change every
+# MUTE 1-8: each part off and on again (said); its light lit while it is muted, dark again; after each change every
 # light is sent again
 listen
 # MUTE 1 (note 1): lead
@@ -856,6 +957,7 @@ midi 80 01 7F
 wait 80
 expect mute 1
 expect track 1
+said TRACK 1: MUTE ON
 expect_out USB 90 01 7F
 expect_out USB 90 04 00
 out
@@ -863,6 +965,7 @@ midi 90 01 7F
 midi 80 01 7F
 wait 30
 expect mute 0
+said TRACK 1: MUTE OFF
 expect_out USB 90 01 00
 # MUTE 2 (note 4): drone
 out
@@ -871,6 +974,7 @@ midi 80 04 7F
 wait 80
 expect mute 2
 expect track 1
+said TRACK 2: MUTE ON
 expect_out USB 90 04 7F
 expect_out USB 90 07 00
 out
@@ -878,6 +982,7 @@ midi 90 04 7F
 midi 80 04 7F
 wait 30
 expect mute 0
+said TRACK 2: MUTE OFF
 expect_out USB 90 04 00
 # MUTE 3 (note 7): left hand
 out
@@ -886,6 +991,7 @@ midi 80 07 7F
 wait 80
 expect mute 4
 expect track 1
+said TRACK 3: MUTE ON
 expect_out USB 90 07 7F
 expect_out USB 90 0A 00
 out
@@ -893,6 +999,7 @@ midi 90 07 7F
 midi 80 07 7F
 wait 30
 expect mute 0
+said TRACK 3: MUTE OFF
 expect_out USB 90 07 00
 # MUTE 4 (note 10): bass line
 out
@@ -901,6 +1008,7 @@ midi 80 0A 7F
 wait 80
 expect mute 8
 expect track 1
+said TRACK 4: MUTE ON
 expect_out USB 90 0A 7F
 expect_out USB 90 0D 00
 out
@@ -908,6 +1016,7 @@ midi 90 0A 7F
 midi 80 0A 7F
 wait 30
 expect mute 0
+said TRACK 4: MUTE OFF
 expect_out USB 90 0A 00
 # MUTE 5 (note 13): kick
 out
@@ -916,6 +1025,7 @@ midi 80 0D 7F
 wait 80
 expect mute 16
 expect track 1
+said TRACK 5: MUTE ON
 expect_out USB 90 0D 7F
 expect_out USB 90 10 00
 out
@@ -923,6 +1033,7 @@ midi 90 0D 7F
 midi 80 0D 7F
 wait 30
 expect mute 0
+said TRACK 5: MUTE OFF
 expect_out USB 90 0D 00
 # MUTE 6 (note 16): darbuka and tabl
 out
@@ -931,6 +1042,7 @@ midi 80 10 7F
 wait 80
 expect mute 32
 expect track 1
+said TRACK 6: MUTE ON
 expect_out USB 90 10 7F
 expect_out USB 90 13 00
 out
@@ -938,6 +1050,7 @@ midi 90 10 7F
 midi 80 10 7F
 wait 30
 expect mute 0
+said TRACK 6: MUTE OFF
 expect_out USB 90 10 00
 # MUTE 7 (note 19): claps
 out
@@ -946,6 +1059,7 @@ midi 80 13 7F
 wait 80
 expect mute 64
 expect track 1
+said TRACK 7: MUTE ON
 expect_out USB 90 13 7F
 expect_out USB 90 16 00
 out
@@ -953,6 +1067,7 @@ midi 90 13 7F
 midi 80 13 7F
 wait 30
 expect mute 0
+said TRACK 7: MUTE OFF
 expect_out USB 90 13 00
 # MUTE 8 (note 22): riq and sagat
 out
@@ -961,6 +1076,7 @@ midi 80 16 7F
 wait 80
 expect mute 128
 expect track 1
+said TRACK 8: MUTE ON
 expect_out USB 90 16 7F
 expect_out USB 90 01 00
 out
@@ -968,6 +1084,7 @@ midi 90 16 7F
 midi 80 16 7F
 wait 30
 expect mute 0
+said TRACK 8: MUTE OFF
 expect_out USB 90 16 00
 # nothing muted, nothing on: every light dark
 expect mixleds 0
@@ -979,202 +1096,164 @@ expect_out USB 90 03 00
 expect_out USB 90 19 00
 expect_out USB 90 1B 00
 
-# REC ARM 1 (note 3): pressed, nothing records yet (its light dark); let go, the lead records, its light lit; the
-# first key starts the rhythm; again: it stops at once
+# REC ARM 1 (note 3): track 1 frozen on its press (no key down: the note played last on it, none yet: the maqam's
+# tonic, D4), its light lit; track 1 picked as it was; let go of the button: nothing more. Again: let go, its light
+# dark (0.19: REC ARM recorded and picked its track)
 out
 midi 90 03 7F
-wait 200
-expect rec_track -1
-expect_no_out USB 90 03 7F
+wait 100
+expect frozen 1
 expect track 1
-midi 80 03 7F
-wait 30
-expect rec_track 0
-expect rec_waiting 1
-said TRACK 1: PLAY TO START
+said TRACK 1 FROZEN
+expect fz_n0 1
+expect fz_note0_0 62
+expect voices0 1
+expect mixleds 256
 expect_out USB 90 03 7F
-tapkey 7
-tapkey 9
-wait 30
-expect running 1
-expect rec_waiting 0
+midi 80 03 7F
+wait 100
+expect frozen 1
 out
 midi 90 03 7F
 midi 80 03 7F
-wait 30
-expect rec_track -1
-expect trk_n0 2
-expect trk_takes0 1
+wait 100
+expect frozen 0
+said TRACK 1 LET GO
+expect voices0 0
 expect_out USB 90 03 00
-said TRACK 1: 1 BAR, 1 TAKE
-# again: a second take over it
-midi 90 03 7F
-midi 80 03 7F
-wait 30
-expect rec_track 0
-expect overdub 1
-tapkey 11
-wait 60
-midi 90 03 7F
-midi 80 03 7F
-wait 30
-expect rec_track -1
-expect trk_n0 3
-expect trk_takes0 2
-# REC ARM 1 held a second: the last take gone, and nothing records (the screen never says RECORDING, its light stays
-# dark); held again: the one before, the lead empty
-listen
-out
-midi 90 03 7F
-wait 600
-expect rec_track -1
-wait 500
-midi 80 03 7F
-wait 30
-expect rec_track -1
-expect trk_n0 2
-expect trk_takes0 1
-said TRACK 1: LAST TAKE GONE
-expect_no_out USB 90 03 7F
-midi 90 03 7F
-wait 1100
-midi 80 03 7F
-wait 30
-expect trk_n0 0
-expect trk_len0 0
-said TRACK 1 EMPTY
-# one track records at a time: REC ARM 4 (the bass line, note 12), then REC ARM 2 (the drone, note 6) takes over
+# each strip its own track, several frozen at once, none picked: REC ARM 4 (note 12) the bass line, then REC ARM 3
+# (note 9) the left hand (its D, played last on it); both lit, track 1 picked still
 out
 midi 90 0C 7F
 midi 80 0C 7F
-wait 30
-expect rec_track 3
-said TRACK 4: RECORDING
-tapkey 0
-wait 30
-out
-midi 90 06 7F
-midi 80 06 7F
-wait 30
-expect rec_track 1
-expect_out USB 90 06 7F
-expect_out USB 90 0C 00
-expect trk_n3 1
-expect trk_key3_0 29
-tapkey 9
-wait 30
-midi 90 06 7F
-midi 80 06 7F
-wait 30
-expect rec_track -1
-expect trk_n1 1
-expect trk_key1_0 62
-# REC ARM 5 (the kick, note 15): it picks track 5 and records its drum live, each hit kept on the step it falls on
-# (the track his from the first one); again: it stops; held a second: that take gone, the rhythm's own steps again
-out
-midi 90 0F 7F
-midi 80 0F 7F
-wait 30
-expect rec_track 4
-expect track 5
-said TRACK 5: RECORDING
-expect_out USB 90 0F 7F
-tapkey 2
-wait 30
-expect dedit 16
-expect his4 1
-expect drum_take 5
-out
-midi 90 0F 7F
-midi 80 0F 7F
-wait 30
-expect rec_track -1
-said TRACK 5: TAKE KEPT
-expect_out USB 90 0F 00
-midi 90 0F 7F
-wait 1100
-midi 80 0F 7F
-wait 30
-expect rec_track -1
-expect dedit 0
-said TRACK 5: BACK TO THE RHYTHM
-# held a second again, nothing of his on the track: said, and nothing changes
-listen
-midi 90 0F 7F
-wait 1100
-midi 80 0F 7F
-wait 30
-expect rec_track -1
-expect dedit 0
-said TRACK 5: NOTHING OF YOURS HERE
-unsaid RECORDING
-tap PLAY
-wait 90
-expect running 0
-
-# SOLO (note 27) is HOLD. The lead picked (SEL held and the first white key); a key down, SOLO: that note held
-# (SOLO's light lit), it sounds on when the key is let go and its key stays lit; a key played over it is not held
-midi B0 13 66
-wait 30
-wait 150
-expect track 5
-press SEL
-tapkey w0
-release SEL
-wait 30
+wait 100
+expect frozen 8
 expect track 1
-key 7 down
-wait 30
+said TRACK 4 FROZEN
+expect_out USB 90 0C 7F
 out
-midi 90 1B 7F
-midi 80 1B 7F
-wait 30
-expect hold 1
-expect held_n 1
-said HOLD: 1 NOTE
-expect_out USB 90 1B 7F
+midi 90 09 7F
+midi 80 09 7F
+wait 100
+expect frozen 12
+said TRACK 3 FROZEN
+expect fz_note2_0 62
+expect_out USB 90 09 7F
+expect_out USB 90 0C 7F
+expect mixleds 3072
+expect track 1
+out
+midi 90 0C 7F
+midi 80 0C 7F
+wait 100
+midi 90 09 7F
+midi 80 09 7F
+wait 100
+expect frozen 0
+expect mixleds 0
+expect_out USB 90 0C 00
+expect_out USB 90 09 00
+# REC on the FM-1 freezes the picked track: its strip's REC ARM lit the same, dark when it is let go
+key 7 down
+wait 60
+tap REC
+wait 60
 key 7 up
 wait 100
-expect voices0 1
-expect lit_key7 1
-tapkey 14
+expect frozen 1
+expect mixleds 256
+out
+tap REC
 wait 100
-expect held_n 1
-expect voices0 1
-# SOLO again with another key down: that one held instead
-key 11 down
-wait 30
-midi 90 1B 7F
-midi 80 1B 7F
-wait 30
-expect held_n 1
-said HOLD: 1 NOTE
-key 11 up
+expect frozen 0
+expect_out USB 90 03 00
+# REC ARM 5 (note 15): the kick's track, a drum sound: nothing frozen, said, its light dark
+out
+midi 90 0F 7F
+midi 80 0F 7F
 wait 100
-expect voices0 1
-expect lit_key11 1
-expect lit_key7 0
-# SOLO with no key down: let go, SOLO dark
+expect frozen 0
+said TRACK 5: A DRUM SOUND HOLDS NO NOTE
+expect_no_out USB 90 0F 7F
+
+# SOLO (note 27) tapped: the knobs' EFFECTS layer: top DELAY SEND, middle DELAY TIME (the one delay: any strip's
+# middle knob), bottom REVERB SEND, the faders their LEVEL still. BANK LEFT and RIGHT lit while on it (SOLO itself
+# never lit); tapped again: back, the BANK lights dark (0.19: SOLO was HOLD)
 out
 midi 90 1B 7F
 midi 80 1B 7F
-wait 30
-expect hold 0
-expect held_n 0
-said HOLD OFF
-expect_out USB 90 1B 00
 wait 100
-expect voices0 0
-# BANK RIGHT / LEFT (notes 26, 25): the rhythm
-midi 90 1A 7F
-midi 80 1A 7F
+expect mix_fx 1
+said KNOBS: EFFECTS DELAY, TIME, REVERB
+expect mixleds 196608
+expect_out USB 90 19 7F
+expect_out USB 90 1A 7F
+expect_no_out USB 90 1B 7F
+wait 300
+midi B0 18 7F
+wait 200
+expect par65 100
+said TRACK 3: DELAY SEND 100
+expect par81 50
+expect par73 0
+wait 300
+midi B0 1A 00
+wait 200
+expect par81 0
+said TRACK 3: REVERB SEND 0
+expect par65 100
+wait 300
+midi B0 19 7F
+wait 200
+expect par20 70
+said DELAY TIME 700 MS
+expect par49 0
+wait 300
+midi B0 2F 00
+wait 200
+expect par20 6
+said DELAY TIME 60 MS
+expect par51 0
+midi B0 2F 2F
 wait 30
-expect rhythm 1
-midi 90 19 7F
-midi 80 19 7F
+expect par20 30
+wait 300
+midi B0 1B 59
+wait 200
+expect par1 70
+said TRACK 3: LEVEL 70
+midi B0 1B 40
 wait 30
-expect rhythm 0
-# PLAY: the BANK lights stay dark
+expect par1 50
+expect track 1
+expect mix_fx 1
+out
+midi 90 1B 7F
+midi 80 1B 7F
+wait 100
+expect mix_fx 0
+said KNOBS: PITCH FILTER, SPACE
+expect mixleds 0
+expect_out USB 90 19 00
+expect_out USB 90 1A 00
+# the top knob its PITCH again, the sends as the layer left them; the bottom knob at their middle: SPACE moves them
+# together, their balance kept
+midi B0 18 50
+wait 30
+expect par73 12
+expect par65 100
+midi B0 18 40
+wait 30
+expect par73 0
+midi B0 1A 40
+wait 30
+expect par65 100
+expect par81 0
+midi B0 1A 30
+wait 30
+expect par65 88
+expect par81 0
+# PLAY, the knobs on their own layer: the BANK lights stay dark while the rhythm runs
 out
 tap PLAY
 wait 1000
@@ -1186,15 +1265,18 @@ wait 90
 expect running 0
 expect mute 0
 
-# ---- step mode (SEQ on the FM-1), the lead picked. A step held (the third white key) and a strip's knob moved:
+# ---- step mode (EDIT held a second), the lead picked. A step held (the third white key) and a strip's knob moved:
 # that knob's value locked on that step, the knob itself as it was. Strip 1's middle knob (its filter, CC 17), then
 # strip 2's (CC 21: another track's knob, locked on the lead's step all the same; no track is picked by it), then
-# strip 1's fader (CC 19, its volume) and its bottom knob (CC 18, its pitch)
+# strip 1's fader (CC 19, its level), its top knob (CC 16, its pitch) and its bottom knob (CC 18, its SPACE: both
+# sends locked)
 midi B0 13 66
 wait 30
 wait 150
 expect track 1
-tap SEQ
+press EDIT
+wait 1100
+release EDIT
 wait 60
 expect seq 1
 listen
@@ -1215,65 +1297,94 @@ midi B0 13 00
 wait 30
 expect lock0_2_0 0
 expect par0 80
-midi B0 12 50
+midi B0 10 50
 wait 30
 expect lock0_2_71 12
 expect par71 0
-expect locks 4
-# the master fader with a step held: it cannot be locked: said once, and it does not move
+midi B0 12 7F
+wait 30
+expect lock0_2_63 100
+expect lock0_2_79 100
+expect par63 50
+expect par79 50
+expect locks 6
+# the EFFECTS layer with the step held: the top knob locks the DELAY SEND there; the middle locks the one delay's
+# time there, as DELAY TIME on the EFFECTS page does (its own value does not move)
+midi 90 1B 7F
+midi 80 1B 7F
+wait 30
+expect mix_fx 1
+midi B0 10 20
+wait 30
+expect lock0_2_63 25
+expect par63 50
+midi B0 11 7F
+wait 30
+expect lock0_2_20 70
+expect par20 30
+unsaid CANNOT
+expect locks 7
+midi 90 1B 7F
+midi 80 1B 7F
+wait 30
+expect mix_fx 0
+# the master fader with a step held: the whole level, live, never locked
 midi B0 3E 40
 wait 30
-expect master 0
-said FADE CANNOT BE LOCKED TO A STEP
+expect mix_lvl 50
+expect locks 7
+unsaid CANNOT
+midi B0 3E 7F
+wait 30
+expect mix_lvl 100
 key w2 up
 wait 60
 # a hold in which a knob was turned is no tap: nothing was added to the step; its key shows the second level
 expect trig0_2 0
 expect mid_key4 1
 expect lit_key4 0
-# the rhythm running: the lock holds from its step (the filter as the engine has it: -0.5) and lets go at the bar's
-# end, with nothing of the lead's to end it sooner: a lock only step, held to the next of the same knob
+# the rhythm running: the lock holds from its step (the filter as the engine has it: -0.5; the delay send 0.25) and
+# lets go at the bar's end, with nothing of the lead's to end it sooner: a lock only step, held to the next of the
+# same knob
 tap PLAY
 wait 400
 expect epar47 -500
 expect lk_at47 -25
 expect epar0 0
+expect epar63 250
 tap PLAY
 wait 90
 expect running 0
 expect epar47 0
 expect epar0 800
 expect lk_at47 -999
-# SOLO in step mode is HOLD too; a strip's knob with no step held is the knob itself (its own track's, said), and
-# the track picked stays picked
-key 1 down
-wait 30
+expect epar63 500
+# SOLO in step mode is the EFFECTS layer too; a strip's knob with no step held is the knob itself (its own track's,
+# said), and the track picked stays picked
 out
 midi 90 1B 7F
 midi 80 1B 7F
 wait 30
-expect hold 1
-expect_out USB 90 1B 7F
-key 1 up
-wait 30
+expect mix_fx 1
+expect_out USB 90 19 7F
 midi 90 1B 7F
 midi 80 1B 7F
 wait 30
-expect hold 0
+expect mix_fx 0
 wait 300
 listen
 midi B0 15 20
 wait 200
 expect par48 -25
 expect track 1
-expect locks 4
+expect locks 7
 said TRACK 2: FILTER DARK 50
 midi B0 15 40
 wait 30
 expect par48 0
 expect track 1
 said TRACK 2: FILTER OPEN
-# EDIT with the step held: its locks removed
+# EDIT with the step held: its locks removed, and nothing else (no EDIT page; step mode on still)
 key w2 down
 wait 30
 tap EDIT
@@ -1282,19 +1393,22 @@ key w2 up
 wait 60
 expect locks 0
 said STEP 3: LOCKS REMOVED
-expect hold 0
-tap SEQ
+expect seq 1
+expect page 0
+press EDIT
+wait 1100
+release EDIT
 wait 60
 expect seq 0
 
-# ---- a knob of the recording track is kept as locks: REC ARM 1 (the rhythm stopped: the first key starts it), a
-# note, then strip 1's middle knob swept while it records: locks on the steps passed, the knob's own value as it
-# was; its fader moved: never kept. Recording over: the sweep comes back with the loop. REC ARM 1 held a second:
-# the take gone, and its locks with it
-midi 90 03 7F
-midi 80 03 7F
+# ---- a knob of the recording track is kept as locks: SEQ (the lead's loop; the rhythm stopped: the first key starts
+# it), a note, then strip 1's middle knob swept while it records: locks on the steps passed, the knob's own value as it
+# was; its SPACE moved: the two sends locked, heard at once; its fader moved: never kept. Recording over: the sweep
+# comes back with the loop. SEQ held a second: the loop cleared, and its locks with it
+tap SEQ
 wait 30
 expect rec_track 0
+expect rec_waiting 1
 tapkey 7
 wait 60
 expect running 1
@@ -1307,25 +1421,31 @@ wait 110
 expect par47 0
 expect locks0 >1
 expect epar47 <-300
+midi B0 12 00
+wait 30
+expect par63 50
+expect par79 50
+expect epar63 0
+expect epar79 0
 midi B0 13 40
 wait 30
 expect par0 50
 expect lock0_0_0 -999
-midi 90 03 7F
-midi 80 03 7F
+tap SEQ
 wait 30
 expect rec_track -1
 expect trk_takes0 1
 expect locks0 >1
+expect loop0 2
 wait 900
 expect par47 0
-midi 90 03 7F
+press SEQ
 wait 1100
-midi 80 03 7F
+release SEQ
 wait 60
 expect trk_n0 0
 expect locks0 0
-said TRACK 1 EMPTY
+said TRACK 1 LOOP CLEARED
 tap PLAY
 wait 90
 expect running 0
@@ -1343,3 +1463,71 @@ tap PLAY
 wait 90
 expect running 0
 leds
+
+# ---- the master fader: the whole level, live, never kept (0.19: the scene fader). Track 1 on the ORGAN (sound page,
+# row 1, K1), its ornaments off (ornaments page, row 1, K4): an even note to measure. C held: at the top as it is,
+# halfway 6 dB down, at the bottom silent, said when it moves alone; no setting moves with it, not the scene fader
+# (FADE) nor a top sound. Down to a quarter (12 dB down), a power cycle: the whole level full again
+tap ENV
+wait 30
+expect page 3
+expect row 0
+turn K1 7
+wait 60
+expect ch0 7
+tap LFO
+wait 30
+expect row 0
+turn K4 -20
+wait 30
+expect ch3 0
+tap HOME
+wait 30
+listen
+key 7 down
+wait 1000
+expect mix_lvl 100
+expect tone6000 >-36
+expect tone6000 <-30
+wait 300
+midi B0 3E 40
+wait 400
+expect mix_lvl 50
+said MIDIMIX MASTER 50
+expect tone6000 >-42
+expect tone6000 <-36
+wait 300
+midi B0 3E 00
+wait 400
+expect mix_lvl 0
+said MIDIMIX MASTER 0
+expect tone6000 <-90
+expect master 0
+expect top_mask 0
+expect par0 50
+expect track 1
+wait 300
+midi B0 3E 7F
+wait 400
+expect mix_lvl 100
+said MIDIMIX MASTER 100
+expect tone6000 >-36
+expect tone6000 <-30
+wait 300
+midi B0 3E 20
+wait 400
+expect mix_lvl 25
+said MIDIMIX MASTER 25
+expect tone6000 >-48
+expect tone6000 <-42
+key 7 up
+wait 2000
+reboot
+wait 900
+expect mix_lvl 100
+key 7 down
+wait 1000
+expect tone6000 >-36
+expect tone6000 <-30
+key 7 up
+wait 300
