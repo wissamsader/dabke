@@ -301,7 +301,7 @@ static void seq_whose(int t, int32_t y)  /* a line: the track and whose it is ("
     char b[48];
     int rec = s->rec_track == t;
     trk_name(t, b);
-    text_cat(b, rec ? (s->rec_waiting ? ": PLAY TO START" : ": RECORDING") : trk_his(t) ? ": YOURS" : trk_rhythm(t) ? ": THE RHYTHM'S" : ": EMPTY");
+    text_cat(b, rec ? (s->rec_waiting ? ": A KEY STARTS IT" : ": RECORDING") : trk_his(t) ? ": YOURS" : trk_rhythm(t) ? ": THE RHYTHM'S" : ": EMPTY");
     if ((set.mute >> t & 1u) && !rec)
         text_cat(b, ", MUTED");
     TXF(b, 14, y, 1, rec ? K_RED : K_INK, 0, 150);
