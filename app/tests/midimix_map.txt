@@ -1,0 +1,142 @@
+# The MIDImix, RAGA MEOW's map (fm1-organ/LOGIC.md version 2), each control once: strip N is track N, nothing on a
+# strip picks its track. Fader: LEVEL. Top knob: PITCH. Middle: FILTER. Bottom: SPACE (the delay and reverb sends
+# together). SOLO tapped: the knobs' EFFECTS layer (top DELAY SEND, middle DELAY TIME, the one delay's, bottom REVERB
+# SEND), BANK LEFT and RIGHT lit while on it; again, back. MUTE: mutes (lit while muted). REC ARM: freezes or lets go
+# (lit while frozen). BANK LEFT and RIGHT: the picked track's sound before and after. The master fader: the whole
+# level, live, never kept. No light blinks.
+wait 900
+expect track 1
+listen
+# ---- strip 3 (CCs 24..27): its fader, its top, middle and bottom knobs; track 1 stays picked
+midi B0 1B 00
+wait 300
+expect par1 0
+said TRACK 3: LEVEL 0
+midi B0 1B 64
+wait 300
+expect par1 79
+midi B0 18 7F
+wait 300
+expect par73 48
+expect track 1
+midi B0 18 40
+wait 300
+expect par73 0
+midi B0 19 00
+wait 300
+expect par49 -50
+said TRACK 3: FILTER DARK 100
+midi B0 19 40
+wait 300
+expect par49 0
+midi B0 1A 00
+wait 300
+expect par65 0
+expect par81 0
+said TRACK 3: SPACE 0
+midi B0 1A 7F
+wait 300
+expect par65 100
+expect par81 100
+expect track 1
+# ---- SOLO tapped: the EFFECTS layer, BANK LEFT and RIGHT lit (bits 16, 17), SOLO's own light never
+midi 90 1B 7F
+midi 80 1B 00
+wait 300
+expect mix_fx 1
+said KNOBS: EFFECTS DELAY, TIME, REVERB
+expect mixleds 196608
+midi B0 18 00
+wait 300
+expect par65 0
+expect par81 100
+midi B0 1A 40
+wait 300
+expect par81 50
+expect par65 0
+midi B0 19 7F
+wait 300
+expect par20 70
+said DELAY TIME 700 MS
+midi B0 2F 00
+wait 300
+expect par20 6
+midi 90 1B 7F
+midi 80 1B 00
+wait 300
+expect mix_fx 0
+said KNOBS: PITCH FILTER, SPACE
+expect mixleds 0
+# ---- MUTE 3 (note 7): muted, lit; again: on, dark. Track 3 not picked
+midi 90 07 7F
+midi 80 07 00
+wait 300
+expect mute 4
+expect mixleds 4
+said TRACK 3: MUTE ON
+expect track 1
+midi 90 07 7F
+midi 80 07 00
+wait 300
+expect mute 0
+expect mixleds 0
+# ---- REC ARM 3 (note 9): track 3 frozen (its chord: the note played last there, or the maqam's tonic), lit; not picked
+midi 90 09 7F
+midi 80 09 00
+wait 300
+expect frozen 4
+expect mixleds 1024
+said TRACK 3 FROZEN
+expect track 1
+expect voices2 >0
+midi 90 09 7F
+midi 80 09 00
+wait 300
+expect frozen 0
+expect mixleds 0
+said TRACK 3 LET GO
+# ---- BANK LEFT and RIGHT: the picked track's sound, before and after
+expect sndn0 0
+midi 90 1A 7F
+midi 80 1A 00
+wait 300
+expect sndn0 1
+midi 90 19 7F
+midi 80 19 00
+wait 300
+expect sndn0 0
+said TRACK 1: MIJWIZ
+expect top_mask 0
+# ---- the master fader (CC 62): the whole level, live
+key 9 down 100
+wait 500
+expect level1000 >100
+midi B0 3E 00
+wait 400
+expect mix_lvl 0
+said MIDIMIX MASTER 0
+peakreset
+wait 300
+expect peak_db_max -80
+midi B0 3E 7F
+wait 400
+expect mix_lvl 100
+peakreset
+wait 300
+expect peak_db_min -30
+midi B0 3E 40
+wait 300
+expect mix_lvl 50
+key 9 up
+wait 300
+# never kept: after a power-on, the whole level again
+expect master 0
+tap FX
+turn K1 2
+wait 50
+settle
+wait 9000
+expect dirty 0
+reboot
+wait 900
+expect mix_lvl 100

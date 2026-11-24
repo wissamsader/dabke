@@ -1,0 +1,469 @@
+# The one logic (fm1-organ/LOGIC.md version 2: RAGA MEOW's jobs), button by button. Every button does the job it does
+# in RAGA MEOW: REC freezes the picked track, SEQ is its loop, PLAY stops and brings back, EDIT tapped opens the EDIT
+# page and held a second is step mode, FX held a second resets the row shown, SEL tapped opens the MAQAM page and held
+# with a white key picks a track (the ninth: the background), each page's button again shows its next row.
+wait 900
+expect track 1
+expect page 0
+expect row 0
+listen
+
+# ---- HOME: the home page's rows, HOME again the next (the picked track's strip first: PITCH, FILTER, SPACE, LEVEL)
+turn K4 -5
+wait 50
+said TRACK 1: LEVEL 70
+expect par0 70
+turn K3 -2
+wait 50
+said TRACK 1: SPACE 96
+expect par63 96
+expect par79 96
+tap HOME
+wait 50
+expect row 1
+said HOME: MIX
+turn K2 -3
+wait 50
+said TRACK 1: REVERB SEND 90
+expect par79 90
+expect par63 96
+tap HOME
+wait 50
+expect row 2
+said HOME: PLAYING
+tap HOME
+wait 50
+expect row 0
+said HOME: TRACK
+
+# ---- SEL tapped: the MAQAM page at its first row, from any page; on it, its next row
+tap FX
+wait 50
+expect page 2
+tap SEL
+wait 50
+expect page 1
+expect row 0
+said MAQAM
+tap SEL
+wait 50
+expect row 1
+said MAQAM: TUNING
+tap SEL
+wait 50
+expect row 0
+# SELECT on its first row: the maqam; on the TUNING row: the note to tune
+turn SELECT 1
+wait 50
+expect maqam 3
+turn SELECT -1
+wait 50
+expect maqam 2
+tap SEL
+wait 50
+turn SELECT 4
+wait 50
+expect cur 4
+said E: QUARTER FLAT
+
+# ---- SEL held and a white key picks that track, on any page (the key plays nothing; SEL let go is no tap)
+tap GLO
+wait 50
+expect page 5
+press SEL
+wait 30
+key w2 down
+wait 30
+key w2 up
+wait 30
+release SEL
+wait 50
+expect track 3
+expect page 5
+said TRACK 3: LEFT HAND STRINGS
+expect voices2 0
+# while SEL is held: the first eight white keys lit (the picked one fully), the ninth at the second level
+press SEL
+wait 30
+expect lit_key4 1
+expect mid_key0 1
+expect mid_key14 1
+key w2 down
+wait 30
+key w2 up
+wait 30
+release SEL
+wait 50
+expect page 5
+# SELECT on the RHYTHM page: the rhythm (as PRESET)
+turn SELECT 1
+wait 50
+expect rhythm 1
+turn SELECT -1
+wait 50
+expect rhythm 0
+press SEL
+wait 30
+key w0 down
+wait 30
+key w0 up
+wait 30
+release SEL
+wait 50
+expect track 1
+
+# ---- ENV, LFO, GLO: their pages; again, the next row (wrapping)
+tap ENV
+wait 50
+expect page 3
+said SOUND
+tap ENV
+wait 50
+expect row 1
+said SOUND: PIPES
+tap LFO
+wait 50
+expect page 4
+tap LFO
+tap LFO
+tap LFO
+tap LFO
+wait 50
+expect row 0
+tap GLO
+wait 50
+expect page 5
+
+# ---- EDIT tapped: the EDIT page (its rows STEPS, SCENE, MIXER); again, the next row
+tap EDIT
+wait 50
+expect page 6
+said EDIT
+expect row 0
+tap EDIT
+wait 50
+expect row 1
+said EDIT: SCENE
+tap EDIT
+wait 50
+expect row 2
+said EDIT: TRACK 1 MIXER
+tap EDIT
+wait 50
+expect row 0
+# EDIT held a second: step mode on (the step view, on the home page); never the EDIT page's next row
+press EDIT
+wait 1100
+expect seq 1
+said STEP MODE: WHITE KEYS ARE STEPS
+release EDIT
+wait 50
+expect seq 1
+expect page 0
+# in step mode SEL held and a white key still picks a track (no step is tapped)
+press SEL
+wait 30
+key w4 down
+wait 30
+key w4 up
+wait 30
+release SEL
+wait 50
+expect track 5
+expect trig4_4 2
+# EDIT tapped in step mode: the EDIT page (the steps stay at its bottom); held a second: step mode off
+tap EDIT
+wait 50
+expect page 6
+expect seq 1
+press EDIT
+wait 1100
+release EDIT
+wait 50
+expect seq 0
+said STEP MODE OFF
+# a press shorter than a second is a tap: the next row, no step mode
+press EDIT
+wait 700
+release EDIT
+wait 50
+expect seq 0
+expect row 1
+press SEL
+wait 30
+key w0 down
+wait 30
+key w0 up
+wait 30
+release SEL
+wait 50
+
+# ---- FX: the EFFECTS page; again, its next row when let go; held a second, the row shown back to its starts
+tap FX
+wait 50
+expect page 2
+turn K1 5
+turn K4 -5
+wait 50
+expect par19 10
+expect par22 15
+press FX
+wait 400
+expect row 0
+wait 700
+said DELAY AND REVERB RESET
+release FX
+wait 50
+expect row 0
+expect par19 0
+expect par22 25
+press FX
+wait 300
+release FX
+wait 50
+expect row 1
+said EFFECTS: WEDDING PA
+# the picked track's SENDS (row 4): reset to its starts too
+tap FX
+tap FX
+wait 50
+expect row 3
+said EFFECTS: TRACK 1 SENDS
+turn K1 -10
+wait 50
+expect par63 76
+press FX
+wait 1100
+release FX
+wait 50
+said TRACK 1 SENDS RESET
+expect par63 100
+expect par79 100
+
+# ---- REC: the picked track frozen. Its key down: that note sounds on without it
+tap HOME
+wait 50
+key 7 down
+wait 50
+tap REC
+wait 50
+key 7 up
+wait 400
+expect frozen 1
+said TRACK 1 FROZEN
+expect voices0 1
+expect fz_n0 1
+expect fz_note0_0 60
+expect lit_key7 1
+# a key on a frozen one-note track moves the held note there (no new note), still held
+tapkey 9
+wait 300
+expect frozen 1
+expect voices0 1
+expect fz_note0_0 62
+expect lit_key9 1
+expect lit_key7 0
+# the key of the held note again: let go
+tapkey 9
+wait 400
+expect frozen 0
+expect voices0 0
+said TRACK 1 LET GO
+# REC with no key down: the note played last there, frozen
+tap REC
+wait 400
+expect frozen 1
+expect fz_note0_0 62
+expect voices0 1
+# REC again: let go
+tap REC
+wait 400
+expect frozen 0
+expect voices0 0
+said TRACK 1 LET GO
+# a chord on a POLY sound: every key held, a key added later held too
+tap ENV
+wait 30
+turn SELECT -1
+wait 50
+expect row 0
+turn K2 2
+wait 50
+expect ch1 2
+tap HOME
+wait 30
+key 7 down
+key 11 down
+wait 50
+tap REC
+key 7 up
+key 11 up
+wait 300
+expect fz_n0 2
+tapkey 14
+wait 300
+expect fz_n0 3
+expect voices0 3
+tapkey 11
+wait 300
+expect fz_n0 2
+tap REC
+wait 300
+expect frozen 0
+tap ENV
+wait 30
+turn K2 -2
+wait 30
+tap HOME
+wait 30
+# a drum sound holds no note
+press SEL
+wait 30
+key w4 down
+wait 30
+key w4 up
+wait 30
+release SEL
+wait 50
+tap REC
+wait 50
+said TRACK 5: A DRUM SOUND HOLDS NO NOTE
+expect frozen 0
+press SEL
+wait 30
+key w0 down
+wait 30
+key w0 up
+wait 30
+release SEL
+wait 50
+
+# ---- PLAY: nothing playing, nothing to bring back: the rhythm starts; running: everything stops (remembered); again
+# everything comes back
+tap PLAY
+wait 200
+expect running 1
+said DABKE SYRIA PLAYS
+key 7 down
+wait 30
+tap REC
+key 7 up
+wait 300
+expect frozen 1
+tap PLAY
+wait 300
+expect running 0
+expect frozen 0
+expect kept_frozen 1
+said ALL STOPPED
+tap PLAY
+wait 300
+expect running 1
+expect frozen 1
+expect kept_frozen 0
+said ALL BACK
+# held 0.4 s while it runs: a fill-in, nothing stops
+press PLAY
+wait 500
+said FILL IN
+release PLAY
+wait 100
+expect running 1
+expect frozen 1
+tap PLAY
+wait 300
+expect running 0
+tap REC
+wait 300
+expect kept_frozen 0
+expect frozen 1
+tap REC
+wait 300
+expect frozen 0
+
+# ---- SEQ: the picked track's loop. Empty, stopped rhythm: it waits for the first key, which starts the rhythm
+tap SEQ
+wait 100
+expect loop0 1
+expect rec_waiting 1
+said TRACK 1 LOOP RECORDING: A KEY STARTS IT
+tapkey 7
+wait 50
+expect running 1
+expect rec_waiting 0
+wait 600
+tapkey 9
+wait 700
+tap SEQ
+wait 100
+expect loop0 2
+said TRACK 1 LOOP PLAYING, 2 BARS
+expect trk_n0 2
+wait 2000
+expect loop_plays >1
+# tapped while it plays: stopped, kept (its light at the second level no more)
+tap SEQ
+wait 100
+expect loop0 3
+expect loop_off 1
+said TRACK 1 LOOP STOPPED
+expect trk_n0 2
+# tapped again: it plays again
+tap SEQ
+wait 100
+expect loop0 2
+said TRACK 1 LOOP PLAYING
+# held: never RECORDING while held; a second: cleared
+press SEQ
+wait 600
+unsaid RECORDING
+wait 500
+said TRACK 1 LOOP CLEARED
+release SEQ
+wait 100
+expect loop0 0
+expect trk_n0 0
+# held on an empty track: nothing there
+press SEQ
+wait 1100
+release SEQ
+wait 100
+said TRACK 1: NO LOOP HERE
+expect loop0 0
+expect rec_track -1
+# a take with nothing played: no loop
+tap SEQ
+wait 300
+tap SEQ
+wait 100
+said TRACK 1: NOTHING PLAYED, NO LOOP
+expect loop0 0
+tap PLAY
+wait 300
+expect running 0
+
+# ---- KEEP THE SOUND (SAVE): SELECT picks a place; SAVE keeps; a place in use: SAVE asks first, SAVE again replaces
+tap SAVE
+wait 50
+expect save 1
+said KEEP THE SOUND: SELECT PICKS A PLACE
+expect slot 0
+tap SAVE
+wait 100
+said KEPT IN 1
+expect kept 1
+tap SAVE
+wait 50
+expect slot 1
+turn SELECT -1
+wait 50
+said PLACE 1 USED
+tap SAVE
+wait 50
+said PLACE 1 IS USED: SAVE AGAIN TO REPLACE
+expect save 1
+tap SAVE
+wait 100
+said KEPT IN 1
+expect save 0
+expect kept 1

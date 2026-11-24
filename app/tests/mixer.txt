@@ -1,0 +1,242 @@
+# The MIXER (the EDIT page's last row, as RAGA MEOW has it): the picked track's LEVEL, FX (its sends and BASS in or out,
+# each kept as set), MUTE, SOLO (several: all of them heard; never kept). SEL held and a white key picks a track, the
+# ninth the background: the rhythm's drums (every track with a drum sound), for the MIXER and the EFFECTS page's track
+# rows (BACKGROUND SENDS, BACKGROUND TONE). A muted track is silent from its next note's first sample.
+wait 900
+listen
+tap EDIT
+tap EDIT
+tap EDIT
+wait 50
+expect page 6
+expect row 2
+said EDIT: TRACK 1 MIXER
+# K1 LEVEL
+turn K1 -5
+wait 50
+said TRACK 1: LEVEL 70
+expect par0 70
+# K2 FX: out, its sends kept as set; in again
+turn K2 -1
+wait 50
+said TRACK 1: EFFECTS OFF
+expect tfx 1
+expect par63 100
+expect par79 100
+turn K2 1
+wait 50
+said TRACK 1: EFFECTS ON
+expect tfx 0
+# K3 MUTE: track 1 silent, the others not
+turn K3 1
+wait 50
+said TRACK 1: MUTE ON
+expect mute 1
+expect mute_eff 1
+key 7 down 100
+wait 400
+expect tlevel0 0
+expect voices0 1
+key 7 up
+wait 300
+turn K3 -1
+wait 50
+said TRACK 1: MUTE OFF
+expect mute 0
+key 7 down 100
+wait 400
+expect tlevel0 >30
+key 7 up
+wait 500
+# K4 SOLO on track 2: track 1 silent; SOLO on track 1 too: both heard
+press SEL
+wait 30
+key w1 down
+wait 30
+key w1 up
+wait 30
+release SEL
+wait 50
+expect track 2
+turn K4 1
+wait 50
+said TRACK 2: SOLO ON
+expect solo 2
+expect mute_eff 253
+press SEL
+wait 30
+key w0 down
+wait 30
+key w0 up
+wait 30
+release SEL
+wait 50
+key 7 down 100
+wait 400
+expect tlevel0 0
+key 7 up
+wait 300
+turn K4 1
+wait 50
+expect solo 3
+expect mute_eff 252
+key 7 down 100
+wait 400
+expect tlevel0 >30
+key 7 up
+wait 300
+turn K4 -1
+wait 50
+expect solo 2
+# the background: the ninth white key; its LEVEL is the DRUMS', its MUTE and SOLO the drums'
+press SEL
+wait 30
+key w8 down
+wait 30
+key w8 up
+wait 30
+release SEL
+wait 50
+said BACKGROUND PICKED: ON FX AND THE MIXER
+expect fx_bg 1
+expect track 1
+turn K1 -4
+wait 50
+expect par3 72
+turn K4 1
+wait 50
+said BACKGROUND SOLO ON
+expect solo 258
+expect mute_eff 13
+turn K4 -1
+wait 50
+expect solo 2
+expect mute_eff 253
+# track 2's SOLO off (the background picked: its key gives the MIXER back to track 2)
+press SEL
+wait 30
+key w1 down
+wait 30
+key w1 up
+wait 30
+release SEL
+wait 50
+turn K4 -1
+wait 50
+expect solo 0
+press SEL
+wait 30
+key w8 down
+wait 30
+key w8 up
+wait 30
+release SEL
+wait 50
+turn K3 1
+wait 50
+said BACKGROUND MUTE ON
+expect bmute 1
+expect mute_eff 240
+# the rhythm running with its drums muted: no drum is heard
+tap PLAY
+wait 1200
+expect running 1
+expect hits9 0
+turn K3 -1
+wait 50
+expect bmute 0
+wait 1500
+expect hits9 >0
+tap PLAY
+wait 300
+turn K2 -1
+wait 50
+said BACKGROUND EFFECTS OFF
+expect bfx 1
+turn K2 1
+wait 50
+expect bfx 0
+# the EFFECTS page's track rows: the background's (its sends, every drum track's, moved together; its tone)
+tap FX
+wait 50
+tap FX
+tap FX
+tap FX
+wait 50
+expect row 3
+said EFFECTS: BACKGROUND SENDS
+turn K1 5
+wait 50
+said BACKGROUND DELAY SEND 40
+expect par67 40
+expect par68 40
+expect par69 40
+expect par70 40
+expect par83 30
+tap FX
+wait 50
+said EFFECTS: BACKGROUND TONE
+turn K4 -2
+wait 50
+expect par3 68
+# a track's key gives the rows back to that track
+press SEL
+wait 30
+key w2 down
+wait 30
+key w2 up
+wait 30
+release SEL
+wait 50
+expect fx_bg 0
+expect track 3
+expect row 4
+turn K2 3
+wait 50
+said TRACK 3: BASS MORE 12
+expect par57 6
+# a drum sound on track 3: its effects are the background's too
+tap HOME
+turn SELECT 41
+wait 100
+expect tfam2 4
+tap EDIT
+wait 50
+expect page 6
+press SEL
+wait 30
+key w8 down
+wait 30
+key w8 up
+wait 30
+release SEL
+wait 50
+turn K3 1
+wait 50
+expect mute_eff 244
+expect voices2 0
+turn K3 -1
+wait 50
+# SOLO is never kept: after a power-on, none; the MIXER's FX and the background's MUTE are
+press SEL
+wait 30
+key w1 down
+wait 30
+key w1 up
+wait 30
+release SEL
+wait 50
+turn K4 1
+turn K2 -1
+wait 50
+expect solo 2
+expect tfx 2
+settle
+wait 9000
+expect dirty 0
+reboot
+wait 900
+expect solo 0
+expect tfx 2
+expect mute_eff 0
+expect par3 68

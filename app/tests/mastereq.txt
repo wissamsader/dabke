@@ -1,0 +1,196 @@
+# The MASTER EQ (the EFFECTS page's last row, as RAGA MEOW has it): LOW (a shelf under 250 Hz), MID (a wide bell at
+# 1 kHz), HIGH (a shelf over 3.5 kHz), -24 dB (OFF: that band out, about 40 dB down) to +12, the last thing on the whole
+# sound, after every effect, before the limit; out of the signal when all three are flat. And the settings: a record as
+# 0.19 kept it (DKB8: no one logic's block, one send a track) loads whole after the update, each track's REVERB SEND its
+# old EFFECT's, the EQ flat; a record of this version keeps the EQ, the MIXER's FX and the frozen tracks.
+wait 900
+expect eq0 0
+expect eq1 0
+expect eq2 0
+expect size_settings 3772
+listen
+tap FX
+wait 50
+turn SELECT 5
+wait 50
+expect row 5
+said EFFECTS: MASTER EQ
+turn K3 -4
+wait 50
+said EQ HIGH -4 DB
+expect eq2 -4
+turn K1 -30
+wait 50
+expect eq0 -24
+said EQ LOW OFF
+turn K2 3
+wait 50
+said EQ MID +3 DB
+# FX held a second: the row flat again
+press FX
+wait 1100
+said MASTER EQ RESET
+expect eq0 0
+expect eq1 0
+expect eq2 0
+release FX
+wait 50
+expect row 5
+# its sound: a held note through it. Flat: as without it. LOW, MID and HIGH all OFF: far quieter. All +12: louder, never
+# a number that is not one
+tap HOME
+wait 30
+tap PLAY
+wait 200
+tap PLAY
+wait 300
+key 9 down 100
+wait 600
+expect tone6200 >-34
+expect level1000 >40
+tap FX
+wait 30
+turn K1 -40
+turn K2 -40
+turn K3 -40
+wait 800
+expect tone6200 <-45
+expect level1000 >-1
+turn K1 40
+turn K2 40
+turn K3 40
+wait 800
+expect level1000 >40
+expect eq0 12
+expect eq1 12
+expect eq2 12
+peakreset
+wait 600
+expect peak_db_max 0
+key 9 up
+wait 300
+press FX
+wait 1100
+release FX
+wait 50
+expect eq1 0
+# HIGH alone at OFF: the note's fundamental (an octave over middle C's D, 587 Hz) stays; its highs go
+key 21 down 100
+wait 600
+expect tone7400 >-42
+turn K3 -40
+wait 600
+expect tone7400 >-44
+key 21 up
+wait 300
+turn K3 40
+wait 100
+expect eq2 12
+turn K3 -12
+wait 50
+expect eq2 0
+# ---- a record as 0.19 kept it (DKB8): every setting comes back, each track's REVERB SEND its EFFECT's, the EQ flat
+# (a loop on track 1, track 3's sound, the maqam: kept)
+tap HOME
+wait 30
+tap SEQ
+wait 50
+tapkey 7
+wait 400
+tapkey 11
+wait 400
+tap SEQ
+wait 300
+expect trk_n0 2
+tap PLAY
+wait 300
+expect running 0
+press SEL
+wait 30
+key w2 down
+wait 30
+key w2 up
+wait 30
+release SEL
+wait 50
+turn SELECT 2
+wait 100
+press SEL
+wait 30
+key w0 down
+wait 30
+key w0 up
+wait 30
+release SEL
+wait 50
+tap SEL
+wait 30
+turn SELECT 3
+wait 50
+expect maqam 5
+tap HOME
+wait 30
+turn K2 -5
+turn K3 -3
+wait 50
+expect par63 94
+expect par79 94
+tap FX
+wait 30
+turn K2 -6
+wait 50
+expect eq1 -6
+tap EDIT
+tap EDIT
+tap EDIT
+wait 50
+turn K2 -1
+wait 50
+expect tfx 1
+turn K1 -3
+wait 50
+expect par0 74
+settle
+wait 9000
+expect dirty 0
+hash_keep
+dkb8_record
+reboot
+wait 900
+expect size_settings 3772
+expect par63 94
+expect par79 94
+expect par64 100
+expect par80 100
+expect par67 30
+expect par83 30
+expect par0 74
+expect eq1 0
+expect tfx 0
+expect track 1
+expect trk_n0 2
+expect kept_n0 2
+expect ksnd2 208
+expect maqam 5
+# ---- this version's record keeps the EQ and the MIXER's FX
+tap FX
+wait 30
+turn SELECT 5
+wait 50
+turn K2 -6
+wait 50
+tap EDIT
+tap EDIT
+tap EDIT
+wait 50
+turn K2 -1
+wait 50
+settle
+wait 9000
+expect dirty 0
+reboot
+wait 900
+expect eq1 -6
+expect tfx 1
+expect par63 94
+expect par79 94
