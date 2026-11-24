@@ -1901,7 +1901,7 @@ static void midi_key(uint32_t note, int vel, int port)
     if (vel) {                               /* (as the FM-1's keys: the picked track; track 1's as set, LEFT KEYS) */
         int rt = dabke_status()->rec_track, pk = midi_pick < 0 ? PART_LEAD : midi_pick, m, t, f;
         int32_t s;
-        if (pk != PART_LEAD || note >= 60u || !left_is_lower())
+        if (pk != PART_LEAD || note >= 60u || !left_is_lower() || ui.seq)   /* (step mode: every note the picked track's) */
             t = m = pk;
         else {
             t = PART_LEFT;
@@ -3907,9 +3907,7 @@ static void mix_take(uint32_t pkt)
                     int d = (int)v - space_of(t), ia = lk_find(t, ui.sstep, P_SEND + t), ib = lk_find(t, ui.sstep, P_RSEND + t);
                     step_lock(P_SEND + t, clamp((ia >= 0 ? DAB_LK_VAL(sq.lock[ia]) : par_eff(P_SEND + t)) + d, 0, 100));
                     step_lock(P_RSEND + t, clamp((ib >= 0 ? DAB_LK_VAL(sq.lock[ib]) : par_eff(P_RSEND + t)) + d, 0, 100));
-                } else if (id == P_ECHOTIME)
-                    lock_refuse("DELAY TIME");
-                else
+                } else
                     step_lock(id, v);
                 return;
             }

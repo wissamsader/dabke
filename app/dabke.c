@@ -2642,9 +2642,11 @@ static void track_sound(int t, int f, int x, int again)   /* (again: the same, a
 {
     int i, n;
     uint32_t keep[4], keepL[4], keepA[4];
+    uint8_t fz;
     if (t < 0 || t >= DAB_NTRK || f < 0 || f >= SF_N) return;
     if (x < 0 || x >= dabke_family_size(f)) x = 0;
     if (tfam[t] == f && tidx[t] == x && !again) return;
+    fz = (uint8_t)(frz & (1u << t));    /* (frozen: still frozen in the new sound, its held notes in it) */
     for (i = DAB_NLK; i < DAB_NLKS; i++)  /* (a sound's knobs it holds: let go, as the knob a lock of its holds may change
                                          * with its sound; held again from their next step) */
         if (lkAt[i] && DAB_LK_TRK(lk[lkAt[i] - 1]) == t) lock_free(i);
@@ -2672,7 +2674,18 @@ static void track_sound(int t, int f, int x, int again)   /* (again: the same, a
     tfam[t] = (uint8_t)f; tidx[t] = (uint8_t)x;
     st.tfam[t] = (uint8_t)f; st.tidx[t] = (uint8_t)x;
     derive();
-    if (!SF_DRUM(f)) held_again(t, keep, keepL, keepA);   /* (a drum sound holds no note: they are let go) */
+    if (!SF_DRUM(f)) {
+        held_again(t, keep, keepL, keepA);   /* (a drum sound holds no note: they are let go) */
+        frz |= fz;
+        if (t != PART_DRONE && !arp_keys(t))   /* (the one logic: the new sound playing on: a key of the track still
+                                         * down sounds on in it, as a held note does; the arpeggio's keys are plain keys
+                                         * now, silent) */
+            for (n = 0; n < 128; n++)
+                if (BGET(keyDn[t], n) && !BGET(heldK[t], n)) {
+                    if (f == SF_LEAD) { lead_track(t); lead_on(n, 100); }
+                    else start(R_KEY, t, n, 100);
+                }
+    }
     held_count();
 }
 
