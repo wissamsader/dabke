@@ -1,16 +1,40 @@
 # DABKE
 
-DABKE is a free firmware for the M-VAVE FM-1 that makes it an Arabic wedding keyboard. It has lead voices with quarter tones on any note, a drone, bass and backing from the left hand, and a rhythm box of darbuka, tabl, riq, daf, sagat, kick and claps. Eight tracks record what you play, and an Akai MIDImix can work as its mixer.
+DABKE is a free firmware for the M-VAVE FM-1 that makes it an Arabic wedding keyboard. It has lead voices with quarter tones on any note, a drone, bass and backing from the left hand, and a rhythm box of darbuka, tabl, riq, daf, sagat, kick and claps. Eight tracks loop or freeze what you play, and an Akai MIDImix can work as its mixer.
 
-**Status.** This is version 0.19, a free public beta from STUDIOMORPHIK. It has been tested on one FM-1.
+**Status.** This is version 0.20, a free public beta from STUDIOMORPHIK. It has been tested on one FM-1.
 
-**New in 0.19.** HOLD: press the key of a held note again and that note stops; the other held notes go on. OCT- and OCT+ take the held notes up or down with their keys, and they stay held. A new sound on a track keeps its held notes sounding (see HOLD).
+**New in 0.20.** New jobs for the buttons and the MIDImix: REC freezes the picked track, SEQ records its loop, and EDIT held a second is step mode. If you played 0.19, read What changed in 0.20, below, first.
 
-**New in 0.18.** Hold SAVE while you switch the FM-1 on to start fresh: every setting, sound, loop, step, lock and MY SOUND goes back to how DABKE was on its first start (see Saving). The maqam page shows every note of the maqam white and every other note grey, on the black keys as on the white ones.
+**New in 0.18.** Hold SAVE while you switch the FM-1 on to start fresh: every setting, sound, loop, step, lock and MY SOUND goes back to how DABKE was on its first start (see Saving). The MAQAM page shows every note of the maqam white and every other note grey, on the black keys as on the white ones.
 
 **New in 0.17.** Each of the eight tracks keeps its own sound, so SAZ on track 2 and BUZUQ TREMOLO on track 3 play at the same time. SELECT on a picked track offers the 22 ready sounds and your MY SOUNDs, and the SOUND and ORNAMENTS pages edit the picked track's sound. The effects, the tempo, the maqam and the rhythm are still shared by the whole song. Saves from 0.16 load and sound as they did.
 
 ![The home page with the rhythm running: the singer on stage, the eight tracks as lanes under him, the rhythm's name at the bottom](img/screen-home.png "The home page, the rhythm running")
+
+---
+
+## What changed in 0.20
+
+DABKE's sounds, maqamat, rhythms, step sequencer and singer are as they were. The buttons, the pages' rows and the MIDImix have new jobs, each track has a reverb send of its own, and there is a MIXER and a MASTER EQ. Everything 0.19 saved loads whole (see Saving).
+
+| In 0.19 | In 0.20 |
+| --- | --- |
+| ALL, or one of the eight tracks, picked | Always one of the eight. Track 1 plays the keys as ALL did, with LEFT KEYS, and a ready sound or a MY SOUND picked on it brings its effects, as with ALL. A 0.19 save with ALL picked opens on track 1 |
+| SEL tapped: the next track. SEL held with a white key: that track, on the home page | SEL held with a white key picks a track on every page, and the ninth white key picks the background. SEL tapped opens the MAQAM page |
+| REC: the picked track recorded live. Held a second: the last take gone | SEQ: the picked track's loop. Tapped, it records, closes and plays, stops, plays again. Held a second: cleared |
+| REC on a track with a loop recorded over it | Gone. SEQ on a loop stops it or plays it again |
+| EDIT tapped, or the MIDImix's SOLO: HOLD | REC freezes the picked track, and the MIDImix's REC ARM its strip's track |
+| SEQ tapped: step mode. SEQ held a second: every recording cleared. EDIT held a second in step mode: the track's locks gone | EDIT held a second: step mode on or off. SEQ held a second clears one track's loop, with its locks |
+| PLAY: the rhythm on or off | PLAY stops everything that sounds and brings it back; with nothing to bring back, it starts the rhythm. Held 0.4 s while the rhythm runs: a fill-in, as before |
+| The home page's K1 to K4: EFFECT, FILTER, PITCH, VOLUME | PITCH, FILTER, SPACE, LEVEL. HOME again: two more rows |
+| One EFFECT a track, its share of the delay and the reverb | A DELAY SEND and a REVERB SEND a track. SPACE turns both |
+| The EFFECTS page, rows 4 and 5: TRACK, LENGTH, PITCH STEPS, DRUM; EFFECT, FADE, TOP SOUND, PITCH | The EDIT page's STEPS and SCENE rows. The EFFECTS page's rows 4 and 5 are the picked track's SENDS and TONE, and row 6 is a new MASTER EQ. FX held a second resets the row shown |
+| The EFFECTS page's eight MIX rows | The MIXER, the EDIT page's last row: LEVEL, FX, MUTE, SOLO |
+| The maqam page: K1 CENTS, K2 MAQAM, K3 ROOT, K4 DEPTH, SELECT the note | Two rows: MAQAM, ROOT, DEPTH, PITCH STEPS, and NOTE, ITS CENTS, KEY TOUCH, USB PORT. SELECT turns the maqam |
+| SELECT on the RHYTHM page: the rows | The rhythm, as PRESET |
+| The MIDImix: top knob EFFECT, bottom knob PITCH, SOLO HOLD, REC ARM recorded, BANK the rhythms, master fader the scene | Top knob PITCH, bottom knob SPACE, SOLO the knobs' EFFECTS layer, REC ARM freezes, BANK the picked track's sound, master fader the whole level. The scene fader is FADE, on the EDIT page |
+| SAVE on a used place replaced it | SAVE asks first, and SAVE again replaces it |
 
 ---
 
@@ -26,19 +50,21 @@ DABKE is a free firmware for the M-VAVE FM-1 that makes it an Arabic wedding key
 8. The left hand, bass and backing
 9. The drone
 10. Velocity and key pressure
-11. Recording
+11. Loops (SEQ)
 12. Steps and locks
-13. HOLD
-14. The arpeggio
-15. Saving
-16. The SOUND page
-17. The ORNAMENTS page
-18. The EFFECTS page
-19. The RHYTHM page
-20. The Akai MIDImix
-21. MIDI and USB audio
-22. Troubleshooting
-23. Credits
+13. Freezing (REC)
+14. PLAY
+15. The arpeggio
+16. Saving
+17. The SOUND page
+18. The ORNAMENTS page
+19. The EFFECTS page
+20. The RHYTHM page
+21. The EDIT page and the MIXER
+22. The Akai MIDImix
+23. MIDI and USB audio
+24. Troubleshooting
+25. Credits
 
 ---
 
@@ -50,7 +76,7 @@ You can also install DABKE with any FM-1 installer that takes a `.fwsc` package.
 
 To go back to another firmware, install that one the same way. When an installer starts writing over USB while DABKE runs, DABKE first saves anything it had not saved yet. When you install DABKE again, it goes on where you left it: its saves stay in the flash, unless the other firmware wrote over them (see below). To begin again from DABKE's first start instead, hold SAVE while you switch the FM-1 on (see Start fresh, in Saving).
 
-DABKE 0.17 loads what 0.16 saved, and it sounds as it did. Going back to 0.16 after 0.17 has saved starts 0.16's settings fresh. The kept sounds stay.
+DABKE 0.20 loads what 0.19 saved, whole (see Saving). DABKE 0.17 loads what 0.16 saved, and it sounds as it did. Going back to 0.16 after 0.17 has saved starts 0.16's settings fresh. The kept sounds stay.
 
 > Some other FM-1 firmwares keep their saves in the same part of the flash as DABKE. After you install one of them, DABKE can start fresh when you come back to it, as on its first start.
 
@@ -60,29 +86,34 @@ DABKE 0.17 loads what 0.16 saved, and it sounds as it did. Going back to 0.16 af
 
 | Control | What it does in DABKE |
 | --- | --- |
-| Keys | The 27 keys, F3 to G5, play the picked track (see The eight tracks). In step mode the white keys are the steps. |
-| OCT- · OCT+ | The octave, from -3 to +3. In step mode: the page of steps before or after. |
-| MASTER | The volume. |
-| SELECT | On the home page: the picked track's sound. On a knob page: the row. On the maqam page: the note to tune. On the save page: the place. |
-| ALGO | The tempo, 2 beats a minute a click. |
-| PRESET | The rhythm. |
-| K1 to K4 | On the home page: the picked track's EFFECT, FILTER, PITCH and VOLUME. With ALL picked: the volume of the lead, the drone, the left hand and the drums. On a knob page: the row's four knobs. |
-| HOME | The home page. In step mode, the step view. |
-| SEL | On the home page: tap it for the next track, or hold it and press one of the first eight white keys to pick that track. On any other page: the maqam page. |
-| ENV | The SOUND page. Press it again for the next row. |
-| LFO | The ORNAMENTS page. Again: the next row. |
-| FX | The EFFECTS page. Again: the next row. |
-| GLO | The RHYTHM page. Again: the next row. |
-| EDIT | Tap it: HOLD. Hold it and press a key: that note goes a quarter tone flat, or back. In step mode, with a step held: that step's locks go. |
-| SAVE | Keeps a track's sound in one of eight places (see Saving). |
+| Keys | The 27 keys, F3 to G5, play the picked track (see The eight tracks). With track 1 picked, the twelve lowest play as LEFT KEYS sets them, outside step mode. In step mode the white keys are the steps. |
+| HOME | The home page (in step mode, the step view). Again: its next row of four knobs. |
+| SEL, tapped | The MAQAM page, from any page. On it, SEL again: its next row. |
+| SEL, held | With one of the first eight white keys, F3 to F4: that track is picked, on any page. With the ninth, G4, or any above it: the background, for the EFFECTS page and the MIXER. The key plays nothing. |
+| ENV | The SOUND page. Again: its next row. |
+| LFO | The ORNAMENTS page. Again: its next row. |
+| GLO | The RHYTHM page. Again: its next row. |
+| FX, tapped | The EFFECTS page. On it, FX again: its next row, when you let go. |
+| FX, held a second | On the EFFECTS page: the row shown goes back to its start values. |
+| EDIT, tapped | The EDIT page: the steps' settings, the scene and the MIXER. Again: its next row. |
+| EDIT, held a second | Step mode on or off: the white keys are the picked track's steps. |
+| EDIT, with a key | Hold EDIT and press a key: that note a quarter tone flat, or back. In step mode, EDIT with a step held: that step's locks go. |
+| REC | Freezes the picked track: its notes sound on without the keys. Again: they are let go (see Freezing). |
+| SEQ, tapped | The picked track's loop: it records, closes and plays, stops, plays again (see Loops). |
+| SEQ, held a second | The picked track's loop cleared. |
+| PLAY | Stops everything that sounds. Again: it all comes back. With nothing to bring back: the rhythm starts. While the rhythm runs, held 0.4 s: a fill-in (see PLAY). |
 | ARP | Tap it: the arpeggio on or off. Hold it: the arpeggio's panel. |
-| SEQ | Tap it: step mode on or off. Hold it a second: every recording, every written step and every lock is cleared. |
-| PLAY | Starts the rhythm and every track. Tap it again to stop. While it runs, hold it for 0.4 s: a fill-in. |
-| REC | The picked track records when you let go. Press it again to stop. Hold it a second: the last take is gone. |
+| SAVE | KEEP THE SOUND: keeps a track's sound in one of eight places (see Saving). |
+| SELECT | On the home page: the picked track's sound. On the RHYTHM page: the rhythm. On the MAQAM page: the maqam, or on its TUNING row the note to tune. On the save page: the place. On any other page: the rows. |
+| PRESET | The rhythm. |
+| ALGO | The tempo, 2 beats a minute a click. |
+| OCT- · OCT+ | The octave, from -3 to +3. In step mode: the page of steps before or after. |
+| K1 to K4 | The four knobs of the row shown. |
+| MASTER | The volume. |
 
-PLAY is green while the rhythm runs. The button of the page you are on is lit. ARP is lit while the arpeggio is on, SEQ in step mode, REC while a track records or waits to, and EDIT while you hold it.
+The button of the page you are on is lit. PLAY is green while anything sounds. REC is lit while the picked track is frozen. SEQ is lit while the picked track's loop records, and at a second level while it plays. ARP is lit while the arpeggio is on. EDIT is lit while you hold it, and at a second level in step mode.
 
-After most actions, a short message takes the place of the top line for a moment, for example KEYS PLAY TRACK 3: LEFT HAND STRINGS.
+After most actions, a short message takes the place of the top line for a moment, for example TRACK 3: LEFT HAND STRINGS.
 
 ---
 
@@ -90,12 +121,36 @@ After most actions, a short message takes the place of the top line for a moment
 
 ![The home page with track 3 picked: STRINGS in the top line, lane 3 marked yellow](img/home-track3.png "Track 3 picked: its sound in the top line, its lane marked")
 
+The home page shows the singer over the eight tracks. Its four knobs work on the picked track, in three rows. K1 to K4 turn the row shown. HOME again shows the next row, and the screen says which, as in HOME: MIX.
+
+| Row | K1 | K2 | K3 | K4 |
+| --- | --- | --- | --- | --- |
+| 1 TRACK | PITCH | FILTER | SPACE | LEVEL |
+| 2 MIX | DELAY SEND | REVERB SEND | BASS | SOUND |
+| 3 PLAYING | HOW OFTEN | VIB DEPTH | GLIDE | ORNAMENT |
+
+Row 1 is the picked track's strip as the MIDImix has it: its top knob, middle knob, bottom knob and fader.
+
+| Knob | What it does |
+| --- | --- |
+| PITCH | The track's pitch, an octave down to an octave up, drums too. PITCH STEPS says whether it moves by semitones or quarter tones. +1 1/4 means one and a quarter semitones up. |
+| FILTER | Left: DARK, a low-pass that closes down to 150 Hz. OPEN in the middle. Right: THIN, a high-pass that rises to 2.5 kHz. |
+| SPACE | DELAY SEND and REVERB SEND together, each moved by as much. It shows their middle. |
+| LEVEL | The track's volume, 0 to 100. Track 2's is DRONE VOL. |
+| DELAY SEND | How much of the track goes into the delay, 0 to 100. |
+| REVERB SEND | How much of the track goes into the reverb, 0 to 100. |
+| BASS | LESS or MORE of the lows under 150 Hz, FLAT in the middle. |
+| SOUND | The track's sound, as SELECT on the home page turns it. |
+| HOW OFTEN, VIB DEPTH, GLIDE, ORNAMENT | The same knobs as on the SOUND and ORNAMENTS pages, for the sound those pages show (see The SOUND page). |
+
+In step mode HOME shows the step view instead, with the row shown on K1 to K4 (see Steps and locks).
+
 | Part | What it shows |
 | --- | --- |
-| Top line | The picked track's sound in a white box, with a small sign for its kind. With ALL picked, track 1's sound. Then the maqam and its root, and CHANGED if you retuned a note by hand. At the right, the tempo, with a metronome that swings on the beats while the rhythm runs. |
+| Top line | The picked track's sound in a white box, with a small sign for its kind. Then the maqam and its root, and CHANGED if you retuned a note by hand. At the right, the tempo, with a metronome that swings on the beats while the rhythm runs. |
 | The singer | The singer claps on the beat and dances while the rhythm runs. HOME SCENE on the ORNAMENTS page picks the picture. |
-| Lanes | The eight tracks, a lane each, numbered 1 to 8. A yellow number is the picked track, a red one is recording. A small yellow bar by the number: the track plays something of yours. Along the lane, the track's steps: a block where something of yours begins, a low grey block where the rhythm plays, a blue line for a lock, amber for the step playing now. The number at the right is the track's length in steps. A muted track is dimmed. |
-| Bottom line | The rhythm, and the one added to it. While a track records: its number and bar, in red. At the right: the HOLD mark while notes are held, how the sound on the SOUND page plays (LEGATO, MONO or POLY) and its ornament (lit while one is on), ARP (lit while on, with a small padlock when ARP LATCH is on), REC while recording, and SYNC (lit when SYNC START is on). |
+| Lanes | The eight tracks, a lane each, numbered 1 to 8. A yellow number is the picked track, a red one is recording its loop. A small yellow bar by the number: the track plays something of yours. Along the lane, the track's steps: a block where something of yours begins, a low grey block where the rhythm plays, a blue line for a lock, amber for the step playing now. The number at the right is the track's length in steps. A muted track is dimmed. |
+| Bottom line | The rhythm, and the one added to it. While a loop records: its track and bar, in red. At the right: a small mark of held keys while notes are frozen, how the sound on the SOUND page plays (LEGATO, MONO or POLY) and its ornament (lit while one is on), ARP (lit while on, with a small padlock when ARP LATCH is on), a red REC while a loop records, and SYNC (lit when SYNC START is on). |
 
 HOME SCENE (the ORNAMENTS page, row 4, K1) has four pictures: PORTRAIT, STAGE (as DABKE starts), DANCERS and CASSETTE.
 
@@ -121,23 +176,29 @@ HOME SCENE (the ORNAMENTS page, row 4, K1) has four pictures: PORTRAIT, STAGE (a
 
 ### Picking a track
 
-On the home page, tap SEL to go round: ALL, track 1, track 2 and so on to track 8, then ALL again. Or hold SEL and press one of the first eight white keys, F3 for track 1 up to F4 for track 8. While SEL is held those eight keys light up, the picked one brightest. The screen says what the keys play now, for example KEYS PLAY TRACK 4: ROUND.
+One of the eight tracks is always picked: DABKE starts on track 1. To pick another, hold SEL and press one of the first eight white keys, F3 for track 1 up to F4 for track 8. This works on any page, and the key plays nothing. While SEL is held those eight keys light up, the picked one brightest. The screen says the track and its sound, for example TRACK 4: ROUND. TRACK on the EDIT page (row 1, K1) picks a track too.
+
+Tapped alone, SEL opens the MAQAM page (see Maqam and quarter tones).
+
+### The background
+
+Hold SEL and press the ninth white key, G4, or any white key above it: the background is picked (BACKGROUND PICKED: ON FX AND THE MIXER). The background is the rhythm's drums: every track with a drum sound. The EFFECTS page's SENDS and TONE rows and the MIXER then work on it (see The EFFECTS page, and The EDIT page and the MIXER). The keys still play the picked track. Hold SEL and press a track's key to give the rows back to that track. While SEL is held the ninth key is lit too, brighter while the background is picked.
 
 ### What the keys play
 
-The keys play the picked track over the whole keyboard, whether the rhythm runs or not. A note sound plays notes. A drum sound plays its drums in turn up the keys: the kick on every key, or on track 6 dum, tek, ka, slap, tabl, stick and daf, then dum again. While a track records, the keys play that track.
+The keys play the picked track over the whole keyboard, whether the rhythm runs or not. A note sound plays notes. A drum sound plays its drums in turn up the keys: the kick on every key, or on track 6 dum, tek, ka, slap, tabl, stick and daf, then dum again.
 
-With ALL picked, the keys play as LEFT KEYS sets them (the RHYTHM page, row 4, K1):
+Track 1 plays the keys as LEFT KEYS sets them (the RHYTHM page, row 4, K1):
 
-- SAME: the whole keyboard plays the lead.
-- SPLIT: the twelve lowest keys, F3 to E4, play the left hand's own sound (track 3), the rest the lead.
-- BASS: the twelve lowest keys give the bass and the backing their chord, the rest play the lead.
+- SAME: the whole keyboard plays track 1, the lead.
+- SPLIT: the twelve lowest keys, F3 to E4, play the left hand's own sound (track 3), the rest track 1.
+- BASS: the twelve lowest keys give the bass and the backing their chord, the rest play track 1.
 
-With SPLIT or BASS, those twelve keys are lit dim.
+With SPLIT or BASS, those twelve keys are lit dim. In step mode LEFT KEYS does not split the keys: every key is the picked track's, track 1's too. Any other track picked: every key plays that track.
 
 ### Any sound on any track
 
-With a track picked, turn SELECT on the home page to change its sound. It goes through the track's own family first, then the others in this order: LEAD, DRONE, LEFT HAND, BASS, KICK, DARBUKA, CLAPS, RIQ. LEAD's sounds are the 22 ready sounds, then the MY SOUNDs you kept (see Sounds). A note sound makes the track a track of notes: its keys play notes and it records loops. A drum sound makes it a drum track: its keys play drums and it records steps.
+Turn SELECT on the home page to change the picked track's sound. SOUND, K4 of the home page's MIX row, does the same, and so do BANK LEFT and BANK RIGHT on the MIDImix. It goes through the track's own family first, then the others in this order: LEAD, DRONE, LEFT HAND, BASS, KICK, DARBUKA, CLAPS, RIQ. LEAD's sounds are the 22 ready sounds, then the MY SOUNDs you kept (see Sounds). On track 1 a lead sound brings its effects too. A note sound makes the track a track of notes: its keys play notes and it records loops. A drum sound makes it a drum track: its keys play drums and it records steps.
 
 Each track keeps its own sound. SAZ on track 2 and BUZUQ TREMOLO on track 3 play at the same time, each with its own settings. The screen names a lead sound by its own name, as in TRACK 2: SAZ. A sound of another family whose name is shared gets its family in front, as in TRACK 2: DRONE ORGAN.
 
@@ -145,17 +206,17 @@ Each track keeps its own sound. SAZ on track 2 and BUZUQ TREMOLO on track 3 play
 
 ### Yours and the rhythm's
 
-The rhythm plays tracks 5 to 8, and with LEFT KEYS on BASS also the bass line (track 4) and the backing (track 3). Once you record, write or remove anything on one of those tracks, it is yours: the rhythm, its variations, its added voices and its fill-ins leave it alone. Cleared, it follows the rhythm again.
+The rhythm plays tracks 5 to 8, and with LEFT KEYS on BASS also the bass line (track 4) and the backing (track 3). Once you record, write or remove anything on one of those tracks, it is yours: the rhythm, its variations, its added voices and its fill-ins leave it alone. Cleared with SEQ held a second, it follows the rhythm again.
 
 ---
 
 ## 5. Sounds
 
-The ready sounds are MIJWIZ, MIJWIZ BUZZ, ZURNA, KEY LEAD, FAST LEAD, WHISTLE LEAD, SQUARE LEAD, VIOLIN, STRINGS, NEY, ACCORDION, ORGAN, BUZUQ, BUZUQ TREMOLO, SAZ, OUD, QANUN, QANUN TREMOLO, BRASS, WEDDING ZURNA, CASSETTE MIJWIZ and SHAABI LEAD. After them come the sounds you kept, MY SOUND 1 to MY SOUND 8. With ALL picked, SELECT on the home page goes through them for track 1. With a track picked, they are its LEAD sounds (see Any sound on any track).
+The ready sounds are MIJWIZ, MIJWIZ BUZZ, ZURNA, KEY LEAD, FAST LEAD, WHISTLE LEAD, SQUARE LEAD, VIOLIN, STRINGS, NEY, ACCORDION, ORGAN, BUZUQ, BUZUQ TREMOLO, SAZ, OUD, QANUN, QANUN TREMOLO, BRASS, WEDDING ZURNA, CASSETTE MIJWIZ and SHAABI LEAD. After them come the sounds you kept, MY SOUND 1 to MY SOUND 8. SELECT on the home page goes through them on the picked track: they are its LEAD sounds (see Any sound on any track).
 
-Each track keeps its own full sound: its instrument, the SOUND page's knobs (apart from VEL AMOUNT and the arpeggio), the vibrato and the ornaments. The effects (the EFFECTS page's first three rows), the tempo, the maqam, the rhythm, the mixer, KEY TOUCH, PRESSURE, VEL AMOUNT and the arpeggio are shared by all the tracks.
+Each track keeps its own full sound: its instrument, the SOUND page's knobs (apart from VEL AMOUNT and the arpeggio), the vibrato and the ornaments. A track's LEVEL, sends, FILTER, BASS, PITCH and MUTE are its own too, and stay when its sound changes. The effects (the EFFECTS page's first three rows and the MASTER EQ), the tempo, the maqam, the rhythm, KEY TOUCH, PRESSURE, VEL AMOUNT and the arpeggio are shared by all the tracks.
 
-Picked with ALL, a ready sound goes on track 1 and also sets the effects: WEDDING ZURNA brings its PA and drive, CASSETTE MIJWIZ its tape wobble and hiss. Picked on a track, it sets that track's sound alone and never the effects, because the effects work on the whole song. With ALL picked, a kept sound also brings back the effects and which sound each track plays (see Keep a sound). The drone, the volumes, the mixer, the rhythm, the arpeggio and the maqam stay as they are.
+On track 1, a ready sound or a MY SOUND also sets the effects on the EFFECTS page's first three rows, as ALL did in 0.19: WEDDING ZURNA brings its PA and drive, CASSETTE MIJWIZ its tape wobble, age and hiss. On any other track it sets that track's sound alone and never the effects, because the effects work on the whole song. Picking a sound never changes another track's sound. The drone, the levels, the rhythm, the arpeggio and the maqam stay as they are.
 
 ### The lead's instruments
 
@@ -196,17 +257,25 @@ DABKE plays up to 16 notes at once, the drone apart. When the FM-1 is busy it pl
 
 ## 6. Maqam and quarter tones
 
-![The maqam page: BAYATI on D, its E a quarter tone flat, the scale written out under the keys](img/maqam.png "The maqam page: BAYATI on D")
+![The MAQAM page: BAYATI on D, its E a quarter tone flat, the scale written out under the keys](img/maqam.png "The MAQAM page: BAYATI on D")
 
-Press SEL on any page but the home page to open the maqam page. It shows the twelve notes of an octave, C to B, as a keyboard. Every note of the maqam is white and every note outside it is grey, on the black keys as on the white ones. The black keys are the short, narrow ones between the white keys, each with a black edge. A retuned note is amber, with its cents. The red frame marks the note SELECT points at. Under the keys, the maqam's scale is written out, with a half-flat sign on each quarter-tone note.
+Tap SEL on any page to open the MAQAM page at its first row. SEL again shows its other row. The page shows the twelve notes of an octave, C to B, as a keyboard. Every note of the maqam is white and every note outside it is grey, on the black keys as on the white ones. The black keys are the short, narrow ones between the white keys, each with a black edge. A retuned note is amber, with its cents. The red frame marks the note the TUNING row tunes. Under the keys, the maqam's scale is written out, with a half-flat sign on each quarter-tone note.
+
+| Row | K1 | K2 | K3 | K4 |
+| --- | --- | --- | --- | --- |
+| 1 MAQAM | MAQAM | ROOT | DEPTH | PITCH STEPS |
+| 2 TUNING | NOTE | ITS CENTS | KEY TOUCH | USB PORT |
 
 | Control | What it does |
 | --- | --- |
-| SELECT | Moves the red frame along the twelve notes. |
-| K1 CENTS | That note's tuning, from -100 to +100 cents. |
-| K2 MAQAM | The maqam. Each comes on its usual root, with its notes tuned. |
-| K3 ROOT | Moves the maqam to another root. |
-| K4 DEPTH | How flat a quarter tone flat is: 20 to 80 cents, 50 as DABKE starts. |
+| SELECT | On the MAQAM row: the maqam. On the TUNING row: the note to tune, as NOTE. |
+| MAQAM | The maqam. Each comes on its usual root, with its notes tuned. |
+| ROOT | Moves the maqam to another root. |
+| DEPTH | How flat a quarter tone flat is: 20 to 80 cents, 50 as DABKE starts. |
+| PITCH STEPS | FULL or MICRO: how the tracks' PITCH knobs move (see The EDIT page and the MIXER). |
+| NOTE | The note to tune, C to B: the one in the red frame. |
+| ITS CENTS | That note's tuning, from -100 to +100 cents. |
+| KEY TOUCH, USB PORT | The same as on the ORNAMENTS page, row 4. |
 
 DABKE starts on BAYATI ON D. The maqamat, on their usual roots:
 
@@ -230,9 +299,9 @@ DABKE starts on BAYATI ON D. The maqamat, on their usual roots:
 
 ### A quarter tone on any note
 
-Hold EDIT and press a key: that note goes a quarter tone flat, in every octave. Press it again with EDIT held: it is back. This works on every page. While EDIT is held, the keys tuned flat are lit dim. For any other amount, use SELECT and K1 CENTS on the maqam page.
+Hold EDIT and press a key: that note goes a quarter tone flat, in every octave. Press it again with EDIT held: it is back. This works on every page. While EDIT is held, the keys tuned flat are lit dim. In step mode the white keys are steps, so there EDIT and a white key removes that step's locks, and the black keys still tune. For any other amount, use NOTE and ITS CENTS on the MAQAM page's TUNING row.
 
-Once a note is tuned by hand, the maqam page says CHANGED BY HAND, and the home page's top line says CHANGED. Choosing a maqam or a root again tunes the notes as the maqam has them.
+Once a note is tuned by hand, the MAQAM page says CHANGED BY HAND, and the home page's top line says CHANGED. Choosing a maqam or a root again tunes the notes as the maqam has them.
 
 The tuning goes to every track's notes, the drone, the arpeggio and notes coming in over MIDI.
 
@@ -240,7 +309,7 @@ The tuning goes to every track's notes, the drone, the arpeggio and notes coming
 
 ## 7. Rhythms and tempo
 
-Turn PRESET to change the rhythm. With the rhythm stopped, the tempo goes to the new rhythm's own. While it runs, the tempo stays. Turn ALGO for the tempo, from 40 to 240.
+Turn PRESET to change the rhythm, or SELECT on the RHYTHM page. With the rhythm stopped, the tempo goes to the new rhythm's own. While it runs, the tempo stays. Turn ALGO for the tempo, from 40 to 240.
 
 | Rhythm | Group | Its tempo |
 | --- | --- | --- |
@@ -268,7 +337,7 @@ Turn PRESET to change the rhythm. With the rhythm stopped, the tempo goes to the
 
 Each rhythm has its own bass line and backing pattern for the left hand.
 
-PLAY starts the rhythm and every track's loops and steps. PLAY again stops everything. While the rhythm runs, hold PLAY for 0.4 s: a fill-in plays in the last two beats of the bar (FILL IN), and the rhythm goes on.
+PLAY starts the rhythm, and every track's loop and steps play with it. PLAY again stops everything, and the next PLAY brings it back (see PLAY). While the rhythm runs, hold PLAY for 0.4 s: a fill-in plays in the last two beats of the bar (FILL IN), and the rhythm goes on.
 
 The RHYTHM page has the rest: swing, accents, variations, added claps, riq, sagat and kick, automatic fill-ins, a second rhythm on top, SYNC START and the drum kit (see The RHYTHM page).
 
@@ -276,13 +345,13 @@ The RHYTHM page has the rest: swing, accents, variations, added claps, riq, saga
 
 ### Your own rhythm
 
-Make a rhythm your own by writing or recording on the drum tracks, 5 to 8, in step mode or live (see Steps and locks). Each track you change is yours and the others go on following the rhythm. Change the rhythm with PRESET and your tracks stay as you made them, while the untouched ones follow the new rhythm.
+Make a rhythm your own by writing or recording on the drum tracks, 5 to 8, in step mode or live with SEQ (see Loops, and Steps and locks). Each track you change is yours and the others go on following the rhythm. Change the rhythm with PRESET and your tracks stay as you made them, while the untouched ones follow the new rhythm.
 
 ---
 
 ## 8. The left hand, bass and backing
 
-These work with ALL picked, as LEFT KEYS sets the twelve lowest keys (F3 to E4).
+These work with track 1 picked, outside step mode, as LEFT KEYS sets the twelve lowest keys (F3 to E4).
 
 ![The RHYTHM page, row 4: LEFT KEYS, BASS PLAYS, BACKING and CHORD TYPE](img/rhythm-4.png "The RHYTHM page, row 4")
 
@@ -296,13 +365,13 @@ With LEFT KEYS on BASS, hold a left key: its note is the chord's root (with seve
 | BACKING | STABS: short chords on the rhythm's backing hits. HELD: the chord held. ARPEGGIO: the maqam's notes in turn, eighths. NONE. |
 | CHORD TYPE | FIFTHS: root, fifth and octave. MAQAM: the root with the maqam's third and fifth. |
 
-LEFT SOUND, BASS SOUND, BASS TONE and BASS DECAY are on row 5. With ALL picked, K3 on the home page turns the left hand's volume, with the bass line's when LEFT KEYS is on BASS.
+LEFT SOUND, BASS SOUND, BASS TONE and BASS DECAY are on row 5. The left hand's volume is track 3's LEVEL and the bass line's is track 4's: their MIDImix faders, or LEVEL with that track picked.
 
 Record or write something on track 3 or 4 and it is yours: the automatic backing or bass line on that track goes silent until you clear it.
 
 ### SYNC START
 
-With SYNC START on (the RHYTHM page, row 3, K4), the first left key starts the rhythm. It needs ALL picked and LEFT KEYS on SPLIT or BASS.
+With SYNC START on (the RHYTHM page, row 3, K4), the first left key starts the rhythm. It needs track 1 picked and LEFT KEYS on SPLIT or BASS.
 
 ---
 
@@ -319,9 +388,9 @@ The drone holds the maqam's tonic, tuned as the maqam has it. It sounds while yo
 | DRONE VOL | 0 to 100. Turned up while the drone is OFF, it switches the drone on, on the tonic. |
 | DRONE PITCH | LOW (C2 to B2) or MIDDLE (an octave up). |
 
-With ALL picked, K2 on the home page is the drone's volume. A ready sound leaves the drone as it is. Track 1's TRANSPOSE, TUNE and vibrato move the drone too.
+DRONE VOL is also track 2's LEVEL: its MIDImix fader, or LEVEL with track 2 picked. A ready sound leaves the drone as it is. Track 1's TRANSPOSE, TUNE and vibrato move the drone too.
 
-The drone is track 2. With it picked, a key moves the drone to that note, in the drone's own octave. It goes back to the tonic when the rhythm starts or stops. Record on track 2 and the drone moves with the loop. With the drone's track picked, the SOUND and ORNAMENTS pages edit track 1's sound (see The SOUND page).
+The drone is track 2. With it picked, a key moves the drone to that note, in the drone's own octave. It goes back to the tonic when the rhythm starts or stops. Record a loop on track 2 with SEQ and the drone moves with the loop. Starting a loop on track 2 with DRONE on OFF switches the drone on, on the tonic. With the drone's track picked, the SOUND and ORNAMENTS pages edit track 1's sound (see The SOUND page).
 
 ---
 
@@ -329,7 +398,7 @@ The drone is track 2. With it picked, a key moves the drone to that note, in the
 
 ### Velocity
 
-KEY TOUCH (the ORNAMENTS page, row 4, K4) has two choices. VELOCITY, as DABKE starts: each note lands as hard as you play it, on all 27 keys. PLAIN: every note lands the same, at 100. KEY TOUCH sets only how hard a note lands. VEL AMOUNT (the SOUND page, row 4, K2) sets how much that changes the loudness: at 0, every note is equally loud. Both are shared by all the tracks.
+KEY TOUCH (the ORNAMENTS page, row 4, K4, or the MAQAM page's TUNING row, K3) has two choices. VELOCITY, as DABKE starts: each note lands as hard as you play it, on all 27 keys. PLAIN: every note lands the same, at 100. KEY TOUCH sets only how hard a note lands. VEL AMOUNT (the SOUND page, row 4, K2) sets how much that changes the loudness: at 0, every note is equally loud. Both are shared by all the tracks.
 
 ### Pressure
 
@@ -349,41 +418,45 @@ BEND RANGE is part of each track's sound, on the SOUND page, row 4, K3: 1/4 TONE
 
 Only the 20 lowest keys sense pressure: F3 to C5. The top seven keys, C#5 to G5, sense velocity but not pressure.
 
-The pressure goes to the notes the keys are playing, on whichever track that is: the lead, the left hand, the bass line, any note sound. With ALL picked, each key's pressure goes to its own track. A light touch does nothing, so a resting finger does not bend. Drum keys have no pressure. The pressure does not move a loop's notes as they play back, and it is not recorded. It does not bend the drone. BRIGHTER changes every instrument but ORGAN, BUZUQ, OUD and QANUN, and it does not change the bass sounds.
+The pressure goes to the notes the keys are playing, on whichever track that is: the lead, the left hand, the bass line, any note sound. With track 1 picked and LEFT KEYS on SPLIT or BASS, each key's pressure goes to its own track. A light touch does nothing, so a resting finger does not bend. Drum keys have no pressure. The pressure does not move a loop's notes as they play back, and it is not recorded. It does not bend the drone. BRIGHTER changes every instrument but ORGAN, BUZUQ, OUD and QANUN, and it does not change the bass sounds.
 
 With KEY TOUCH on PLAIN and PRESSURE on NOTHING, the keys work as plain switches.
 
 ---
 
-## 11. Recording
+## 11. Loops (SEQ)
 
-Each track records what you play. A track with a note sound records a loop. A drum track records hits on its steps.
+SEQ is the picked track's loop. A track with a note sound records a loop of what you play on it. A drum track records hits on its steps.
 
-1. Pick the track. With ALL picked, REC records track 1, the lead.
-2. Press REC and let go. If the rhythm runs, the track records at once. If not, it waits: the screen says TRACK 1: PLAY TO START and REC shows framed in red. Your first key starts the rhythm and the recording, or press PLAY.
-3. Play. The bottom line counts the bars, in red.
-4. Press REC again. The recording stops at once, and the loop plays from the next bar. The screen says what was kept, for example TRACK 1: 1 BAR, 1 TAKE.
+1. Pick the track: hold SEL and press its white key.
+2. Tap SEQ. If the rhythm runs, the track records at once (TRACK 1 LOOP RECORDING). If not, it waits for your first key, which starts the rhythm and the recording (TRACK 1 LOOP RECORDING: A KEY STARTS IT).
+3. Play. The bottom line counts the bars, in red, and SEQ is lit.
+4. Tap SEQ again. The recording closes. It keeps every bar you began, and the loop plays from the next bar, round after round. The screen says how long it is, for example TRACK 1 LOOP PLAYING, 2 BARS. With nothing played, there is no loop (TRACK 1: NOTHING PLAYED, NO LOOP).
 
-![Waiting to record: TRACK 1: PLAY TO START at the bottom, REC framed in red](img/home-rec-wait.png "REC with the rhythm stopped: it waits for your first key")
+![Waiting for the first key: the track waiting in red at the bottom, REC framed in red](img/home-rec-wait.png "SEQ with the rhythm stopped: the loop waits for your first key")
 ![Recording: lane 1 red, TRACK 1: BAR 2 at the bottom, REC lit red](img/home-recording.png "Recording track 1, in its second bar")
 
-Notes land on the nearest step of the rhythm, or of the arpeggio when it is on and faster. A first take keeps every bar you began, up to eight bars. At eight it ends by itself and plays.
+Tap SEQ while the loop plays: it stops, and is kept (TRACK 1 LOOP STOPPED). Tap it again: it plays again from the next bar (TRACK 1 LOOP PLAYING). With the rhythm stopped, the rhythm starts with it. SEQ is lit at a second level while the picked track's loop plays.
 
-REC on a track that has a loop records over it: the bottom line says ADDING, and what you play is a new take, the loop as long as before. Stopping the rhythm with PLAY also ends a recording, and keeps it. One track records at a time.
+Hold SEQ a second: the track's loop is cleared, every take of it and its locks with it (TRACK 1 LOOP CLEARED). On a track with nothing of yours, the screen says TRACK 1: NO LOOP HERE. A drum track cleared follows the rhythm again. If the press had started the rhythm to play a stopped loop again, the clear stops the rhythm again.
 
-Hold REC a second, with nothing recording: the picked track's last take is gone (LAST TAKE GONE). Again: the one before. With nothing left, the screen says TRACK 3 EMPTY, or BACK TO THE RHYTHM for a track the rhythm plays. A track keeps 16 takes apart; past that, the oldest two become one.
+SEQ acts on the press, so a recording starts and ends where you tap. The screen speaks when you let go, so holding SEQ to clear never says RECORDING. A press shorter than a second is a tap, and a hold on a playing loop first stops it, then clears it.
 
-A drum track records the drums you play on the keys, each hit on the step it falls on. It is yours from the first hit. With the rhythm stopped, your first hit starts it.
+A track with a loop is not recorded over: SEQ stops it or plays it again. To record that track anew, clear it first. Your keys play over a loop that plays, and are not recorded.
 
-While a track records, turning its EFFECT, FILTER or PITCH (K1 to K3 on the home page, or its MIDImix knobs) is kept as locks on the steps the recording passes, so the move comes back with the loop. Its volume is not kept.
+Notes land on the nearest step of the rhythm, or of the arpeggio when it is on and faster. A recording keeps up to eight bars. At eight it closes by itself and plays, and the screen says so. One track records at a time: SEQ on another track's empty loop closes the recording that was going, which plays, and starts the new one. PLAY stopping the rhythm also closes a recording, and keeps it. A recording still waiting for its first key starts with the rhythm when PLAY starts it.
 
-The loops play whenever the rhythm runs. A track holds up to 128 notes, and all the tracks 512: past that, NO ROOM FOR MORE NOTES. Hold SEQ a second to clear every recording, every written step and every lock (ALL RECORDINGS CLEARED).
+A drum track records the drums you play on the keys, each hit on the step it falls on. It is yours from the first hit. With the rhythm stopped, your first hit starts it. A drum track's loop is its own steps: SEQ stops them and plays them again as it does a loop, and SEQ held a second gives the track back to the rhythm.
+
+While a track records, turning its PITCH, FILTER, SPACE, DELAY SEND or REVERB SEND (on the home page, or its MIDImix knobs) is kept as locks on the steps the recording passes, so the move comes back with the loop. Its LEVEL is not kept.
+
+The loops play whenever the rhythm runs, apart from those SEQ stopped. A track holds up to 128 notes, and all the tracks 512: past that, NO ROOM FOR MORE NOTES.
 
 ---
 
 ## 12. Steps and locks
 
-Tap SEQ for step mode. It starts nothing: the rhythm and the loops go on as they were. With ALL picked, it picks the track you picked last (track 1 the first time). In step mode SEL goes round tracks 1 to 8, and HOME shows the step view.
+Hold EDIT a second for step mode (STEP MODE: WHITE KEYS ARE STEPS). It starts nothing: the rhythm and the loops go on as they were. HOME shows the step view of the picked track, and EDIT is lit at a second level. SEL held and a white key still picks another track.
 
 ![The step view of the kick: its steps on 1, 5, 9 and 13, outlined: the rhythm's](img/step-kick.png "The step view: track 5, the rhythm's steps")
 ![A step held and K2 turned: STEP 3: FILTER DARK 20 at the top, the value in blue](img/step-lock-held.png "Step 3 held, its filter locked")
@@ -395,15 +468,15 @@ Tap SEQ for step mode. It starts nothing: the rhythm and the loops go on as they
 | Upper half | A drum track: its drums lane by lane. A note track: its notes by pitch, as long as they sound. |
 | Row of steps | The steps as the white keys have them: filled where something of yours begins, outlined where the rhythm plays, dotted where empty. A blue padlock on a locked step, a line under the step playing, a frame round the step held. |
 | Two lines | The track and whose it is (YOURS, THE RHYTHM'S or EMPTY) and its length. What a tap adds, and the track's locks counted. |
-| K1 to K4 | The track's EFFECT, FILTER, PITCH and VOLUME. |
+| K1 to K4 | The home page's row shown: the picked track's PITCH, FILTER, SPACE and LEVEL first. HOME again: the next row. |
 
 ### The white keys are steps
 
 The 16 white keys are the steps of the page shown, from the left. A white key is lit where something begins, at a second level where a lock is, and dim on the step playing. The black keys go on playing the track's sound.
 
-A page is a bar: 16 steps, or as many whole bars of the rhythm as fit in 16 (12 in 6/8, 14 in 7/8, 10 in 10/8). OCT- and OCT+ show the page before and after. OCT+ on a track one bar long gives it a second bar, with the first bar copied in if the second is empty. LENGTH (the EFFECTS page, row 4, K2) sets one bar or two, and for a loop played live, also the length it was played.
+A page is a bar: 16 steps, or as many whole bars of the rhythm as fit in 16 (12 in 6/8, 14 in 7/8, 10 in 10/8). OCT- and OCT+ show the page before and after. OCT+ on a track one bar long gives it a second bar, with the first bar copied in if the second is empty. LENGTH (the EDIT page, row 1, K2) sets one bar or two, and for a loop played live, also the length it was played.
 
-- Tap an empty step. A drum track gets the drum shown after A TAP ADDS: the drum you played last on it, or the one DRUM picks (the EFFECTS page, row 4, K4). A note track gets the notes HOLD holds on it, or else the note or chord you played last on it, or else the maqam's tonic, one step long.
+- Tap an empty step. A drum track gets the drum shown after A TAP ADDS: the drum you played last on it, or the one DRUM picks (the EDIT page, row 1, K3). A note track gets the notes frozen on it, or else the note or chord you played last on it, or else the maqam's tonic, one step long.
 - Tap a step with something on it: it goes, and its locks with it.
 - Hold a step and press keys. On a note track, their notes become the step's in place of what was there, up to four. On a drum track, the black key's drum becomes the step's only drum.
 - A key held longer than 0.4 s and let go with nothing done changes nothing.
@@ -412,38 +485,60 @@ A page is a bar: 16 steps, or as many whole bars of the rhythm as fit in 16 (12 
 
 Hold a step and turn a knob: that knob is locked on that step. From that step to the track's next step with a note or a hit, the knob holds the lock's value, then goes back. The top line names the step's locks, for example STEP 3: FILTER DARK 20, and the knob's value shows in blue. A small padlock by a knob's name means the track has a lock of that knob somewhere.
 
-Most knobs that turn through values can be locked: K1 to K4 of the step view, the knobs of the SOUND, ORNAMENTS, EFFECTS and RHYTHM pages, and the MIDImix's knobs and faders. On a knob page in step mode, the track's steps show under the knobs, so you can hold a step and lock that page's knob. A lock of one of a sound's knobs, such as TONE or VIB DEPTH, works on the sound the page shows and no other: VIB DEPTH locked on a step of track 2, with SAZ on it, changes track 2's vibrato, and the other tracks keep theirs. When a control cannot be locked, the screen says so: the tempo, the rhythm, choices such as ORNAMENT, a track's mute and FADE are among them.
+Most knobs that turn through values can be locked: K1 to K4 of the step view, the knobs of the SOUND, ORNAMENTS, EFFECTS and RHYTHM pages, and the MIDImix's knobs and faders. On a knob page in step mode, the track's steps show under the knobs, so you can hold a step and lock that page's knob. A lock of one of a sound's knobs, such as TONE or VIB DEPTH, works on the sound the page shows and no other: VIB DEPTH locked on a step of track 2, with SAZ on it, changes track 2's vibrato, and the other tracks keep theirs. When a control cannot be locked, the screen says so: the tempo, the rhythm, choices such as ORNAMENT, the MIXER's MUTE, FX and SOLO, the MASTER EQ and FADE are among them.
 
-![The EFFECTS page in step mode: TRACK, LENGTH, PITCH STEPS and DRUM, the kick's steps under them](img/fx-track.png "A knob page in step mode: the steps under the knobs")
+![A knob page in step mode: TRACK, LENGTH, PITCH STEPS and DRUM over the kick's steps](img/fx-track.png "A knob page in step mode: the steps under the knobs")
 
 - An empty step held while a knob turns gets a lock and nothing else. Tap it to remove the lock.
 - On a drum track, hold a step and turn SELECT: that step's hits play another drum sound, the track's own family first, then the other drum families. Turn back to the track's own sound to remove it. Note sounds cannot be locked to a step.
-- EDIT with a step held removes that step's locks. Hold EDIT a second with no step held: all the picked track's locks go.
+- EDIT with a step held removes that step's locks. SEQ held a second removes all the track's locks, with its loop.
 - There is room for 240 locks in all. Past that, NO ROOM FOR MORE LOCKS.
 
-Tap SEQ again to leave step mode. The track stays picked and the keys play it.
+Hold EDIT a second again to leave step mode (STEP MODE OFF). The track stays picked and the keys play it.
 
 ---
 
-## 13. HOLD
+## 13. Freezing (REC)
 
-Tap EDIT on any page, or SOLO on the MIDImix, while you hold keys: their notes go on sounding after you let go, on the track they were played on (HOLD: 2 NOTES). The held keys stay lit, and the bottom line shows the HOLD mark. Notes you play meanwhile are not held. Tap EDIT with other keys down: those are held instead. Tap it with no key down: the held notes stop (HOLD OFF).
+REC freezes the picked track: the notes of its keys down sound on after you let go (TRACK 1 FROZEN). With no key down, REC freezes the note or chord you played last on that track, or else the maqam's tonic. REC is lit while the picked track holds anything, and the keys of its frozen notes are lit bright.
 
-Press the key of a held note again and that note stops at once, while the other held notes go on (HOLD: 1 NOTE); that press plays nothing else, and its key goes dark. This works whatever track the keys play now and whatever the octave. A note held from a MIDI keyboard stops the same way when you play it again there.
+On a frozen track:
 
-OCT- and OCT+ take the held notes up or down an octave with their keys, and they stay held: the same key still stops its note. The left keys set to SPLIT or BASS keep their pitch, as they always do. The track's PITCH, its TRANSPOSE and TUNE, and a quarter tone set with EDIT move the held notes too, and they stay there. A pitch wheel and the keys' pressure bend held notes only while you move them.
+- A lead sound that plays one note at a time (PLAY on LEGATO or MONO, the arpeggio off): a key moves the frozen note to that key's note, with no new attack, and it stays frozen there.
+- A POLY lead sound, the left hand and the bass line: each key you press is frozen too.
+- Press the key of a frozen note again and that note stops, while the others go on. When the last one stops, the screen says TRACK 1 LET GO and the track is no longer frozen.
 
-A new sound on a track keeps its held notes sounding, in the new sound. A drum sound holds no notes, so on a drum sound they stop.
+REC again lets everything on the track go (TRACK 1 LET GO). A drum sound holds no note: REC on a drum track says TRACK 5: A DRUM SOUND HOLDS NO NOTE.
 
-A held left key keeps its chord for the bass and backing. With the arpeggio on, held notes go on arpeggiating; the key of a held note takes it out of the arpeggio, with ARP LATCH on too. In step mode the white keys are steps, so they do not stop held notes there, and the held notes are what a tap adds. While recording, a held note is kept for as long as it sounds. Nothing is held when DABKE starts.
+Freeze several tracks and they sound together while the keys play another. REC ARM on the MIDImix freezes its strip's track, or lets it go, without picking it. Its light is lit while that track is frozen.
 
-EDIT held while you press a key tunes that key, and is not a HOLD.
+OCT- and OCT+ do not move frozen notes. The track's PITCH, its TRANSPOSE and TUNE, and a quarter tone set with EDIT do move them, and they stay there. A pitch wheel and the keys' pressure bend frozen notes only while you move them.
+
+A new sound on a frozen track keeps its notes sounding, in the new sound. A drum sound holds no notes, so on a drum sound they stop (TRACK 3 LET GO).
+
+With the arpeggio on, frozen notes go on arpeggiating: a key you add joins them, and the key of a frozen note takes it out. The arpeggio plays on one track at a time: a key on another track with a lead sound takes it there, and the frozen arpeggio is let go (TRACK 1 LET GO). On track 1 with LEFT KEYS on SPLIT or BASS, REC freezes the left keys too: a frozen left key keeps its chord for the bass and the backing. In step mode the white keys are steps, and the frozen notes are what a tap adds.
+
+PLAY stops the frozen tracks with everything else, and brings them back (see PLAY).
 
 ---
 
-## 14. The arpeggio
+## 14. PLAY
 
-Tap ARP to switch the arpeggio on or off (ARPEGGIO ON). It plays the keys you hold on a lead sound, track 1 or any track with a lead sound, a note at a time on its own grid. It keeps time with the rhythm when it runs, and with the tempo when not. Its notes keep their quarter tones, and a recording on its track keeps them.
+PLAY stops everything that sounds: the rhythm, the loops with it, the frozen tracks and a latched arpeggio playing on (ALL STOPPED). It remembers what it stopped. Press PLAY again and it all comes back (ALL BACK): the rhythm and the loops from the start of a bar, the frozen tracks on their notes, the arpeggio on its notes. With nothing to bring back, PLAY starts the rhythm, and the screen says its name, as in DABKE SYRIA PLAYS. So PLAY always plays.
+
+If something PLAY stopped is still waiting while something else sounds, for example a track you froze since, PLAY brings back what it stopped first. The next PLAY stops all of it.
+
+While the rhythm runs, PLAY acts when you let go of it. Hold it for 0.4 s instead and a fill-in plays in the last two beats of the bar (FILL IN), and nothing stops.
+
+A loop recording when PLAY stops the rhythm closes there, and is kept. A recording still waiting for its first key is not sounding yet: with nothing else sounding, PLAY starts the rhythm and the recording with it; when PLAY stops other things, the waiting recording is dropped. PLAY is green while anything sounds.
+
+The tracks PLAY stopped while frozen are kept with the settings: after the FM-1 is switched off and on, PLAY brings them back.
+
+---
+
+## 15. The arpeggio
+
+Tap ARP to switch the arpeggio on or off (ARPEGGIO ON). It plays the keys you hold on a lead sound, track 1 or any track with a lead sound, a note at a time on its own grid. It keeps time with the rhythm when it runs, and with the tempo when not. Its notes keep their quarter tones, and a loop recorded on its track keeps them.
 
 Hold ARP for its panel: eight controls in two rows, the framed row on K1 to K4. SEL or SELECT moves to the other row. Let go of ARP after using the panel and the arpeggio stays on or off as it was. The same eight are on the SOUND page, rows 5 and 6.
 
@@ -458,27 +553,31 @@ Hold ARP for its panel: eight controls in two rows, the framed row on K1 to K4. 
 | ARP PATTERN | ALL, 3-3-2, MAQSUM, SAIDI, GALLOP, OFFBEATS, PAIRS, ACCENTS: a rhythm of eight steps, with rests and accents. |
 | ARP REPEAT | ONCE, TWICE, 3 TIMES, 4 TIMES: each note that many times before the next. |
 | ARP SWING | AS RHYTHM, NONE, LIGHT, MEDIUM, HEAVY, FULL. |
-| ARP LATCH | OFF or ON. ON: it goes on after you let go of the keys, and the next keys you press start a new set. |
+| ARP LATCH | OFF or ON. ON: it goes on after you let go of the keys, and the next keys you press start a new set. PLAY stops it and brings it back. |
 
 ---
 
-## 15. Saving
+## 16. Saving
 
-DABKE keeps everything you set by itself: every track's sound, every page's settings, the maqam, the rhythm and the tempo, the mixer, the loops, the steps and the locks. They come back when the FM-1 starts.
+DABKE keeps everything you set by itself: every track's sound, every page's settings, the maqam, the rhythm and the tempo, each track's LEVEL, sends, FILTER, BASS, PITCH, MUTE and FX, the background's MUTE and FX, the MASTER EQ, the loops, the steps and the locks. They come back when the FM-1 starts.
 
-It writes them a few seconds after your last change, in a quiet moment: with the rhythm stopped, nothing recording, no key down and the sound faded. Writing to the flash stops the sound for a moment, which is why it waits. Notes held by HOLD never fade, so then it writes a minute after the change. So before you switch the FM-1 off, stop the rhythm and wait a few seconds.
+It writes them a few seconds after your last change, in a quiet moment: with the rhythm stopped, nothing recording, no key down and the sound faded. Writing to the flash stops the sound for a moment, which is why it waits. Frozen notes never fade, so then it writes a minute after the change. So before you switch the FM-1 off, press PLAY to stop everything and wait a few seconds.
 
-Step mode, HOLD and the scene fader's place are not kept: DABKE starts with step mode off, nothing held and the fader down.
+Some things are not kept: step mode, the SOLOs, which loops SEQ stopped, the MIDImix's master fader and FADE's place. DABKE starts with step mode off, nothing soloed, every loop ready to play with the rhythm, the whole level full and FADE at 0. Nothing sounds when it starts. The tracks PLAY stopped while frozen are kept, and PLAY brings them back. A track still frozen and sounding when the FM-1 goes off is not kept.
+
+### From 0.19
+
+DABKE 0.20 loads what 0.19 saved, whole: every track's sound, the loops, the steps, the locks and the kept sounds. In 0.19 one send a track, EFFECT, fed both the delay and the reverb, so each track's REVERB SEND starts where its EFFECT was. The MASTER EQ starts flat and every track's effects in. With ALL picked in 0.19, DABKE opens on track 1.
 
 ### Keep a sound
 
 ![The save page: KEEP THE SOUND, eight places, place 3 picked](img/save.png "SAVE: the eight places")
 
-Press SAVE: the KEEP THE SOUND page shows eight places, each FREE or USED. Turn SELECT to pick one and press SAVE again: the screen says KEPT IN 3. HOME leaves without keeping. Any other button leaves too, and does its own job. SAVE keeps the sound the SOUND page shows: the picked track's, or track 1's (see The SOUND page).
+Press SAVE: the KEEP THE SOUND page shows eight places, each FREE or USED, and opens on the first free one. Turn SELECT to pick a place (PLACE 3 FREE, or PLACE 3 USED) and press SAVE again: the screen says KEPT IN 3. On a used place, the first SAVE asks (PLACE 3 IS USED: SAVE AGAIN TO REPLACE), and SAVE again replaces it. HOME leaves without keeping. Any other button leaves too, and does its own job. SAVE keeps the sound the SOUND page shows: the picked track's, or track 1's (see The SOUND page).
 
-To load a kept sound, turn SELECT on the home page: the kept sounds come after the ready ones, as MY SOUND 1 to MY SOUND 8. With a track picked, it goes on that track alone. With ALL picked, it goes on track 1.
+To load a kept sound, turn SELECT on the home page: the kept sounds come after the ready ones, as MY SOUND 1 to MY SOUND 8. It goes on the picked track.
 
-A kept sound holds a track's sound: its instrument and its settings, the vibrato and the ornaments. It also holds the effects on the EFFECTS page's first three rows, which come back only when you pick it with ALL. Picking a kept sound never changes another track's sound. A kept sound does not hold the loops, the steps, the rhythm or the maqam. To replace a kept sound, keep another one in its place.
+A kept sound holds a track's sound: its instrument and its settings, the vibrato and the ornaments. It also holds the effects on the EFFECTS page's first three rows, which come back only when you pick it on track 1. Picking a kept sound never changes another track's sound. A kept sound does not hold the loops, the steps, the rhythm or the maqam.
 
 ### Start fresh
 
@@ -492,17 +591,16 @@ Starting fresh rewrites only DABKE's own saves, in the places DABKE always saves
 
 ---
 
-## 16. The SOUND page
+## 17. The SOUND page
 
 Press ENV. The SOUND page shapes one track's sound, and holds the arpeggio's controls. The title says whose sound it is:
 
 - With a track picked that plays a lead sound, that track's, as in SOUND: TRACK 3.
-- With ALL picked, track 1's. The title is SOUND.
 - With a track picked that plays a drum, drone, left-hand or bass sound, track 1's, and the title says SOUND: TRACK 1. INSTRUMENT there changes track 1. It never turns the picked track into a lead sound: SELECT on the home page does that (see Any sound on any track).
 
-VEL AMOUNT is shared by all the tracks, and so is the arpeggio on rows 5 and 6. The header shows the row, for example 1 / 6. Under the knobs, the sound's wave.
+VEL AMOUNT is shared by all the tracks, and so is the arpeggio on rows 5 and 6. The header shows the row, for example 1 / 6. Under the knobs, the sound's wave. The home page's PLAYING row (HOW OFTEN, VIB DEPTH, GLIDE, ORNAMENT) changes the same sound.
 
-![The SOUND page, row 1, with ALL picked: INSTRUMENT MIJWIZ, PLAY LEGATO, TONE 70, BUZZ 45](img/sound-1.png "ALL picked: track 1's sound")
+![The SOUND page, row 1: INSTRUMENT MIJWIZ, PLAY LEGATO, TONE 70, BUZZ 45](img/sound-1.png "Track 1's sound")
 ![The SOUND page, row 1, with track 3 picked: SOUND: TRACK 3 in the title, INSTRUMENT BUZUQ, PLAY POLY, TONE 75, BUZZ 35](img/sound-track3.png "Track 3 picked, playing BUZUQ TREMOLO")
 
 | Row | K1 | K2 | K3 | K4 |
@@ -536,7 +634,7 @@ VEL AMOUNT is shared by all the tracks, and so is the arpeggio on rows 5 and 6. 
 
 ---
 
-## 17. The ORNAMENTS page
+## 18. The ORNAMENTS page
 
 Press LFO. The vibrato and the ornaments, the drone, and a few settings. Rows 1 and 2 edit the same track's sound as the SOUND page, and the title says whose, as in ORNAMENTS: TRACK 3 (see The SOUND page). PRESSURE, the drone and row 4 are shared by all the tracks.
 
@@ -559,35 +657,34 @@ Press LFO. The vibrato and the ornaments, the drone, and a few settings. Rows 1 
 | PRESSURE | NOTHING, BEND UP, BEND DOWN, VIBRATO, BRIGHTER (see Velocity and key pressure). |
 | DRONE, SOUND, DRONE VOL, DRONE PITCH | The drone (see The drone). |
 | HOME SCENE | PORTRAIT, STAGE, DANCERS, CASSETTE: the picture on the home page. |
-| USB PORT | COMPUTER, as DABKE starts, or AUTO (see The Akai MIDImix). |
-| KEY TOUCH | PLAIN or VELOCITY (see Velocity and key pressure). |
+| USB PORT | COMPUTER, as DABKE starts, or AUTO (see The Akai MIDImix). Also on the MAQAM page's TUNING row. |
+| KEY TOUCH | PLAIN or VELOCITY (see Velocity and key pressure). Also on the MAQAM page's TUNING row. |
 
 ---
 
-## 18. The EFFECTS page
+## 19. The EFFECTS page
 
-Press FX. The effects, the picked track's controls, and the mixer, a track a row.
+Press FX. FX again shows the next row, when you let go of it, and SELECT turns the rows too. Hold FX a second and the row shown goes back to its start values, as DABKE starts them: the screen says so, as in DELAY AND REVERB RESET, and the row stays shown.
 
-The effects, rows 1 to 3, work on the whole song and are the same whichever track is picked. A ready sound picked with ALL sets them. Picked on a track, it leaves them as they are.
+The first three rows and the MASTER EQ work on the whole song and are the same whichever track is picked. A ready sound or a MY SOUND picked on track 1 sets the first three rows; picked on any other track, it leaves them as they are. Rows 4 and 5 are the picked track's own, and their title says whose, as in TRACK 3 SENDS.
 
 ![The EFFECTS page, row 1: DELAY, DELAY TIME, REPEATS and REVERB](img/fx-1.png "The EFFECTS page, row 1")
-![The EFFECTS page, row 6: MIX: TRACK 1, its VOLUME, FILTER, BASS and PART](img/fx-mix.png "Row 6: the mixer's first row, track 1")
 
 | Row | K1 | K2 | K3 | K4 |
 | --- | --- | --- | --- | --- |
-| 1 | DELAY | DELAY TIME | REPEATS | REVERB |
-| 2 | DRIVE | CHORUS | WEDDING PA | BRIGHTNESS |
-| 3 | WOBBLE | TAPE AGE | HISS | DELAY SYNC |
-| 4 | TRACK | LENGTH | PITCH STEPS | DRUM |
-| 5 | EFFECT | FADE | TOP SOUND | PITCH |
-| 6 to 13 | VOLUME | FILTER | BASS | PART |
+| 1 DELAY AND REVERB | DELAY | DELAY TIME | REPEATS | REVERB |
+| 2 WEDDING PA | DRIVE | CHORUS | WEDDING PA | BRIGHTNESS |
+| 3 TAPE | WOBBLE | TAPE AGE | HISS | DELAY SYNC |
+| 4 SENDS | DELAY SEND | REVERB SEND | SPACE | (none) |
+| 5 TONE | FILTER | BASS | PITCH | LEVEL |
+| 6 MASTER EQ | LOW | MID | HIGH | (none) |
 
 | Knob | What it does |
 | --- | --- |
 | DELAY | 0 to 100: the echo's level. |
-| DELAY TIME | 60 to 700 ms. Changing it bends what is already in the echo, as a tape echo does. |
+| DELAY TIME | 60 to 700 ms. Changing it bends what is already in the echo, as a tape echo does. With DELAY SYNC on 1/8, 3/16 or 1/4 it shows `--`, and turning it says DELAY SYNC SETS THE TIME. |
 | REPEATS | 0 to 90. |
-| REVERB | 0 to 100: a hall. Each track's EFFECT sets how much of it goes into the delay and the reverb. |
+| REVERB | 0 to 100: a hall. Each track's DELAY SEND and REVERB SEND set how much of it goes into the delay and into the reverb. |
 | DRIVE | 0 to 100: the lead, the drone and the left hand pushed into distortion. The bass and the drums stay clean. |
 | CHORUS | 0 to 100, on the lead, the drone and the left hand. |
 | WEDDING PA | 0 to 100: the whole sound through a wedding hall's PA, with no lows, a horn's honk, pushed hard, with the hall's slap-back. |
@@ -596,24 +693,23 @@ The effects, rows 1 to 3, work on the whole song and are the same whichever trac
 | TAPE AGE | 0 to 100: a worn tape, saturated, with fewer highs and lows. |
 | HISS | 0 to 100: tape hiss. |
 | DELAY SYNC | OWN TIME (DELAY TIME), or 1/8, 3/16, 1/4: the echo in time with the tempo. |
-| TRACK | The picked track: ALL, or TRACK 1 to TRACK 8, as SEL picks it. |
-| LENGTH | The picked track one bar or two long; a loop played live can also be as long as it was played. |
-| PITCH STEPS | FULL: the pitch knobs move by semitones. MICRO: by quarter tones. |
-| DRUM | The drum a tapped step gets on a drum track. On a note track: THE KEYS. |
-| EFFECT | The picked track's share of the delay and the reverb, 0 to 100. |
-| FADE | The scene fader, 0 to 100, TOP from 97 up (see The Akai MIDImix). |
-| TOP SOUND | NONE, or TURN: CLEAR. Turn it to clear the top sound. |
-| PITCH | The picked track's pitch, an octave down to an octave up, drums too. +1 1/4 means one and a quarter semitones up. |
-| VOLUME | Rows 6 to 13, MIX: TRACK 1 to MIX: TRACK 8: that track's volume, 0 to 100. |
-| FILTER | Left: DARK, a low-pass that closes down to 150 Hz. OPEN in the middle. Right: THIN, a high-pass that rises to 2.5 kHz. |
-| BASS | LESS or MORE of the lows under 150 Hz, FLAT in the middle. |
-| PART | ON or MUTED. Turn left to mute, right to switch it on. |
+| DELAY SEND, REVERB SEND, SPACE | The picked track's sends, as on the home page (see The home page). |
+| FILTER, BASS, PITCH, LEVEL | The picked track's tone and level, as on the home page. |
+| LOW | A shelf under 250 Hz. |
+| MID | A wide bell at 1 kHz. |
+| HIGH | A shelf over 3.5 kHz. |
+
+The MASTER EQ is the last thing on the whole sound, after every effect. LOW, MID and HIGH each go from -24 dB, shown as OFF (that band about 40 dB down), to +12 dB. While all three are at 0 dB, the MASTER EQ is out of the sound.
+
+### The background's rows
+
+Hold SEL and press the ninth white key, G4: rows 4 and 5 become the background's, the rhythm's drums, which are every track with a drum sound. BACKGROUND SENDS has DELAY SEND, REVERB SEND and SPACE, moving all the drum tracks' sends together. BACKGROUND TONE has KIT TONE, LOW / HIGH and KIT TUNE, as on the RHYTHM page, row 7, and DRUMS, the volume of all the drums together. With no drum sound on any track, the sends show `--`, and turning them says NO TRACK HAS A DRUM SOUND. Hold SEL and press a track's key to give the rows back to that track.
 
 ---
 
-## 19. The RHYTHM page
+## 20. The RHYTHM page
 
-Press GLO. The rhythm's feel, its added voices and fill-ins, the left hand, and the drum kit.
+Press GLO. GLO again shows the next row. SELECT turns the rhythm, as PRESET does. The page has the rhythm's feel, its added voices and fill-ins, the left hand, and the drum kit.
 
 | Row | K1 | K2 | K3 | K4 |
 | --- | --- | --- | --- | --- |
@@ -653,13 +749,60 @@ Press GLO. The rhythm's feel, its added voices and fill-ins, the left hand, and 
 | KIT LENGTH | 40 % to 250 %: every drum's decay. |
 | KIT TONE | 0 to 100: the drums' highs. 100 is open. |
 | LOW / HIGH | -100 to +100: the balance between the low drums (dum, tabl, daf, kick) and the others. Above 0 the low drums go down, below 0 the others. |
-| Row 8 | KICK, DARBUKA, CLAPS and RIQ, SAGAT: the volumes of tracks 5 to 8, the same as their MIDImix faders. |
+| Row 8 | KICK, DARBUKA, CLAPS and RIQ, SAGAT: the volumes of tracks 5 to 8, the same as their LEVEL on the MIXER and their MIDImix faders. |
 
 The rhythm's added voices, variations and fill-ins play only on the tracks that follow the rhythm, never on yours.
 
 ---
 
-## 20. The Akai MIDImix
+## 21. The EDIT page and the MIXER
+
+Tap EDIT: the EDIT page. EDIT again shows its next row, and SELECT turns the rows too. Held a second, EDIT turns step mode on or off instead (see Steps and locks). Held while you press a key, it tunes that key (see A quarter tone on any note).
+
+| Row | K1 | K2 | K3 | K4 |
+| --- | --- | --- | --- | --- |
+| 1 STEPS | TRACK | LENGTH | DRUM | PITCH STEPS |
+| 2 SCENE | FADE | TOP SOUND | (none) | (none) |
+| 3 MIXER | LEVEL | FX | MUTE | SOLO |
+
+| Knob | What it does |
+| --- | --- |
+| TRACK | The picked track, TRACK 1 to TRACK 8, as SEL held with a white key picks it. |
+| LENGTH | The picked track one bar long or two, shown in steps (16 STEPS). A loop played live can also be as long as it was played (64 PLAYED). |
+| DRUM | The drum a tapped step gets on a drum track. On a note track: THE KEYS. |
+| PITCH STEPS | FULL: the PITCH knobs and the MIDImix's top knobs move by semitones. MICRO: by quarter tones. The same knob as on the MAQAM page. |
+| FADE | The scene fader, 0 to 100, TOP from 97 up (see The scene). |
+| TOP SOUND | NONE, or TURN: CLEAR. Turn it to clear the top sound. |
+| LEVEL, FX, MUTE, SOLO | The MIXER (below). |
+
+### The MIXER
+
+The MIXER is the EDIT page's last row: press EDIT until the screen says EDIT: TRACK 1 MIXER. Its knobs act on the picked track.
+
+| Knob | What it does |
+| --- | --- |
+| LEVEL | The track's volume, 0 to 100, as its MIDImix fader. |
+| FX | Left: the track's effects out, its delay and reverb sends and its BASS, each kept as set (TRACK 3: EFFECTS OFF). Right: back in (TRACK 3: EFFECTS ON). It shows `-` while the track has none of them set. |
+| MUTE | Right: the track muted (TRACK 3: MUTE ON). Left: on again (TRACK 3: MUTE OFF). |
+| SOLO | Right: the track soloed (TRACK 2: SOLO ON), and only soloed tracks are heard. Left: off. With several soloed, all of them are heard. |
+
+A muted track is silent from its next note's first sample, and its lane on the home page is dimmed. MUTE and FX are kept with the settings. SOLO never is: after a power-off, nothing is soloed.
+
+Hold SEL and press the ninth white key, G4, for the background's MIXER (BACKGROUND MIXER). LEVEL is then DRUMS, the volume of all the drums together, and FX, MUTE and SOLO act on every track with a drum sound, as in BACKGROUND MUTE ON. Hold SEL and press a track's key to give the row back to that track.
+
+### The scene
+
+FADE moves between two settings of the tracks: the sound as set, and a top sound. Each track's DELAY SEND, FILTER, PITCH and LEVEL can have a top value.
+
+1. Turn FADE to its top, 97 and up. The screen says FADER UP: THIS IS THE TOP SOUND.
+2. Move the controls you want to change, on the home page or on the MIDImix's strips: you set their top values.
+3. Turn FADE down: the sound as set (FADER DOWN: THE SOUND AS SET). In between, those controls move from their set values toward their top values.
+
+Turn TOP SOUND to clear the top sound (TOP SOUND CLEARED). The top sound is kept with the settings. FADE's place is not: DABKE starts with it at 0.
+
+---
+
+## 22. The Akai MIDImix
 
 An Akai MIDImix on the FM-1's USB port works as DABKE's mixer: a strip for each track. Nothing on DABKE works only from the MIDImix. Every control has its place on the FM-1 too.
 
@@ -671,38 +814,30 @@ DABKE reads the MIDImix as it comes from the factory, on channel 1.
 
 | MIDImix | What it does | On the FM-1 |
 | --- | --- | --- |
-| Strips 1 to 8 | Tracks 1 to 8. | The picked track (SEL) |
-| Fader | The track's VOLUME. | K4 on the home page, or the EFFECTS page's MIX row, K1 |
-| Top knob | The track's EFFECT, its share of the delay and reverb. | K1 on the home page |
+| Strips 1 to 8 | Tracks 1 to 8. Nothing on a strip picks its track. | The picked track: SEL held and a white key |
+| Fader | The track's LEVEL. | K4 on the home page, or LEVEL on the MIXER |
+| Top knob | The track's PITCH: in tune in the middle, an octave down or up at the ends, in steps as PITCH STEPS says. | K1 on the home page |
 | Middle knob | The track's FILTER. | K2 on the home page |
-| Bottom knob | The track's PITCH: in tune in the middle, an octave down or up at the ends, in steps as PITCH STEPS says. | K3 on the home page |
-| MUTE | The track off and on again. Lit while it is muted. | PART, the EFFECTS page's MIX row, K4 |
-| REC ARM | REC for that track, and picks it. Let go, it records; again, it stops; held a second, its last take goes. Lit while it records or waits. | REC |
-| SOLO | HOLD, as EDIT tapped. Lit while notes are held. | EDIT, tapped |
-| BANK LEFT, BANK RIGHT | The rhythm before or after. Both together: the top sound cleared. | PRESET; TOP SOUND on the EFFECTS page, row 5, K3 |
-| Master fader | The scene fader. | FADE, the EFFECTS page, row 5, K2 |
+| Bottom knob | The track's SPACE: its delay and reverb sends together. | K3 on the home page |
+| SOLO | Tapped: the knobs' EFFECTS layer. The top knob is then the track's DELAY SEND, the middle knob DELAY TIME (the one delay all the tracks share: any strip's middle knob sets it), the bottom knob the track's REVERB SEND. BANK LEFT and RIGHT are lit while the knobs are on it. Tapped again: back. | The home page's MIX row; DELAY TIME on the EFFECTS page, row 1 |
+| MUTE | The track muted, or on again. Lit while it is muted. | MUTE on the MIXER |
+| REC ARM | Freezes the track, or lets it go, as REC does. Lit while the track holds anything. | REC |
+| BANK LEFT, BANK RIGHT | The picked track's sound before or after. | SELECT on the home page |
+| Master fader | The whole level, live. Never kept: full again when the FM-1 starts and when the MIDImix is unplugged. | MASTER |
 
-A fader or a knob moves its own strip's track and never picks it: the keys stay where they are while you ride another track. The screen says what moved, for example TRACK 6: VOLUME 70. The SEND ALL button sends every value at once: DABKE takes them all and says nothing. No light blinks: each one shows what its label says.
+The master fader is no longer the scene fader: that is FADE, on the EDIT page (see The scene).
 
-In step mode, with a step held, a strip's knob or fader is locked on that step. While a track records, its knobs are kept as locks on the steps the recording passes. Its fader is not.
+A fader or a knob moves its own strip's track and never picks it: the keys stay where they are while you ride another track. The screen says what moved, for example TRACK 6: LEVEL 70. SOLO says which layer the knobs are on: KNOBS: EFFECTS DELAY, TIME, REVERB, or KNOBS: PITCH FILTER, SPACE. The SEND ALL button sends every value at once: DABKE takes them all and says nothing. No light blinks: each one shows what its label says. The MIDImix lights SOLO only while it is held, so BANK LEFT and RIGHT show the EFFECTS layer instead.
 
-### The scene fader
-
-The master fader, or FADE on the FM-1, moves between two settings of the strips: the sound as set, and a top sound. Each track's EFFECT, FILTER, PITCH and VOLUME can have a top value.
-
-1. Push the fader to its top, the last 3 % (FADE 97 and up). The screen says FADER UP: THIS IS THE TOP SOUND.
-2. Move the strips you want to change: you set their top values.
-3. Pull the fader down: the sound as set (FADER DOWN: THE SOUND AS SET). In between, those controls move from their set values toward their top values.
-
-Both BANK buttons together, or turning TOP SOUND on the EFFECTS page, clears the top sound. The top sound is kept with the settings. The fader's place is not: DABKE starts with it down.
+In step mode, with a step held, a strip's knob or fader is locked on that step. While a track records its loop, its knobs are kept as locks on the steps the recording passes. Its fader is not.
 
 ---
 
-## 21. MIDI and USB audio
+## 23. MIDI and USB audio
 
 On a computer, the FM-1 shows up as DABKE FM-1. DABKE has no Bluetooth.
 
-MIDI comes in over USB and the FM-1's TRS MIDI jack. Notes on any channel play the picked track, as the keys would. With ALL picked and LEFT KEYS on SPLIT or BASS, notes under C4 go to the left hand. Notes under E1 do not play: on channel 1 they are the MIDImix's buttons. A pitch wheel bends the lead sounds, each by its own BEND RANGE, and a mod wheel adds vibrato. Notes from MIDI get the maqam's quarter tones too.
+MIDI comes in over USB and the FM-1's TRS MIDI jack. Notes on any channel play the picked track, as the keys would. With track 1 picked and LEFT KEYS on SPLIT or BASS, notes under C4 go to the left hand. Notes under E1 do not play: on channel 1 they are the MIDImix's buttons. A pitch wheel bends the lead sounds, each by its own BEND RANGE, and a mod wheel adds vibrato. Notes from MIDI get the maqam's quarter tones too.
 
 The MIDImix's messages work from any MIDI input on channel 1, so a computer can send them: the strips' knobs and faders as control changes 16 to 31 and 46 to 61, the master fader as 62, and the buttons as notes 1 to 27.
 
@@ -712,27 +847,31 @@ Over the USB cable the FM-1 is also a sound card. Your computer can record DABKE
 
 ---
 
-## 22. Troubleshooting
+## 24. Troubleshooting
 
-**No sound.** Turn MASTER up. With ALL picked, K1 to K4 on the home page are the volumes of the lead, the drone, the left hand and the drums. A muted track's lane is dimmed: switch it on with PART on its MIX row of the EFFECTS page, or MUTE on the MIDImix.
+**No sound.** Turn MASTER up, and the MIDImix's master fader if one is plugged in. A track's LEVEL is K4 on the home page, or its MIDImix fader. A muted track's lane is dimmed: switch it on with MUTE on the MIXER (the EDIT page's last row), or MUTE on the MIDImix. While any track is soloed, only the soloed ones are heard. The background's MUTE silences every track with a drum sound.
+
+**A note goes on after I let go.** The track is frozen, and REC is lit. Press that note's key again, or REC, to let it go. PLAY stops every frozen track.
+
+**SEQ does not record.** The track has a loop already, and SEQ stops it or plays it again. Hold SEQ a second to clear it, then tap SEQ to record.
 
 **A key does not bend.** Only F3 to C5 sense pressure: the top seven keys, C#5 to G5, do not. Check that PRESSURE is not on NOTHING (the ORNAMENTS page, row 2, K4). Drum tracks have no pressure, a loop playing back does not bend, and the drone does not bend. BRIGHTER does not change ORGAN, BUZUQ, OUD, QANUN or the bass sounds.
 
 **The drone is silent.** Check DRONE and DRONE VOL (the ORNAMENTS page, row 3). The drone sounds only while you play the lead, the rhythm runs, the left hand holds a chord, or you play its track.
 
-**A left key does not start the rhythm.** SYNC START needs ALL picked and LEFT KEYS on SPLIT or BASS.
+**A left key does not start the rhythm.** SYNC START needs track 1 picked, LEFT KEYS on SPLIT or BASS, and step mode off.
 
 **The MIDImix does nothing.** Set USB PORT to AUTO. With a computer on the port, the port stays the computer's. After the FM-1 starts, the port looks for a controller only after 30 seconds. Wait for CONTROLLER READY.
 
-**My changes were not kept.** DABKE saves only with the rhythm stopped and the sound quiet. Stop the rhythm and wait a few seconds before you switch the FM-1 off.
+**My changes were not kept.** DABKE saves only with the rhythm stopped and the sound quiet. Press PLAY to stop everything and wait a few seconds before you switch the FM-1 off.
 
 **DABKE started fresh.** Another firmware installed since may have written over DABKE's saves (see Install).
 
 **Notes stop early.** DABKE plays up to 16 notes at once besides the drone, and fewer when the FM-1 is busy. The oldest note stops first.
 
-**NO ROOM FOR MORE NOTES, NO ROOM FOR MORE LOCKS.** A track holds 128 notes, all the tracks 512, and all the locks 240. Take back a take, or remove some steps or locks.
+**NO ROOM FOR MORE NOTES, NO ROOM FOR MORE LOCKS.** A track holds 128 notes, all the tracks 512, and all the locks 240. Clear a loop you no longer need (SEQ held a second on its track), or remove some steps or locks.
 
-**CANNOT BE LOCKED TO A STEP.** That control cannot hold a value of its own on a step. The tempo, the rhythm, choices such as ORNAMENT, a mute and FADE are among them.
+**CANNOT BE LOCKED TO A STEP.** That control cannot hold a value of its own on a step. The tempo, the rhythm, choices such as ORNAMENT, the MIXER's MUTE, FX and SOLO, the MASTER EQ and FADE are among them.
 
 **The installer does not find the FM-1.** Use Chrome or Edge, and allow MIDI when the browser asks. Close other programs that use the FM-1's MIDI port.
 
@@ -740,6 +879,6 @@ Over the USB cable the FM-1 is also a sound card. Your computer can record DABKE
 
 ---
 
-## 23. Credits
+## 25. Credits
 
 DABKE is made by STUDIOMORPHIK and built on fm1-base by Charles Vestal and felucca-bsp, from Felucca by Leo Kuroshita (Hügelton Instruments). Licence MPL-2.0. Source at [github.com/wissamsader/dabke](https://github.com/wissamsader/dabke).
