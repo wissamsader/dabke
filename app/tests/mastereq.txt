@@ -131,10 +131,12 @@ expect maqam 5
 tap HOME
 wait 30
 turn K2 -5
-turn K3 -3
+tap HOME
+wait 30
+turn K1 -3
 wait 50
 expect par63 94
-expect par79 94
+expect par79 100
 tap FX
 wait 30
 turn K2 -6

@@ -77,7 +77,9 @@ enum {
     P_LOWEQ, P_LOWEQ_LAST = P_LOWEQ + DAB_NPART - 1,    /* each part's bass, -1 .. 1: less low end, 0 as it is, more */
     P_SEND, P_SEND_LAST = P_SEND + DAB_NPART - 1,       /* each part into the delay, 0..1 (its DELAY SEND; up to 0.19 one
                                                          * send fed the delay and the reverb: P_RSEND took its value) */
-    P_PITCH, P_PITCH_LAST = P_PITCH + DAB_NPART - 1,    /* each part's pitch, semitones -12..12 (the drums' too) */
+    P_PITCH, P_PITCH_LAST = P_PITCH + DAB_NPART - 1,    /* each part's pitch, semitones -12..12 (the drums' too). A note
+                                                         * sound sounding slides to a new one (0.21, some 0.45 s); a lock
+                                                         * on a step, a silent track: there at once */
     P_RSEND, P_RSEND_LAST = P_RSEND + DAB_NPART - 1,    /* each part into the reverb, 0..1 (its REVERB SEND; 0.20) */
     /* choices, as whole numbers */
     P_MODEL, P_PLAY, P_DOUBLE,                          /* MD_*; 0 legato, 1 mono, 2 poly; 0 off, 1 octave down, 2 up */
@@ -231,7 +233,11 @@ void dabke_loop_off(int track, int off);   /* SEQ: the track's loop (a drum soun
 void dabke_track_clear(int track);      /* SEQ held: the track's loop gone, every take (a drum sound: its own steps, the
                                          * rhythm's again); a recording on it ends with nothing kept */
 void dabke_fx_off(int mask);            /* the tracks whose effects are out (the MIXER's FX), a bit each: their delay and
-                                         * reverb sends and their BASS, each kept as set */
+                                         * reverb sends, their CHORUS and their BASS, each kept as set */
+void dabke_chorus(int track, float amount);   /* a track's CHORUS, 0..1 (0.21: the MIDImix's bottom knob): how much of
+                                         * its note sound goes through a chorus of its own, a quarter of it out of its dry
+                                         * sound (the lead's, the drone's and the left hand's before the pedals, a bass
+                                         * sound's beside them, where it joins the mix); a drum sound none */
 void dabke_master_eq(float low, float mid, float high);   /* the MASTER EQ, dB each, -24 (that band out, about 40 dB
                                          * down) .. +12: a shelf under 250 Hz, a wide bell at 1 kHz, a shelf over 3.5 kHz,
                                          * the last on the whole sound, after every effect; out when all three are 0 */

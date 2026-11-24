@@ -1,0 +1,59 @@
+# DABKE 0.20's settings (DKB9, its one logic's block DKX1: no CHORUS) load whole in 0.21 (the block DKX2: each track's
+# CHORUS from its spare room, none): nothing reset. Made by 0.20's own simulator (tag v0.20-beta) and saved there:
+# track 1's PITCH up 2 (the home page's K1), the tempo 146 (ALGO 3), the MIDImix's bottom knob 2 at 0x20 (0.20's SPACE:
+# track 2's two sends 25), the MASTER EQ's LOW -3, a note frozen on track 1 (key 16, A4) and stopped by PLAY (kept for
+# PLAY to bring back after a power-off). A change then saves it as DKX2, which loads whole too. From the repository's
+# root:
+#   app/build/host/dabke_host app/tests/upgrade020.txt OUTDIR
+flash_load app/tests/dkb9-0.20.bin
+reboot
+wait 900
+listen
+expect x_ver 2
+expect track 1
+expect par71 8
+expect tempo 146
+expect par64 25
+expect par80 25
+expect par63 100
+expect par79 100
+expect eq0 -3
+expect x_frz 1
+expect kept_frozen 1
+expect tchorus0 0
+expect tchorus1 0
+expect tchorus2 0
+expect tchorus3 0
+expect tchorus4 0
+expect tchorus5 0
+expect tchorus6 0
+expect tchorus7 0
+expect dirty 0
+# PLAY brings the frozen A4 back (on the MIJWIZ, as it starts), sounding
+tap PLAY
+wait 400
+said ALL BACK
+expect frozen 1
+expect fz_note0_0 69
+expect voices0 1
+expect level1000 >100
+# a change (track 1's CHORUS, the home page's K3) and PLAY's stop again: saved as DKX2; after a power-off all of it
+# is there, the CHORUS too
+turn K3 5
+wait 60
+said TRACK 1: CHORUS 10
+tap PLAY
+wait 400
+said ALL STOPPED
+wait 32000
+expect dirty 0
+reboot
+wait 900
+expect x_ver 2
+expect tchorus0 10
+expect par71 8
+expect tempo 146
+expect par64 25
+expect par80 25
+expect eq0 -3
+expect kept_frozen 1

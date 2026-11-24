@@ -1,22 +1,24 @@
 # Every control of the Akai MIDImix, one by one (made by a script, tools/gen_midimix_test.py; the numbers are the
 # MIDImix's factory ones), and its lights. RAGA MEOW's map (fm1-organ/LOGIC.md version 2): the eight strips are DABKE's
-# eight tracks, fader its LEVEL, top knob its PITCH, middle knob its FILTER, bottom knob its SPACE (its delay and
-# reverb sends together), MUTE it off and on, REC ARM freezes it or lets it go (as REC). Nothing on a strip picks its
-# track: it moves its own strip's track whatever the keys play, and the screen says what moved, once it is plain that
-# one control moved alone ("TRACK 6: LEVEL 70"), without changing the page. SOLO tapped: the knobs' EFFECTS layer (top
-# DELAY SEND, middle DELAY TIME, the one delay's, bottom REVERB SEND; BANK LEFT and RIGHT lit), again: back. BANK LEFT
-# and RIGHT: the picked track's sound before and after. The master fader: the whole level, live, never kept. No light
-# blinks: each shows what its label says. In step mode a strip's knob moved with a step held is locked on that step; a
-# knob of the recording track (SEQ) is kept as locks on the steps the recording passes. (Up to 0.19: top knob the
-# effect, bottom the pitch, SOLO was HOLD, REC ARM recorded and picked its track, BANK the rhythms, both together
-# cleared the top sound, the master fader was the scene fader.)
+# eight tracks, fader its LEVEL, top knob its PITCH (a note sound sliding there, 0.21), middle knob its FILTER, bottom
+# knob its CHORUS (0.21: a note sound's, a drum sound has none; up to 0.20 its SPACE, its delay and reverb sends
+# together), MUTE it off and on, REC ARM freezes it or lets it go (as REC). Nothing on a strip picks its track: it
+# moves its own strip's track whatever the keys play, and the screen says what moved, once it is plain that one control
+# moved alone ("TRACK 6: LEVEL 70"), without changing the page. SOLO tapped: the knobs' EFFECTS layer (top DELAY SEND,
+# middle DELAY TIME, the one delay's, bottom REVERB SEND, each all the way to 100; BANK LEFT and RIGHT lit), again:
+# back. BANK LEFT and RIGHT: the picked track's sound before and after. The master fader: the whole level, live, never
+# kept. No light blinks: each shows what its label says. In step mode a strip's knob moved with a step held is locked
+# on that step (the CHORUS cannot be: said); a knob of the recording track (SEQ) is kept as locks on the steps the
+# recording passes. (Up to 0.19: top knob the effect, bottom the pitch, SOLO was HOLD, REC ARM recorded and picked its
+# track, BANK the rhythms, both together cleared the top sound, the master fader was the scene fader.)
 #   app/build/host/dabke_host app/tests/midimix.txt OUTDIR
 wait 900
 expect track 1
 expect mix_lvl 100
 # SEND ALL: the 33 control changes (16..31, 46..62) in one burst, no note: all of them taken, every light sent, the
-# picked track as it was, nothing said (the page a reader hears when it starts listening aside); the master fader
-# halfway: the whole level at 50, the scene fader (FADE, the EDIT page's) left as it is
+# picked track as it was, nothing said (the page a reader hears when it starts listening aside); the bottom knobs
+# the note sounds' CHORUS (the drum sounds' none), the sends as they were; the master fader halfway: the whole level
+# at 50, the scene fader (FADE, the EDIT page's) left as it is
 out
 listen
 said DABKE
@@ -79,22 +81,30 @@ expect par51 0
 expect par52 0
 expect par53 0
 expect par54 0
-expect par63 50
-expect par64 50
-expect par65 50
-expect par66 50
-expect par67 50
-expect par68 50
-expect par69 50
-expect par70 50
-expect par79 50
-expect par80 50
-expect par81 50
-expect par82 50
-expect par83 50
-expect par84 50
-expect par85 50
-expect par86 50
+expect par63 100
+expect par64 100
+expect par65 100
+expect par66 0
+expect par67 30
+expect par68 30
+expect par69 30
+expect par70 30
+expect par79 100
+expect par80 100
+expect par81 100
+expect par82 0
+expect par83 30
+expect par84 30
+expect par85 30
+expect par86 30
+expect tchorus0 50
+expect tchorus1 50
+expect tchorus2 50
+expect tchorus3 50
+expect tchorus4 0
+expect tchorus5 0
+expect tchorus6 0
+expect tchorus7 0
 expect maqam 2
 expect root 2
 expect mix_lvl 50
@@ -114,7 +124,7 @@ wait 30
 expect mix_lvl 100
 
 # strip 1 (lead): fader (CC 19) its LEVEL, top knob (CC 16) its PITCH (quarter tones: 48 an octave, whole semitones as
-# it starts), middle (CC 17) its FILTER, bottom (CC 18) its SPACE (its two sends moved together). No track is picked by
+# it starts), middle (CC 17) its FILTER, bottom (CC 18) its CHORUS (its sends as they were). No track is picked by
 # them. One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the sound page)
 midi B0 13 7F
 wait 30
@@ -145,16 +155,16 @@ wait 30
 expect par47 0
 midi B0 12 7F
 wait 30
+expect tchorus0 100
 expect par63 100
-expect par79 100
 midi B0 12 00
 wait 30
-expect par63 0
-expect par79 0
+expect tchorus0 0
+expect par63 100
 midi B0 12 40
 wait 30
-expect par63 50
-expect par79 50
+expect tchorus0 50
+expect par63 100
 wait 300
 expect track 1
 tap ENV
@@ -188,21 +198,20 @@ said TRACK 1: IN TUNE
 wait 300
 midi B0 12 59
 wait 200
-expect par63 70
-expect par79 70
-said TRACK 1: SPACE 70
-midi B0 12 40
+expect tchorus0 70
+said TRACK 1: CHORUS 70
+midi B0 12 00
 wait 30
-expect par63 50
-expect par79 50
-said TRACK 1: SPACE 50
+expect tchorus0 0
+said TRACK 1: CHORUS 0
+expect par79 100
 expect track 1
 expect page 3
 tap HOME
 wait 300
 
 # strip 2 (drone): fader (CC 23) its LEVEL, top knob (CC 20) its PITCH (quarter tones: 48 an octave, whole semitones as
-# it starts), middle (CC 21) its FILTER, bottom (CC 22) its SPACE (its two sends moved together). No track is picked by
+# it starts), middle (CC 21) its FILTER, bottom (CC 22) its CHORUS (its sends as they were). No track is picked by
 # them. One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the sound page)
 midi B0 17 7F
 wait 30
@@ -233,16 +242,16 @@ wait 30
 expect par48 0
 midi B0 16 7F
 wait 30
+expect tchorus1 100
 expect par64 100
-expect par80 100
 midi B0 16 00
 wait 30
-expect par64 0
-expect par80 0
+expect tchorus1 0
+expect par64 100
 midi B0 16 40
 wait 30
-expect par64 50
-expect par80 50
+expect tchorus1 50
+expect par64 100
 wait 300
 expect track 1
 tap ENV
@@ -276,22 +285,21 @@ said TRACK 2: IN TUNE
 wait 300
 midi B0 16 59
 wait 200
-expect par64 70
-expect par80 70
-said TRACK 2: SPACE 70
-midi B0 16 40
+expect tchorus1 70
+said TRACK 2: CHORUS 70
+midi B0 16 00
 wait 30
-expect par64 50
-expect par80 50
-said TRACK 2: SPACE 50
+expect tchorus1 0
+said TRACK 2: CHORUS 0
+expect par80 100
 expect track 1
 expect page 3
 tap HOME
 wait 300
 
 # strip 3 (left hand): fader (CC 27) its LEVEL, top knob (CC 24) its PITCH (quarter tones: 48 an octave, whole
-# semitones as it starts), middle (CC 25) its FILTER, bottom (CC 26) its SPACE (its two sends moved together). No track
-# is picked by them. One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the
+# semitones as it starts), middle (CC 25) its FILTER, bottom (CC 26) its CHORUS (its sends as they were). No track is
+# picked by them. One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the
 # sound page)
 midi B0 1B 7F
 wait 30
@@ -322,16 +330,16 @@ wait 30
 expect par49 0
 midi B0 1A 7F
 wait 30
+expect tchorus2 100
 expect par65 100
-expect par81 100
 midi B0 1A 00
 wait 30
-expect par65 0
-expect par81 0
+expect tchorus2 0
+expect par65 100
 midi B0 1A 40
 wait 30
-expect par65 50
-expect par81 50
+expect tchorus2 50
+expect par65 100
 wait 300
 expect track 1
 tap ENV
@@ -365,22 +373,21 @@ said TRACK 3: IN TUNE
 wait 300
 midi B0 1A 59
 wait 200
-expect par65 70
-expect par81 70
-said TRACK 3: SPACE 70
-midi B0 1A 40
+expect tchorus2 70
+said TRACK 3: CHORUS 70
+midi B0 1A 00
 wait 30
-expect par65 50
-expect par81 50
-said TRACK 3: SPACE 50
+expect tchorus2 0
+said TRACK 3: CHORUS 0
+expect par81 100
 expect track 1
 expect page 3
 tap HOME
 wait 300
 
 # strip 4 (bass line): fader (CC 31) its LEVEL, top knob (CC 28) its PITCH (quarter tones: 48 an octave, whole
-# semitones as it starts), middle (CC 29) its FILTER, bottom (CC 30) its SPACE (its two sends moved together). No track
-# is picked by them. One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the
+# semitones as it starts), middle (CC 29) its FILTER, bottom (CC 30) its CHORUS (its sends as they were). No track is
+# picked by them. One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the
 # sound page)
 midi B0 1F 7F
 wait 30
@@ -411,16 +418,16 @@ wait 30
 expect par50 0
 midi B0 1E 7F
 wait 30
-expect par66 100
-expect par82 100
+expect tchorus3 100
+expect par66 0
 midi B0 1E 00
 wait 30
+expect tchorus3 0
 expect par66 0
-expect par82 0
 midi B0 1E 40
 wait 30
-expect par66 50
-expect par82 50
+expect tchorus3 50
+expect par66 0
 wait 300
 expect track 1
 tap ENV
@@ -454,21 +461,20 @@ said TRACK 4: IN TUNE
 wait 300
 midi B0 1E 59
 wait 200
-expect par66 70
-expect par82 70
-said TRACK 4: SPACE 70
-midi B0 1E 40
+expect tchorus3 70
+said TRACK 4: CHORUS 70
+midi B0 1E 00
 wait 30
-expect par66 50
-expect par82 50
-said TRACK 4: SPACE 50
+expect tchorus3 0
+said TRACK 4: CHORUS 0
+expect par82 0
 expect track 1
 expect page 3
 tap HOME
 wait 300
 
 # strip 5 (kick): fader (CC 49) its LEVEL, top knob (CC 46) its PITCH (quarter tones: 48 an octave, whole semitones as
-# it starts), middle (CC 47) its FILTER, bottom (CC 48) its SPACE (its two sends moved together). No track is picked by
+# it starts), middle (CC 47) its FILTER, bottom (CC 48) its CHORUS (a drum sound's: none, said). No track is picked by
 # them. One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the sound page)
 midi B0 31 7F
 wait 30
@@ -499,16 +505,16 @@ wait 30
 expect par51 0
 midi B0 30 7F
 wait 30
-expect par67 100
-expect par83 100
+expect tchorus4 0
+expect par67 30
 midi B0 30 00
 wait 30
-expect par67 0
-expect par83 0
+expect tchorus4 0
+expect par67 30
 midi B0 30 40
 wait 30
-expect par67 50
-expect par83 50
+expect tchorus4 0
+expect par67 30
 wait 300
 expect track 1
 tap ENV
@@ -542,21 +548,17 @@ said TRACK 5: IN TUNE
 wait 300
 midi B0 30 59
 wait 200
-expect par67 70
-expect par83 70
-said TRACK 5: SPACE 70
-midi B0 30 40
-wait 30
-expect par67 50
-expect par83 50
-said TRACK 5: SPACE 50
+expect tchorus4 0
+said TRACK 5: CHORUS ONLY ON A NOTE SOUND
+expect par67 30
+expect par83 30
 expect track 1
 expect page 3
 tap HOME
 wait 300
 
 # strip 6 (darbuka and tabl): fader (CC 53) its LEVEL, top knob (CC 50) its PITCH (quarter tones: 48 an octave, whole
-# semitones as it starts), middle (CC 51) its FILTER, bottom (CC 52) its SPACE (its two sends moved together). No track
+# semitones as it starts), middle (CC 51) its FILTER, bottom (CC 52) its CHORUS (a drum sound's: none, said). No track
 # is picked by them. One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the
 # sound page)
 midi B0 35 7F
@@ -588,16 +590,16 @@ wait 30
 expect par52 0
 midi B0 34 7F
 wait 30
-expect par68 100
-expect par84 100
+expect tchorus5 0
+expect par68 30
 midi B0 34 00
 wait 30
-expect par68 0
-expect par84 0
+expect tchorus5 0
+expect par68 30
 midi B0 34 40
 wait 30
-expect par68 50
-expect par84 50
+expect tchorus5 0
+expect par68 30
 wait 300
 expect track 1
 tap ENV
@@ -631,21 +633,17 @@ said TRACK 6: IN TUNE
 wait 300
 midi B0 34 59
 wait 200
-expect par68 70
-expect par84 70
-said TRACK 6: SPACE 70
-midi B0 34 40
-wait 30
-expect par68 50
-expect par84 50
-said TRACK 6: SPACE 50
+expect tchorus5 0
+said TRACK 6: CHORUS ONLY ON A NOTE SOUND
+expect par68 30
+expect par84 30
 expect track 1
 expect page 3
 tap HOME
 wait 300
 
 # strip 7 (claps): fader (CC 57) its LEVEL, top knob (CC 54) its PITCH (quarter tones: 48 an octave, whole semitones as
-# it starts), middle (CC 55) its FILTER, bottom (CC 56) its SPACE (its two sends moved together). No track is picked by
+# it starts), middle (CC 55) its FILTER, bottom (CC 56) its CHORUS (a drum sound's: none, said). No track is picked by
 # them. One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the sound page)
 midi B0 39 7F
 wait 30
@@ -676,16 +674,16 @@ wait 30
 expect par53 0
 midi B0 38 7F
 wait 30
-expect par69 100
-expect par85 100
+expect tchorus6 0
+expect par69 30
 midi B0 38 00
 wait 30
-expect par69 0
-expect par85 0
+expect tchorus6 0
+expect par69 30
 midi B0 38 40
 wait 30
-expect par69 50
-expect par85 50
+expect tchorus6 0
+expect par69 30
 wait 300
 expect track 1
 tap ENV
@@ -719,21 +717,17 @@ said TRACK 7: IN TUNE
 wait 300
 midi B0 38 59
 wait 200
-expect par69 70
-expect par85 70
-said TRACK 7: SPACE 70
-midi B0 38 40
-wait 30
-expect par69 50
-expect par85 50
-said TRACK 7: SPACE 50
+expect tchorus6 0
+said TRACK 7: CHORUS ONLY ON A NOTE SOUND
+expect par69 30
+expect par85 30
 expect track 1
 expect page 3
 tap HOME
 wait 300
 
 # strip 8 (riq and sagat): fader (CC 61) its LEVEL, top knob (CC 58) its PITCH (quarter tones: 48 an octave, whole
-# semitones as it starts), middle (CC 59) its FILTER, bottom (CC 60) its SPACE (its two sends moved together). No track
+# semitones as it starts), middle (CC 59) its FILTER, bottom (CC 60) its CHORUS (a drum sound's: none, said). No track
 # is picked by them. One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the
 # sound page)
 midi B0 3D 7F
@@ -765,16 +759,16 @@ wait 30
 expect par54 0
 midi B0 3C 7F
 wait 30
-expect par70 100
-expect par86 100
+expect tchorus7 0
+expect par70 30
 midi B0 3C 00
 wait 30
-expect par70 0
-expect par86 0
+expect tchorus7 0
+expect par70 30
 midi B0 3C 40
 wait 30
-expect par70 50
-expect par86 50
+expect tchorus7 0
+expect par70 30
 wait 300
 expect track 1
 tap ENV
@@ -808,14 +802,10 @@ said TRACK 8: IN TUNE
 wait 300
 midi B0 3C 59
 wait 200
-expect par70 70
-expect par86 70
-said TRACK 8: SPACE 70
-midi B0 3C 40
-wait 30
-expect par70 50
-expect par86 50
-said TRACK 8: SPACE 50
+expect tchorus7 0
+said TRACK 8: CHORUS ONLY ON A NOTE SOUND
+expect par70 30
+expect par86 30
 expect track 1
 expect page 3
 tap HOME
@@ -867,8 +857,10 @@ wait 30
 expect ch44 0
 tap HOME
 wait 30
-# a note sounding moves with the knob: the drone silent (its fader down), the left hand picked (SEL held and the
-# third white key), its fader up, D held (293.7 Hz); the knob up 5: 392 Hz; then up 3: 349 Hz
+# a note sounding slides with the knob (0.21, as RAGA MEOW's PITCH: some 0.45 s whatever the distance; up to 0.20
+# at once): the drone silent (its fader down), the left hand picked (SEL held and the third white key), its fader up,
+# D held (293.7 Hz); the knob up 5: 150 ms on, on its way (a jump would be at 392 Hz by then), then at 392 Hz; then
+# up 3: 349 Hz; back in tune
 midi B0 17 00
 wait 30
 expect par4 0
@@ -887,17 +879,20 @@ wait 400
 expect pitch_x10 >2900
 expect pitch_x10 <2975
 midi B0 18 5B
-wait 300
+wait 150
 expect par73 20
+expect pitch_x10 >3000
+expect pitch_x10 <3700
+wait 1050
 expect pitch_x10 >3870
 expect pitch_x10 <3970
 midi B0 18 50
-wait 300
+wait 1200
 expect par73 12
 expect pitch_x10 >3450
 expect pitch_x10 <3530
 midi B0 18 40
-wait 300
+wait 1200
 expect par73 0
 expect pitch_x10 >2900
 expect pitch_x10 <2975
@@ -1194,7 +1189,7 @@ midi B0 18 7F
 wait 200
 expect par65 100
 said TRACK 3: DELAY SEND 100
-expect par81 50
+expect par81 100
 expect par73 0
 wait 300
 midi B0 1A 00
@@ -1202,6 +1197,13 @@ wait 200
 expect par81 0
 said TRACK 3: REVERB SEND 0
 expect par65 100
+# the REVERB SEND all the way: 100, on the screen and in the engine (1.0), not half of it
+wait 300
+midi B0 1A 7F
+wait 200
+expect par81 100
+said TRACK 3: REVERB SEND 100
+expect epar81 1000
 wait 300
 midi B0 19 7F
 wait 200
@@ -1232,12 +1234,12 @@ midi 90 1B 7F
 midi 80 1B 7F
 wait 100
 expect mix_fx 0
-said KNOBS: PITCH FILTER, SPACE
+said KNOBS: PITCH FILTER, CHORUS
 expect mixleds 0
 expect_out USB 90 19 00
 expect_out USB 90 1A 00
-# the top knob its PITCH again, the sends as the layer left them; the bottom knob at their middle: SPACE moves them
-# together, their balance kept
+# the top knob its PITCH again, the sends as the layer left them; the bottom knob the CHORUS again (up to 0.20: SPACE,
+# the two sends together): track 3's all the way, then none, its sends as they were
 midi B0 18 50
 wait 30
 expect par73 12
@@ -1245,14 +1247,15 @@ expect par65 100
 midi B0 18 40
 wait 30
 expect par73 0
-midi B0 1A 40
+midi B0 1A 7F
 wait 30
+expect tchorus2 100
 expect par65 100
-expect par81 0
-midi B0 1A 30
+expect par81 100
+midi B0 1A 00
 wait 30
-expect par65 88
-expect par81 0
+expect tchorus2 0
+expect par81 100
 # PLAY, the knobs on their own layer: the BANK lights stay dark while the rhythm runs
 out
 tap PLAY
@@ -1268,8 +1271,8 @@ expect mute 0
 # ---- step mode (EDIT held a second), the lead picked. A step held (the third white key) and a strip's knob moved:
 # that knob's value locked on that step, the knob itself as it was. Strip 1's middle knob (its filter, CC 17), then
 # strip 2's (CC 21: another track's knob, locked on the lead's step all the same; no track is picked by it), then
-# strip 1's fader (CC 19, its level), its top knob (CC 16, its pitch) and its bottom knob (CC 18, its SPACE: both
-# sends locked)
+# strip 1's fader (CC 19, its level) and its top knob (CC 16, its pitch); its bottom knob (CC 18, its CHORUS) cannot
+# be locked: said, nothing locked, the chorus as it was
 midi B0 13 66
 wait 30
 wait 150
@@ -1303,11 +1306,10 @@ expect lock0_2_71 12
 expect par71 0
 midi B0 12 7F
 wait 30
-expect lock0_2_63 100
-expect lock0_2_79 100
-expect par63 50
-expect par79 50
-expect locks 6
+said CHORUS CANNOT BE LOCKED TO A STEP
+expect tchorus0 0
+expect lock0_2_63 -999
+expect locks 4
 # the EFFECTS layer with the step held: the top knob locks the DELAY SEND there; the middle locks the one delay's
 # time there, as DELAY TIME on the EFFECTS page does (its own value does not move)
 midi 90 1B 7F
@@ -1317,13 +1319,13 @@ expect mix_fx 1
 midi B0 10 20
 wait 30
 expect lock0_2_63 25
-expect par63 50
+expect par63 100
 midi B0 11 7F
 wait 30
 expect lock0_2_20 70
 expect par20 30
 unsaid CANNOT
-expect locks 7
+expect locks 6
 midi 90 1B 7F
 midi 80 1B 7F
 wait 30
@@ -1332,7 +1334,7 @@ expect mix_fx 0
 midi B0 3E 40
 wait 30
 expect mix_lvl 50
-expect locks 7
+expect locks 6
 unsaid CANNOT
 midi B0 3E 7F
 wait 30
@@ -1358,7 +1360,7 @@ expect running 0
 expect epar47 0
 expect epar0 800
 expect lk_at47 -999
-expect epar63 500
+expect epar63 1000
 # SOLO in step mode is the EFFECTS layer too; a strip's knob with no step held is the knob itself (its own track's,
 # said), and the track picked stays picked
 out
@@ -1377,7 +1379,7 @@ midi B0 15 20
 wait 200
 expect par48 -25
 expect track 1
-expect locks 7
+expect locks 6
 said TRACK 2: FILTER DARK 50
 midi B0 15 40
 wait 30
@@ -1403,8 +1405,8 @@ expect seq 0
 
 # ---- a knob of the recording track is kept as locks: SEQ (the lead's loop; the rhythm stopped: the first key starts
 # it), a note, then strip 1's middle knob swept while it records: locks on the steps passed, the knob's own value as it
-# was; its SPACE moved: the two sends locked, heard at once; its fader moved: never kept. Recording over: the sweep
-# comes back with the loop. SEQ held a second: the loop cleared, and its locks with it
+# was; its CHORUS moved: no lock, it changes as when nothing records (and back); its fader moved: never kept.
+# Recording over: the sweep comes back with the loop. SEQ held a second: the loop cleared, and its locks with it
 tap SEQ
 wait 30
 expect rec_track 0
@@ -1421,12 +1423,15 @@ wait 110
 expect par47 0
 expect locks0 >1
 expect epar47 <-300
+midi B0 12 40
+wait 30
+expect tchorus0 50
+expect par63 100
+expect epar63 1000
+expect lock0_0_63 -999
 midi B0 12 00
 wait 30
-expect par63 50
-expect par79 50
-expect epar63 0
-expect epar79 0
+expect tchorus0 0
 midi B0 13 40
 wait 30
 expect par0 50

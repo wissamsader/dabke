@@ -9,6 +9,8 @@ BASE = [16, 20, 24, 28, 46, 50, 54, 58]
 PARTS = ["lead", "drone", "left hand", "bass line", "kick", "darbuka and tabl", "claps", "riq and sagat"]
 VOL = [0, 4, 1, 2, 43, 42, 44, 45]            # the parts' levels (dabke.h P_*)
 FILTER, SEND, PITCH, RSEND = 47, 63, 71, 79   # each track's filter, delay send, pitch, reverb send (dabke.h P_*)
+SEND0 = [100, 100, 100, 0, 30, 30, 30, 30]    # each track's sends as they start (app.c TRKK)
+NOTE = [1, 1, 1, 1, 0, 0, 0, 0]               # a note sound on it as it starts (tracks 5 to 8: drum sounds, no CHORUS)
 DTIME = 20                                    # the one delay's time (P_ECHOTIME)
 L = []
 w = L.append
@@ -19,14 +21,17 @@ def cc(c, v, par=None, exp=None, t=30):
     if par: w(f"expect {par} {exp}")
 HEAD = ("Every control of the Akai MIDImix, one by one (made by a script, tools/gen_midimix_test.py; the numbers are the "
         "MIDImix's factory ones), and its lights. RAGA MEOW's map (fm1-organ/LOGIC.md version 2): the eight strips are "
-        "DABKE's eight tracks, fader its LEVEL, top knob its PITCH, middle knob its FILTER, bottom knob its SPACE (its "
-        "delay and reverb sends together), MUTE it off and on, REC ARM freezes it or lets it go (as REC). Nothing on a "
+        "DABKE's eight tracks, fader its LEVEL, top knob its PITCH (a note sound sliding there, 0.21), middle knob its "
+        "FILTER, bottom knob its CHORUS (0.21: a note sound's, a drum sound has none; up to 0.20 its SPACE, its delay and "
+        "reverb sends together), MUTE it off and on, REC ARM freezes it or lets it go (as REC). Nothing on a "
         "strip picks its track: it moves its own strip's track whatever the keys play, and the screen says what moved, "
         "once it is plain that one control moved alone (\"TRACK 6: LEVEL 70\"), without changing the page. SOLO tapped: "
-        "the knobs' EFFECTS layer (top DELAY SEND, middle DELAY TIME, the one delay's, bottom REVERB SEND; BANK LEFT and "
+        "the knobs' EFFECTS layer (top DELAY SEND, middle DELAY TIME, the one delay's, bottom REVERB SEND, each all the way "
+        "to 100; BANK LEFT and "
         "RIGHT lit), again: back. BANK LEFT and RIGHT: the picked track's sound before and after. The master fader: the "
         "whole level, live, never kept. No light blinks: each shows what its label says. In step mode a strip's knob "
-        "moved with a step held is locked on that step; a knob of the recording track (SEQ) is kept as locks on the "
+        "moved with a step held is locked on that step (the CHORUS cannot be: said); a knob of the recording track (SEQ) "
+        "is kept as locks on the "
         "steps the recording passes. (Up to 0.19: top knob the effect, bottom the pitch, SOLO was HOLD, REC ARM recorded "
         "and picked its track, BANK the rhythms, both together cleared the top sound, the master fader was the scene "
         "fader.)")
@@ -41,15 +46,16 @@ w("wait 900")
 w("expect track 1")
 w("expect mix_lvl 100")
 w("# SEND ALL: the 33 control changes (16..31, 46..62) in one burst, no note: all of them taken, every light sent, the")
-w("# picked track as it was, nothing said (the page a reader hears when it starts listening aside); the master fader")
-w("# halfway: the whole level at 50, the scene fader (FADE, the EDIT page's) left as it is")
+w("# picked track as it was, nothing said (the page a reader hears when it starts listening aside); the bottom knobs")
+w("# the note sounds' CHORUS (the drum sounds' none), the sends as they were; the master fader halfway: the whole level")
+w("# at 50, the scene fader (FADE, the EDIT page's) left as it is")
 w("out"); w("listen"); w("said DABKE")
 for c in list(range(16, 32)) + list(range(46, 63)): w(f"midi B0 {c:02X} 40")
 w("wait 200")
 w("said_none")
 for par, e in ([(f"par{VOL[i]}", 50) for i in range(8)] + [(f"par{PITCH+i}", 0) for i in range(8)] +
-               [(f"par{FILTER+i}", 0) for i in range(8)] + [(f"par{SEND+i}", 50) for i in range(8)] +
-               [(f"par{RSEND+i}", 50) for i in range(8)] +
+               [(f"par{FILTER+i}", 0) for i in range(8)] + [(f"par{SEND+i}", SEND0[i]) for i in range(8)] +
+               [(f"par{RSEND+i}", SEND0[i]) for i in range(8)] + [(f"tchorus{i}", 50 * NOTE[i]) for i in range(8)] +
                [("maqam", 2), ("root", 2), ("mix_lvl", 50), ("master", 0), ("track", 1), ("top_mask", 0)]):
     w(f"expect {par} {e}")
 for pkt in ("90 01 00", "90 16 00", "90 03 00", "90 18 00", "90 19 00", "90 1A 00", "90 1B 00"): w(f"expect_out USB {pkt}")
@@ -57,13 +63,13 @@ w("# the master fader up: the whole level full again")
 cc(62, 0x7F, "mix_lvl", 100)
 for i, p in enumerate(PARTS):
     w(""); note(f"strip {i+1} ({p}): fader (CC {BASE[i]+3}) its LEVEL, top knob (CC {BASE[i]}) its PITCH (quarter tones: 48 an "
-                f"octave, whole semitones as it starts), middle (CC {BASE[i]+1}) its FILTER, bottom (CC {BASE[i]+2}) its SPACE (its "
-                "two sends moved together). No track is picked by them. One of them moved alone is said a moment later, and "
-                "said on as it moves; the page stays (here: the sound page)")
+                f"octave, whole semitones as it starts), middle (CC {BASE[i]+1}) its FILTER, bottom (CC {BASE[i]+2}) its CHORUS ("
+                + ("its sends as they were" if NOTE[i] else "a drum sound's: none, said") + "). No track is picked by them. "
+                "One of them moved alone is said a moment later, and said on as it moves; the page stays (here: the sound page)")
     for v, e in ((0x7F, 100), (0x00, 0), (0x40, 50)): cc(BASE[i] + 3, v, f"par{VOL[i]}", e)
     for v, e in ((0x7F, 48), (0x00, -48), (0x40, 0)): cc(BASE[i], v, f"par{PITCH+i}", e)
     for v, e in ((0x7F, 50), (0x00, -50), (0x40, 0)): cc(BASE[i] + 1, v, f"par{FILTER+i}", e)
-    for v, e in ((0x7F, 100), (0x00, 0), (0x40, 50)): cc(BASE[i] + 2, v, f"par{SEND+i}", e); w(f"expect par{RSEND+i} {e}")
+    for v, e in ((0x7F, 100), (0x00, 0), (0x40, 50)): cc(BASE[i] + 2, v, f"tchorus{i}", e * NOTE[i]); w(f"expect par{SEND+i} {SEND0[i]}")
     w("wait 300"); w("expect track 1")
     w("tap ENV"); w("wait 30")
     cc(BASE[i] + 3, 0x59, f"par{VOL[i]}", 70, 200); w(f"said TRACK {i+1}: LEVEL 70")
@@ -72,8 +78,12 @@ for i, p in enumerate(PARTS):
     cc(BASE[i] + 1, 0x40, f"par{FILTER+i}", 0); w(f"said TRACK {i+1}: FILTER OPEN")
     w("wait 300"); cc(BASE[i], 0x59, f"par{PITCH+i}", 20, 200); w(f"said TRACK {i+1}: UP 5")
     cc(BASE[i], 0x40, f"par{PITCH+i}", 0); w(f"said TRACK {i+1}: IN TUNE")
-    w("wait 300"); cc(BASE[i] + 2, 0x59, f"par{SEND+i}", 70, 200); w(f"expect par{RSEND+i} 70"); w(f"said TRACK {i+1}: SPACE 70")
-    cc(BASE[i] + 2, 0x40, f"par{SEND+i}", 50); w(f"expect par{RSEND+i} 50"); w(f"said TRACK {i+1}: SPACE 50")
+    if NOTE[i]:
+        w("wait 300"); cc(BASE[i] + 2, 0x59, f"tchorus{i}", 70, 200); w(f"said TRACK {i+1}: CHORUS 70")
+        cc(BASE[i] + 2, 0x00, f"tchorus{i}", 0); w(f"said TRACK {i+1}: CHORUS 0"); w(f"expect par{RSEND+i} {SEND0[i]}")
+    else:
+        w("wait 300"); cc(BASE[i] + 2, 0x59, f"tchorus{i}", 0, 200); w(f"said TRACK {i+1}: CHORUS ONLY ON A NOTE SOUND")
+        w(f"expect par{SEND+i} {SEND0[i]}"); w(f"expect par{RSEND+i} {SEND0[i]}")
     w("expect track 1"); w("expect page 3"); w("tap HOME"); w("wait 300")
 w(""); w("# the top knob, the track's pitch: its middle (CC 60 to 67) in tune; FULL (as it starts) whole semitones, an octave")
 w("# either way at its ends; said in words")
@@ -87,13 +97,16 @@ cc(24, 0x3B, "par73", -1, 200); w("said TRACK 3: DOWN A QUARTER")
 cc(24, 0x50, "par73", 10); w("said TRACK 3: UP 2 AND A HALF")
 cc(24, 0x40, "par73", 0); w("said TRACK 3: IN TUNE")
 w("tap EDIT"); w("wait 30"); w("expect row 0"); w("turn K4 -1"); w("wait 30"); w("expect ch44 0"); w("tap HOME"); w("wait 30")
-w("# a note sounding moves with the knob: the drone silent (its fader down), the left hand picked (SEL held and the")
-w("# third white key), its fader up, D held (293.7 Hz); the knob up 5: 392 Hz; then up 3: 349 Hz")
+w("# a note sounding slides with the knob (0.21, as RAGA MEOW's PITCH: some 0.45 s whatever the distance; up to 0.20")
+w("# at once): the drone silent (its fader down), the left hand picked (SEL held and the third white key), its fader up,")
+w("# D held (293.7 Hz); the knob up 5: 150 ms on, on its way (a jump would be at 392 Hz by then), then at 392 Hz; then")
+w("# up 3: 349 Hz; back in tune")
 cc(23, 0x00, "par4", 0); w("wait 150"); cc(27, 0x66); w("wait 150"); w("expect track 1"); pick(3)
 w("key 9 down"); w("wait 400"); w("expect pitch_x10 >2900"); w("expect pitch_x10 <2975")
-cc(24, 0x5B, "par73", 20, 300); w("expect pitch_x10 >3870"); w("expect pitch_x10 <3970")
-cc(24, 0x50, "par73", 12, 300); w("expect pitch_x10 >3450"); w("expect pitch_x10 <3530")
-cc(24, 0x40, "par73", 0, 300); w("expect pitch_x10 >2900"); w("expect pitch_x10 <2975")
+cc(24, 0x5B, "par73", 20, 150); w("expect pitch_x10 >3000"); w("expect pitch_x10 <3700")
+w("wait 1050"); w("expect pitch_x10 >3870"); w("expect pitch_x10 <3970")
+cc(24, 0x50, "par73", 12, 1200); w("expect pitch_x10 >3450"); w("expect pitch_x10 <3530")
+cc(24, 0x40, "par73", 0, 1200); w("expect pitch_x10 >2900"); w("expect pitch_x10 <2975")
 
 w(""); w("# BANK RIGHT and LEFT (notes 26, 25): the picked track's sound after and before (the left hand's: STRINGS, then")
 w("# ORGAN), said, the note under the finger playing on (RAGA MEOW's: the new sound takes it over); the rhythm as it was")
@@ -155,22 +168,24 @@ w("# middle knob), bottom REVERB SEND, the faders their LEVEL still. BANK LEFT a
 w("# never lit); tapped again: back, the BANK lights dark (0.19: SOLO was HOLD)")
 w("out"); press(27, 100); w("expect mix_fx 1"); w("said KNOBS: EFFECTS DELAY, TIME, REVERB"); w("expect mixleds 196608")
 w("expect_out USB 90 19 7F"); w("expect_out USB 90 1A 7F"); w("expect_no_out USB 90 1B 7F")
-w("wait 300"); cc(24, 0x7F, f"par{SEND+2}", 100, 200); w("said TRACK 3: DELAY SEND 100"); w(f"expect par{RSEND+2} 50"); w("expect par73 0")
+w("wait 300"); cc(24, 0x7F, f"par{SEND+2}", 100, 200); w("said TRACK 3: DELAY SEND 100"); w(f"expect par{RSEND+2} 100"); w("expect par73 0")
 w("wait 300"); cc(26, 0x00, f"par{RSEND+2}", 0, 200); w("said TRACK 3: REVERB SEND 0"); w(f"expect par{SEND+2} 100")
+w("# the REVERB SEND all the way: 100, on the screen and in the engine (1.0), not half of it")
+w("wait 300"); cc(26, 0x7F, f"par{RSEND+2}", 100, 200); w("said TRACK 3: REVERB SEND 100"); w(f"expect epar{RSEND+2} 1000")
 w("wait 300"); cc(25, 0x7F, f"par{DTIME}", 70, 200); w("said DELAY TIME 700 MS"); w(f"expect par{FILTER+2} 0")
 w("wait 300"); cc(47, 0x00, f"par{DTIME}", 6, 200); w("said DELAY TIME 60 MS"); w(f"expect par{FILTER+4} 0")
 cc(47, 0x2F, f"par{DTIME}", 30)
 w("wait 300"); cc(27, 0x59, "par1", 70, 200); w("said TRACK 3: LEVEL 70")
 cc(27, 0x40, "par1", 50)
 w("expect track 1"); w("expect mix_fx 1")
-w("out"); press(27, 100); w("expect mix_fx 0"); w("said KNOBS: PITCH FILTER, SPACE"); w("expect mixleds 0")
+w("out"); press(27, 100); w("expect mix_fx 0"); w("said KNOBS: PITCH FILTER, CHORUS"); w("expect mixleds 0")
 w("expect_out USB 90 19 00"); w("expect_out USB 90 1A 00")
-w("# the top knob its PITCH again, the sends as the layer left them; the bottom knob at their middle: SPACE moves them")
-w("# together, their balance kept")
+w("# the top knob its PITCH again, the sends as the layer left them; the bottom knob the CHORUS again (up to 0.20: SPACE,")
+w("# the two sends together): track 3's all the way, then none, its sends as they were")
 cc(24, 0x50, "par73", 12); w(f"expect par{SEND+2} 100")
 cc(24, 0x40, "par73", 0)
-cc(26, 0x40, f"par{SEND+2}", 100); w(f"expect par{RSEND+2} 0")
-cc(26, 0x30, f"par{SEND+2}", 88); w(f"expect par{RSEND+2} 0")
+cc(26, 0x7F, "tchorus2", 100); w(f"expect par{SEND+2} 100"); w(f"expect par{RSEND+2} 100")
+cc(26, 0x00, "tchorus2", 0); w(f"expect par{RSEND+2} 100")
 w("# PLAY, the knobs on their own layer: the BANK lights stay dark while the rhythm runs")
 w("out"); w("tap PLAY"); w("wait 1000"); w("expect running 1"); w("expect_no_out USB 90 19 7F"); w("expect_no_out USB 90 1A 7F")
 w("tap PLAY"); w("wait 90"); w("expect running 0")
@@ -179,8 +194,8 @@ w("expect mute 0")
 w(""); w("# ---- step mode (EDIT held a second), the lead picked. A step held (the third white key) and a strip's knob moved:")
 w("# that knob's value locked on that step, the knob itself as it was. Strip 1's middle knob (its filter, CC 17), then")
 w("# strip 2's (CC 21: another track's knob, locked on the lead's step all the same; no track is picked by it), then")
-w("# strip 1's fader (CC 19, its level), its top knob (CC 16, its pitch) and its bottom knob (CC 18, its SPACE: both")
-w("# sends locked)")
+w("# strip 1's fader (CC 19, its level) and its top knob (CC 16, its pitch); its bottom knob (CC 18, its CHORUS) cannot")
+w("# be locked: said, nothing locked, the chorus as it was")
 cc(19, 0x66); w("wait 150"); w("expect track 1")
 w("press EDIT"); w("wait 1100"); w("release EDIT"); w("wait 60"); w("expect seq 1"); w("listen")
 w("key w2 down"); w("wait 30")
@@ -188,16 +203,16 @@ cc(17, 0x20); w("expect lock0_2_47 -25"); w("expect par47 0"); w("expect locks 1
 cc(21, 0x7F); w("expect lock0_2_48 50"); w("expect par48 0"); w("wait 150"); w("expect track 1")
 cc(19, 0x00); w("expect lock0_2_0 0"); w("expect par0 80")
 cc(16, 0x50); w("expect lock0_2_71 12"); w("expect par71 0")
-cc(18, 0x7F); w("expect lock0_2_63 100"); w("expect lock0_2_79 100"); w("expect par63 50"); w("expect par79 50")
-w("expect locks 6")
+cc(18, 0x7F); w("said CHORUS CANNOT BE LOCKED TO A STEP"); w("expect tchorus0 0"); w("expect lock0_2_63 -999")
+w("expect locks 4")
 w("# the EFFECTS layer with the step held: the top knob locks the DELAY SEND there; the middle locks the one delay's")
 w("# time there, as DELAY TIME on the EFFECTS page does (its own value does not move)")
 press(27); w("expect mix_fx 1")
-cc(16, 0x20); w("expect lock0_2_63 25"); w("expect par63 50")
-cc(17, 0x7F); w("expect lock0_2_20 70"); w("expect par20 30"); w("unsaid CANNOT"); w("expect locks 7")
+cc(16, 0x20); w("expect lock0_2_63 25"); w("expect par63 100")
+cc(17, 0x7F); w("expect lock0_2_20 70"); w("expect par20 30"); w("unsaid CANNOT"); w("expect locks 6")
 press(27); w("expect mix_fx 0")
 w("# the master fader with a step held: the whole level, live, never locked")
-cc(62, 0x40, "mix_lvl", 50); w("expect locks 7"); w("unsaid CANNOT")
+cc(62, 0x40, "mix_lvl", 50); w("expect locks 6"); w("unsaid CANNOT")
 cc(62, 0x7F, "mix_lvl", 100)
 w("key w2 up"); w("wait 60")
 w("# a hold in which a knob was turned is no tap: nothing was added to the step; its key shows the second level")
@@ -207,13 +222,13 @@ w("# lets go at the bar's end, with nothing of the lead's to end it sooner: a lo
 w("# same knob")
 w("tap PLAY"); w("wait 400"); w("expect epar47 -500"); w("expect lk_at47 -25"); w("expect epar0 0"); w("expect epar63 250")
 w("tap PLAY"); w("wait 90"); w("expect running 0"); w("expect epar47 0"); w("expect epar0 800"); w("expect lk_at47 -999")
-w("expect epar63 500")
+w("expect epar63 1000")
 w("# SOLO in step mode is the EFFECTS layer too; a strip's knob with no step held is the knob itself (its own track's,")
 w("# said), and the track picked stays picked")
 w("out"); press(27); w("expect mix_fx 1"); w("expect_out USB 90 19 7F")
 press(27); w("expect mix_fx 0")
 w("wait 300"); w("listen")
-cc(21, 0x20, None, None, 200); w("expect par48 -25"); w("expect track 1"); w("expect locks 7"); w("said TRACK 2: FILTER DARK 50")
+cc(21, 0x20, None, None, 200); w("expect par48 -25"); w("expect track 1"); w("expect locks 6"); w("said TRACK 2: FILTER DARK 50")
 cc(21, 0x40); w("expect par48 0"); w("expect track 1"); w("said TRACK 2: FILTER OPEN")
 w("# EDIT with the step held: its locks removed, and nothing else (no EDIT page; step mode on still)")
 w("key w2 down"); w("wait 30"); w("tap EDIT"); w("wait 30"); w("key w2 up"); w("wait 60")
@@ -222,12 +237,13 @@ w("press EDIT"); w("wait 1100"); w("release EDIT"); w("wait 60"); w("expect seq 
 
 w(""); w("# ---- a knob of the recording track is kept as locks: SEQ (the lead's loop; the rhythm stopped: the first key starts")
 w("# it), a note, then strip 1's middle knob swept while it records: locks on the steps passed, the knob's own value as it")
-w("# was; its SPACE moved: the two sends locked, heard at once; its fader moved: never kept. Recording over: the sweep")
-w("# comes back with the loop. SEQ held a second: the loop cleared, and its locks with it")
+w("# was; its CHORUS moved: no lock, it changes as when nothing records (and back); its fader moved: never kept.")
+w("# Recording over: the sweep comes back with the loop. SEQ held a second: the loop cleared, and its locks with it")
 w("tap SEQ"); w("wait 30"); w("expect rec_track 0"); w("expect rec_waiting 1"); w("tapkey 7"); w("wait 60"); w("expect running 1")
 cc(17, 0x30, None, None, 110); cc(17, 0x20, None, None, 110); cc(17, 0x10, None, None, 110)
 w("expect par47 0"); w("expect locks0 >1"); w("expect epar47 <-300")
-cc(18, 0x00); w("expect par63 50"); w("expect par79 50"); w("expect epar63 0"); w("expect epar79 0")
+cc(18, 0x40, "tchorus0", 50); w("expect par63 100"); w("expect epar63 1000"); w("expect lock0_0_63 -999")
+cc(18, 0x00, "tchorus0", 0)
 cc(19, 0x40); w("expect par0 50"); w("expect lock0_0_0 -999")
 w("tap SEQ"); w("wait 30"); w("expect rec_track -1"); w("expect trk_takes0 1"); w("expect locks0 >1"); w("expect loop0 2")
 w("wait 900"); w("expect par47 0")

@@ -24,12 +24,13 @@
 /* Akai MIDImix on channel 1: per strip i three knobs (top, middle, bottom) as CC MIX_BASE[i] + 0, 1, 2 and a fader
  * as + 3; the master fader CC 62; MUTE buttons notes 1 + 3 i, REC ARM notes 3 + 3 i, BANK LEFT 25, BANK RIGHT 26,
  * SOLO 27. Its LEDs: note on (127) / on at velocity 0 on channel 1 for the same notes. The eight strips are the eight
- * tracks (dabke.h PART_*), RAGA MEOW's map (fm1-organ/LOGIC.md version 2): the fader its LEVEL, the top knob its PITCH,
- * the middle its FILTER (the cutoff), the bottom its SPACE (its delay and reverb sends together); SOLO tapped: the
- * knobs' EFFECTS layer (top DELAY SEND, middle DELAY TIME, the one delay's, bottom REVERB SEND; BANK LEFT and RIGHT
- * lit), tapped again: back. MUTE mutes it, REC ARM freezes it or lets it go (as REC). Nothing on a strip picks its
- * track: it moves its own strip's track whatever the keys play, and what moved is said. BANK LEFT and RIGHT: the picked
- * track's sound, before and after. The master fader: the whole level, live, never kept. */
+ * tracks (dabke.h PART_*), RAGA MEOW's map (fm1-organ/LOGIC.md version 2): the fader its LEVEL, the top knob its PITCH
+ * (a note sound sliding there, 0.21), the middle its FILTER (the cutoff), the bottom its CHORUS (0.21, the owner's, as
+ * COMBO 0.17's: "the chorus instead of the space"; up to 0.20 its SPACE, both sends together; a drum sound has none);
+ * SOLO tapped: the knobs' EFFECTS layer (top DELAY SEND, middle DELAY TIME, the one delay's, bottom REVERB SEND; BANK
+ * LEFT and RIGHT lit), tapped again: back. MUTE mutes it, REC ARM freezes it or lets it go (as REC). Nothing on a strip
+ * picks its track: it moves its own strip's track whatever the keys play, and what moved is said. BANK LEFT and RIGHT:
+ * the picked track's sound, before and after. The master fader: the whole level, live, never kept. */
 static const uint8_t MIX_BASE[8] = {16, 20, 24, 28, 46, 50, 54, 58};
 #define MIX_MASTER_CC 62
 static const uint8_t PART_PAR[DAB_NPART] = {P_LEAD, P_DRONE, P_LEFT, P_BASS, P_GKICK, P_GDRUM, P_GCLAP, P_GMETAL};
@@ -253,12 +254,12 @@ static float ch_engine(int c, int v)    /* a choice as the engine takes it */
 enum { K_SECOND = 200, K_QDEPTH, K_CENTS, K_DRUM, K_DLEVEL, K_DTUNE, K_DLEN, K_MUTE,
        K_TRACK = K_MUTE + 8, K_TSEND, K_TPITCH, K_TDRUM, K_FADE, K_TOPCLR, K_TLEN, K_TFILT, K_TVOL,
        K_TRSEND, K_TSPACE, K_TBASS, K_TFX, K_TMUTE, K_TSOLO, K_EQLOW, K_EQMID, K_EQHIGH, K_TSOUND, K_BDSEND, K_BRSEND,
-       K_BSPACE, K_BFX, K_BMUTE, K_BSOLO, K_NOTE, K_MIXLVL, K_NONE = 255 };
+       K_BSPACE, K_BFX, K_BMUTE, K_BSOLO, K_NOTE, K_MIXLVL, K_TCHORUS, K_NONE = 255 };
 /* (K_MUTE + part: that part plays or is muted; the picked track's own: which it is, its DELAY SEND, its pitch, the drum
  * a tapped step gets, its LENGTH, its filter, its LEVEL, its REVERB SEND, its SPACE (both sends together), its BASS,
  * the MIXER's FX, MUTE and SOLO, its sound; FADE: the scene fader's place; TOP: its top sound cleared; the MASTER EQ's
  * three; the background's (the rhythm's drums, SEL held and the ninth white key): its sends, its SPACE, its FX, MUTE
- * and SOLO; NOTE: the note the maqam page tunes) */
+ * and SOLO; NOTE: the note the maqam page tunes; the picked track's CHORUS, 0.21: the MIDImix's bottom knob) */
 static const char *const DRUM_NAME[DAB_NDRUM] = {"DUM", "TEK", "KA", "SLAP", "TABL", "STICK", "RIQ", "DAF", "SAGAT",
                                                  "KICK", "CLAP", "SNARE", "SHAKER"};
 static const char *const DRUM_SHORT[DAB_NDRUM] = {"DUM", "TEK", "KA", "SLP", "TBL", "TIK", "RIQ", "DAF", "SAG", "KCK",
@@ -278,19 +279,20 @@ enum { PG_HOME, PG_SEL, PG_FX, PG_ENV, PG_LFO, PG_GLO, PG_EDIT, NPG };
 static const char *const PAGE_TITLE[NPG] = {"HOME", "MAQAM", "EFFECTS", "SOUND", "ORNAMENTS", "RHYTHM", "EDIT"};
 /* Every page has rows of four knobs (RAGA MEOW's way, fm1-organ/LOGIC.md version 2): its button again shows the next
  * row, K1 to K4 turn the row shown. The home page's rows are the picked track's (its strip as the MIDImix has it
- * first). The EFFECTS page: its own three, then the picked track's two (SENDS, TONE: the background's when SEL held and
- * the ninth white key picked it), its last the MASTER EQ. The EDIT page: the steps, the scene, its last the MIXER */
+ * first: PITCH, FILTER, CHORUS, LEVEL). The EFFECTS page: its own three, then the picked track's two (SENDS with its
+ * CHORUS, TONE: the background's when SEL held and the ninth white key picked it), its last the MASTER EQ. The EDIT
+ * page: the steps, the scene, its last the MIXER */
 #define MAXROWS 8
 #define FX_TRK_ROW 3                     /* the EFFECTS page's rows from here: the picked track's SENDS and TONE */
 #define FX_EQ_ROW 5                      /* its last: the MASTER EQ */
 #define MIX_ROW 2                        /* the EDIT page's last: the MIXER */
 static const uint8_t PAGE_ROWS[NPG] = {3, 2, 6, 6, 4, 8, 3};
 static const uint8_t ROWS[NPG][MAXROWS][4] = {
-    [PG_HOME] = {{K_TPITCH, K_TFILT, K_TSPACE, K_TVOL}, {K_TSEND, K_TRSEND, K_TBASS, K_TSOUND},
+    [PG_HOME] = {{K_TPITCH, K_TFILT, K_TCHORUS, K_TVOL}, {K_TSEND, K_TRSEND, K_TBASS, K_TSOUND},
                  {P_ORNAMOUNT, P_VIBDEPTH, P_GLIDE, CH(C_ORN)}},
     [PG_SEL] = {{CH(C_MAQAM), CH(C_ROOT), K_QDEPTH, CH(C_PSTEPS)}, {K_NOTE, K_CENTS, CH(C_TOUCH), CH(C_USB)}},
     [PG_FX] = {{P_ECHO, P_ECHOTIME, P_ECHOFB, P_REVERB}, {P_DRIVE, P_CHORUS, P_PA, P_BRIGHT}, {P_WOW, P_AGE, P_HISS, CH(C_DSYNC)},
-               {K_TSEND, K_TRSEND, K_TSPACE, K_NONE}, {K_TFILT, K_TBASS, K_TPITCH, K_TVOL}, {K_EQLOW, K_EQMID, K_EQHIGH, K_NONE}},
+               {K_TSEND, K_TRSEND, K_TSPACE, K_TCHORUS}, {K_TFILT, K_TBASS, K_TPITCH, K_TVOL}, {K_EQLOW, K_EQMID, K_EQHIGH, K_NONE}},
     [PG_ENV] = {{CH(C_MODEL), CH(C_PLAY), P_TONE, P_BUZZ}, {P_DETUNE, P_BREATH, P_BODY, CH(C_DOUBLE)},
                 {P_ATTACK, P_RELEASE, P_GLIDE, P_TRANSPOSE}, {P_TUNE, P_VELAMT, CH(C_BEND), CH(C_PICK)},
                 {CH(C_ARPMODE), CH(C_ARPRATE), CH(C_ARPOCT), P_ARPGATE}, {CH(C_ARPPAT), CH(C_ARPREP), CH(C_ARPSWING), CH(C_ARPLATCH)}},
@@ -420,8 +422,11 @@ typedef struct {
                                           * every knob's id is below it; the reverb sends of 0.20 in places the choices
                                           * left empty) */
 /* The one logic's block (DKB9, after what DKB8 had): the MIXER's and the MASTER EQ's, what REC froze (for PLAY to bring
- * back, after a power-off too) */
-#define X_TAG 0x31584B44u                /* "DKX1" */
+ * back, after a power-off too), each track's CHORUS. Its tag is its version: a later one adds from its spare room, and
+ * the one before it loads whole */
+#define X_TAG 0x32584B44u                /* "DKX2" (0.21): each track's CHORUS, from the spare room */
+#define X_TAG1 0x31584B44u               /* "DKX1" (0.20): no CHORUS yet, its spare room nothing: it loads whole, each
+                                          * track's CHORUS none */
 typedef struct {
     uint32_t tag;
     int8_t eq[3];                        /* the MASTER EQ: LOW, MID, HIGH, dB -24 (OFF) .. +12 */
@@ -430,7 +435,8 @@ typedef struct {
     uint8_t frz;                         /* the tracks REC froze that PLAY brings back, a bit each */
     uint8_t frz_n[DAB_NTRK];             /* their notes (bit 7: the left keys as set, with track 1) */
     uint8_t frz_note[DAB_NTRK][4];
-    uint8_t rsv[16];                     /* (room for more) */
+    uint8_t chor[DAB_NTRK];              /* (DKX2, 0.21) each track's CHORUS, percent: the MIDImix's bottom knob */
+    uint8_t rsv[8];                      /* (room for more) */
 } xset_t;
 typedef struct {
     uint32_t magic;
@@ -491,6 +497,7 @@ _Static_assert(sizeof(settings_t) <= PLAT_STORE_MAX, "the settings: one store ob
 _Static_assert(SET8_SIZE == SET7_SIZE + DAB_NTRK * sizeof(tsound_t), "DKB8: DKB7 as it was, then the tracks' sounds");
 _Static_assert(SET8_SIZE == 3704u, "DKB8 as 0.17 to 0.19 kept it");
 _Static_assert(sizeof(settings_t) == SET8_SIZE + sizeof(xset_t), "DKB9: DKB8 as it was, then the one logic's block");
+_Static_assert(sizeof(xset_t) == 68u, "the one logic's block as 0.20 kept it (DKX1): DKX2 in the same room");
 _Static_assert(P_RSEND_LAST < SET_NPAR && P_ARPGATE < SET_NPAR && P_LOWEQ_LAST < SET_NPAR, "every knob has its place");
 _Static_assert(P_COUNT <= K_CH, "the engine's knobs and choices: below the pages' own ids");
 _Static_assert(K_CH + NCH <= K_SECOND, "the choices' ids: below the pages' own");
@@ -1035,6 +1042,8 @@ static void sound_label(int f, int x, char *b)   /* its own name, its family in 
     text_cat(b, FAM_LIST[f][x]);
 }
 static void tsnd_send(int t) { dabke_track_sound(t, set.tsnd[t][0], set.tsnd[t][1]); }
+static void chorus_send(int t) { dabke_chorus(t & 7, (float)set.x.chor[t & 7] * 0.01f); }   /* (its CHORUS: a drum sound's
+                                          * and one whose effects are out, the engine leaves out) */
 static void ts_send(int t);
 static void view_load(void);
 static void solo_send(void);
@@ -1659,6 +1668,11 @@ static int settings_sane(void)
     if (set.ch[C_TOUCH] > 1)                 /* (a record from 0.14 or before, KEY TOUCH on its third choice, VEL+PRESS:
                                               * it reads VELOCITY, and the pressure is PRESSURE's alone) */
         set.ch[C_TOUCH] = 1;
+    if (set.x.tag == X_TAG1) {               /* (0.20's block, DKX1: whole as it was, each track's CHORUS none; the record
+                                              * is DKX2 once something changes) */
+        memset(set.x.chor, 0, sizeof set.x.chor);
+        set.x.tag = X_TAG;
+    }
     if (set.x.tag != X_TAG)                  /* (the one logic's block: a value out of its range, at its start) */
         x_start();
     for (i = 0; i < 3; i++)
@@ -1666,11 +1680,14 @@ static int settings_sane(void)
             set.x.eq[i] = 0;
     set.x.bfx = set.x.bfx ? 1 : 0;
     set.x.bmute = set.x.bmute ? 1 : 0;
-    for (i = 0; i < DAB_NTRK; i++)
+    for (i = 0; i < DAB_NTRK; i++) {
         if (set.x.frz_n[i] > 4) {
             set.x.frz_n[i] = 0;
             set.x.frz &= (uint8_t)~(1u << i);
         }
+        if (set.x.chor[i] > 100u)
+            set.x.chor[i] = 0;
+    }
     if (!set.track)                          /* (ALL, before the one logic: track 1, which plays the keys as ALL did) */
         set.track = 1;
     for (i = 0; i < DAB_NTRK; i++) {
@@ -1776,6 +1793,8 @@ static void push_all(void)
     dabke_par(P_BEND, 0.0f);
     solo_send();                             /* (the mutes, the background's, the effects out: SOLO is never kept) */
     eq_send();
+    for (i = 0; i < DAB_NTRK; i++)           /* (each track's CHORUS) */
+        chorus_send(i);
     dabke_master(1.0f);
     maqam_send();
     for (i = 0; i < DAB_NDRUM; i++)
@@ -1946,7 +1965,9 @@ static void midi_in(void)                /* audio interrupt: what came in */
 }
 
 #ifdef PLAT_HOST
-static float host_out[8192];             /* (the simulator's checks: the output's last samples, for "pitch") */
+static float host_out[8192];             /* (the simulator's checks: the output's last samples, for "pitch"; their sides,
+                                          * left less right, for "side_mid") */
+static float host_side[8192];
 static uint32_t host_out_w;
 #endif
 void app_render(int32_t *lr, uint32_t n, uint32_t master_q12)
@@ -1960,8 +1981,10 @@ void app_render(int32_t *lr, uint32_t n, uint32_t master_q12)
 #ifdef PLAT_HOST
     {
         uint32_t i;
-        for (i = 0; i < n; i++)
+        for (i = 0; i < n; i++) {
+            host_side[host_out_w & 8191u] = (float)(lr[2 * i] - lr[2 * i + 1]) * 0.5f;
             host_out[host_out_w++ & 8191u] = (float)(lr[2 * i] + lr[2 * i + 1]) * 0.5f;
+        }
     }
 #endif
 }
@@ -2175,10 +2198,11 @@ static void solo_send(void)              /* each track's silence and its effects
     dabke_fx_off(f);
 }
 static void eq_send(void) { dabke_master_eq((float)set.x.eq[0], (float)set.x.eq[1], (float)set.x.eq[2]); }
-static int trk_fx_set(int t)             /* a track has effects set (its sends, its BASS): the MIXER's "FX", else "-" */
+static int trk_fx_set(int t)             /* a track has effects set (its sends, its BASS, a note sound's CHORUS): the
+                                          * MIXER's "FX", else "-" */
 {
     t &= 7;
-    return set.par[P_SEND + t] || set.par[P_RSEND + t] || set.par[P_LOWEQ + t];
+    return set.par[P_SEND + t] || set.par[P_RSEND + t] || set.par[P_LOWEQ + t] || (set.x.chor[t] && !trk_drum(t));
 }
 
 /* REC (and a strip's REC ARM): the track frozen. Its keys down now sound on without them; none down: its note or chord,
@@ -2726,6 +2750,7 @@ static const char *strip_word(int id)        /* a strip's control, by name */
            : id >= P_PITCH && id <= P_PITCH_LAST ? "PITCH" : "LEVEL";
 }
 static void space_say(int t);
+static void chorus_words(int t, char *b);
 static void strip_say_at(int t, int id, int32_t val)   /* a track's control just moved: "TRACK 3: FILTER DARK 30" */
 {
     char b[48] = ": ", v[32];
@@ -2736,6 +2761,13 @@ static void strip_say_at(int t, int id, int32_t val)   /* a track's control just
     }
     if (id == K_TSPACE) {
         space_say(t);
+        return;
+    }
+    if (id == K_TCHORUS) {                   /* (its CHORUS, the bottom knob; a drum sound's, swept: said once, while it
+                                              * shows) */
+        chorus_words(t, b);
+        if (!trk_drum(t) || !ui.msg_until || !same_text(ui.msg, b))
+            say(b);
         return;
     }
     if (id == P_ECHOTIME) {                  /* (the one delay's time, from any strip's middle knob) */
@@ -2766,6 +2798,32 @@ static void space_say(int t)             /* "TRACK 3: SPACE 40" */
     int_text(space_of(t), v);
     text_cat(b, v);
     trk_words(t, b);
+}
+/* Each track's CHORUS (0.21, the MIDImix's bottom knob, the home page's K3; the owner, 11-25, as COMBO 0.17's: "the
+ * chorus instead of the space"), 0..100: its note sound through a chorus of its own (dabke_chorus). A drum sound has
+ * none (said); a step held cannot lock it (said); the MIXER's FX takes it out with the sends */
+static void chorus_words(int t, char *b) /* "TRACK 3: CHORUS 70"; a drum sound: "TRACK 5: CHORUS ONLY ON A NOTE SOUND"
+                                          * (b: 48) */
+{
+    char v[8];
+    trk_name(t, b);
+    text_cat(b, ": CHORUS ");
+    if (trk_drum(t))
+        text_cat(b, "ONLY ON A NOTE SOUND");
+    else {
+        int_text(set.x.chor[t & 7], v);
+        text_cat(b, v);
+    }
+}
+static void chorus_set(int t, int32_t v) /* track t's CHORUS to v */
+{
+    t &= 7;
+    v = clamp(v, 0, 100);
+    if (set.x.chor[t] == v)
+        return;
+    set.x.chor[t] = (uint8_t)v;
+    chorus_send(t);
+    changed();
 }
 static int bg_send(int id)               /* the background's send (its drum tracks', their middle; -1: none has a drum sound) */
 {
@@ -2912,6 +2970,7 @@ static const char *knob_na(int id)       /* a knob that does nothing where it is
 {
     switch (id) {
     case P_ECHOTIME: return set.ch[C_DSYNC] ? "DELAY SYNC SETS THE TIME" : 0;
+    case K_TCHORUS: return trk_drum(picked()) ? "ONLY ON A NOTE SOUND" : 0;
     case K_BDSEND:
     case K_BRSEND:
     case K_BSPACE: {
@@ -2929,6 +2988,22 @@ static void knob_step(int id, int n)
     int pid;
     if (id == K_NONE)
         return;
+    if (id == K_TCHORUS) {                   /* the picked track's CHORUS: a drum sound has none, a step held cannot lock
+                                              * it (both said, nothing changes; the hold is no tap) */
+        int t = picked();
+        char b[48];
+        if (step_held())
+            ui.wused |= (uint16_t)(1u << ui.skey);
+        if (!trk_drum(t) && step_held()) {
+            lock_refuse("CHORUS");
+            return;
+        }
+        if (!trk_drum(t))
+            chorus_set(t, set.x.chor[t] + n * 2);
+        chorus_words(t, b);
+        say(b);
+        return;
+    }
     if (knob_na(id) && !step_held()) {      /* (it does nothing here: said why, nothing changes) */
         say(knob_na(id));
         return;
@@ -3525,6 +3600,7 @@ static int row_id(int pg, int r, int k)  /* a row's knob K (0..3): on the EFFECT
     case K_TSEND: return K_BDSEND;
     case K_TRSEND: return K_BRSEND;
     case K_TSPACE: return K_BSPACE;
+    case K_TCHORUS: return K_NONE;       /* (the drums: no chorus of their own) */
     case K_TFILT: return P_KITTONE;      /* (the background's TONE: the kit's tone, its LOW / HIGH, its tune, the DRUMS) */
     case K_TBASS: return P_BALANCE;
     case K_TPITCH: return P_KITTUNE;
@@ -3575,7 +3651,9 @@ static void fx_hold(uint32_t btn)        /* FX on the EFFECTS page: let go, its 
                 set.x.eq[id - K_EQLOW] = 0;
                 eq_send();
                 changed();
-            } else if (id == K_BDSEND || id == K_BRSEND) {   /* (the background's sends: each drum track's at its start) */
+            } else if (id == K_TCHORUS)      /* (the picked track's CHORUS: none) */
+                chorus_set(picked(), 0);
+            else if (id == K_BDSEND || id == K_BRSEND) {   /* (the background's sends: each drum track's at its start) */
                 for (t = 0; t < DAB_NTRK; t++)
                     if (trk_drum(t))
                         set_par((id == K_BDSEND ? P_SEND : P_RSEND) + t, PAR[(id == K_BDSEND ? P_SEND : P_RSEND) + t].start);
@@ -3853,11 +3931,11 @@ static void part_mute(int k, int on)
 }
 
 /* the MIDImix: what the main loop takes from the ring. RAGA MEOW's map (fm1-organ/LOGIC.md version 2): strip i is track
- * i. Fader: its LEVEL. Top knob: its PITCH. Middle: its FILTER. Bottom: its SPACE (its two sends together). SOLO tapped:
- * the knobs' EFFECTS layer (top DELAY SEND, middle DELAY TIME, the one delay's, bottom REVERB SEND), again: back. MUTE:
- * its MUTE. REC ARM: freezes it or lets it go. None picks its track. BANK LEFT and RIGHT: the picked track's sound
- * before and after. The master fader: the whole level, live, never kept. In step mode with a step held, a strip's knob
- * or fader is locked on it */
+ * i. Fader: its LEVEL. Top knob: its PITCH. Middle: its FILTER. Bottom: its CHORUS (0.21; up to 0.20 its SPACE, its two
+ * sends together). SOLO tapped: the knobs' EFFECTS layer (top DELAY SEND, middle DELAY TIME, the one delay's, bottom
+ * REVERB SEND), again: back. MUTE: its MUTE. REC ARM: freezes it or lets it go. None picks its track. BANK LEFT and
+ * RIGHT: the picked track's sound before and after. The master fader: the whole level, live, never kept. In step mode
+ * with a step held, a strip's knob or fader is locked on it (its CHORUS cannot be: said) */
 static void mix_master(int v)            /* the MIDImix's master fader, 0..100: the whole level (live; 100 again at power-on
                                           * and when the controller goes) */
 {
@@ -3884,7 +3962,7 @@ static void mix_take(uint32_t pkt)
             return;
         }
         for (i = 0; i < 8u; i++) {
-            int t = (int)i, id, space = 0;
+            int t = (int)i, id;
             int32_t v;
             if (d1 < MIX_BASE[i] || d1 > MIX_BASE[i] + 3u)
                 continue;
@@ -3896,29 +3974,24 @@ static void mix_take(uint32_t pkt)
                 id = P_PITCH + t;
             else if (d1 == MIX_BASE[i] + 1u)
                 id = P_FILTER + t;
-            else {
-                id = P_SEND + t;
-                space = 1;
+            else {                           /* the bottom knob: its CHORUS (0.21; up to 0.20 its SPACE, both sends
+                                              * together, now the EFFECTS page's). A drum sound has none, a step held
+                                              * cannot lock it: said, nothing changes (the hold is no tap) */
+                if (step_held())
+                    ui.wused |= (uint16_t)(1u << ui.skey);
+                if (!trk_drum(t) && step_held()) {
+                    lock_refuse("CHORUS");
+                    return;
+                }
+                if (!trk_drum(t))
+                    chorus_set(t, ((int32_t)d2 * 100 + 63) / 127);
+                cc_moved((int)d1, t, K_TCHORUS, set.x.chor[t]);
+                return;
             }
             v = id == P_PITCH + t ? pitch_from_cc((int)d2)   /* (the top knob: its steps as PITCH STEPS says) */
                                   : PAR[id].lo + ((int32_t)d2 * (PAR[id].hi - PAR[id].lo) + 63) / 127;
-            if (step_held()) {               /* a step held: this control's value locked on it (SPACE: both sends) */
-                if (space) {
-                    int d = (int)v - space_of(t), ia = lk_find(t, ui.sstep, P_SEND + t), ib = lk_find(t, ui.sstep, P_RSEND + t);
-                    step_lock(P_SEND + t, clamp((ia >= 0 ? DAB_LK_VAL(sq.lock[ia]) : par_eff(P_SEND + t)) + d, 0, 100));
-                    step_lock(P_RSEND + t, clamp((ib >= 0 ? DAB_LK_VAL(sq.lock[ib]) : par_eff(P_RSEND + t)) + d, 0, 100));
-                } else
-                    step_lock(id, v);
-                return;
-            }
-            if (space) {                     /* SPACE: both sends moved by as much, their balance kept (at an end, each
-                                              * stops at its own) */
-                int d = (int)v - space_of(t);
-                if (d) {
-                    ctl_move(P_SEND + t, clamp(ctl_from(P_SEND + t) + d, 0, 100));
-                    ctl_move(P_RSEND + t, clamp(ctl_from(P_RSEND + t) + d, 0, 100));
-                }
-                cc_moved((int)d1, t, K_TSPACE, space_of(t));
+            if (step_held()) {               /* a step held: this control's value locked on it */
+                step_lock(id, v);
                 return;
             }
             {                                /* its own track's control, whatever track is picked: the keys stay where
@@ -3943,7 +4016,7 @@ static void mix_take(uint32_t pkt)
     if (d1 == MIX_SOLO) {                    /* SOLO tapped: the knobs' other layer (BANK LEFT and RIGHT lit on it) */
         ui.mix_fx = (uint8_t)!ui.mix_fx;
         ui.ver++;
-        app_say(ui.mix_fx ? "KNOBS: EFFECTS" : "KNOBS: PITCH", ui.mix_fx ? "DELAY, TIME, REVERB" : "FILTER, SPACE");
+        app_say(ui.mix_fx ? "KNOBS: EFFECTS" : "KNOBS: PITCH", ui.mix_fx ? "DELAY, TIME, REVERB" : "FILTER, CHORUS");
         return;
     }
     if (d1 == MIX_BANK_LEFT || d1 == MIX_BANK_RIGHT) {   /* the picked track's sound, before and after, playing on */
@@ -5005,6 +5078,7 @@ static float knob_fill(int id)           /* how full a knob's glass is, 0..1: wh
     }
     switch (id) {
     case K_TSPACE: return (float)space_of(t) * 0.01f;
+    case K_TCHORUS: return (float)set.x.chor[t] * 0.01f;
     case K_BDSEND:
     case K_BRSEND:
     case K_BSPACE: return bg_send(id) < 0 ? 0.0f : (float)bg_send(id) * 0.01f;
@@ -5988,7 +6062,8 @@ static void knob_value(int id, char *b, const char **label)   /* a knob's name a
     b[0] = 0;
     kv_locked = 0;
     if (knob_na(id)) {
-        *label = id == P_ECHOTIME ? PAR[id].word : id == K_BDSEND ? "DELAY SEND" : id == K_BRSEND ? "REVERB SEND" : "SPACE";
+        *label = id == P_ECHOTIME ? PAR[id].word : id == K_BDSEND ? "DELAY SEND" : id == K_BRSEND ? "REVERB SEND"
+                 : id == K_TCHORUS ? "CHORUS" : "SPACE";
         text_cat(b, "--");
         return;
     }
@@ -6027,6 +6102,10 @@ static void knob_value(int id, char *b, const char **label)   /* a knob's name a
     case K_TSPACE:                           /* the picked track's two sends together */
         *label = "SPACE";
         int_text(space_of(picked()), b);
+        return;
+    case K_TCHORUS:                          /* the picked track's CHORUS (a drum sound's: "--", above) */
+        *label = "CHORUS";
+        int_text(set.x.chor[picked()], b);
         return;
     case K_TFX:                              /* the MIXER: its effects in or out ("-": none set) */
         *label = "FX";
@@ -7386,6 +7465,20 @@ int app_expect(const char *what, int *got)
     else if (!strncmp(what, "tone", 4) && what[4] >= '0' && what[4] <= '9')   /* toneC: the output's level at the pitch C
                                               * cents above MIDI note 0 (6000 middle C), dB of full scale */
         *got = host_tone(atoi(what + 4));
+    else if (!strcmp(what, "side_mid")) {    /* the output's last 8192 samples: how wide, its sides (left less right)
+                                              * against its middle, x 1000 (0: as one, mono; the middle silent: -1) */
+        uint32_t w = host_out_w, i;
+        float sm = 0.0f, ss = 0.0f;
+        for (i = 0; i < 8192u; i++) {
+            float a = host_out[(w - 8192u + i) & 8191u], b = host_side[(w - 8192u + i) & 8191u];
+            sm += a * a;
+            ss += b * b;
+        }
+        *got = sm > 1.0f ? (int)(fm_sqrtf(ss / sm) * 1000.0f + 0.5f) : -1;
+    } else if (!strncmp(what, "tchorus", 7)) /* tchorusT: track T's CHORUS, as set (0..100) */
+        *got = set.x.chor[atoi(what + 7) & 7];
+    else if (!strcmp(what, "x_ver"))         /* the one logic's block's version (its tag DKXn: n): 2 since 0.21 */
+        *got = (int)(set.x.tag >> 24) - '0';
     else if (!strcmp(what, "left_root"))
         *got = s->left_root;
     else if (!strcmp(what, "dirty"))

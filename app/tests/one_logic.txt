@@ -8,25 +8,27 @@ expect page 0
 expect row 0
 listen
 
-# ---- HOME: the home page's rows, HOME again the next (the picked track's strip first: PITCH, FILTER, SPACE, LEVEL)
+# ---- HOME: the home page's rows, HOME again the next (the picked track's strip first: PITCH, FILTER, CHORUS, LEVEL;
+# 0.21: its CHORUS where its SPACE was, as the MIDImix's bottom knob; its sends as they were)
 turn K4 -5
 wait 50
 said TRACK 1: LEVEL 70
 expect par0 70
-turn K3 -2
+turn K3 2
 wait 50
-said TRACK 1: SPACE 96
-expect par63 96
-expect par79 96
+said TRACK 1: CHORUS 4
+expect tchorus0 4
+expect par63 100
+expect par79 100
 tap HOME
 wait 50
 expect row 1
 said HOME: MIX
 turn K2 -3
 wait 50
-said TRACK 1: REVERB SEND 90
-expect par79 90
-expect par63 96
+said TRACK 1: REVERB SEND 94
+expect par79 94
+expect par63 100
 tap HOME
 wait 50
 expect row 2
@@ -223,7 +225,7 @@ release FX
 wait 50
 expect row 1
 said EFFECTS: WEDDING PA
-# the picked track's SENDS (row 4): reset to its starts too
+# the picked track's SENDS (row 4): reset to its starts too, its CHORUS (K4, 0.21) none again
 tap FX
 tap FX
 wait 50
@@ -231,7 +233,8 @@ expect row 3
 said EFFECTS: TRACK 1 SENDS
 turn K1 -10
 wait 50
-expect par63 76
+expect par63 80
+expect tchorus0 4
 press FX
 wait 1100
 release FX
@@ -239,6 +242,7 @@ wait 50
 said TRACK 1 SENDS RESET
 expect par63 100
 expect par79 100
+expect tchorus0 0
 
 # ---- REC: the picked track frozen. Its key down: that note sounds on without it
 tap HOME
@@ -535,8 +539,10 @@ tap REC
 wait 300
 expect frozen 0
 
-# ---- step mode (EDIT held a second): a step held while the home row's SPACE turns locks both sends there; the MIDImix's
-# bottom knob (SPACE) the same; the step's locks removed by EDIT with the step held
+# ---- step mode (EDIT held a second): a step held while the home row's CHORUS turns (0.21: where SPACE was), or the
+# MIDImix's bottom knob (its CHORUS): it cannot be locked (said), nothing locked, the chorus as it was. The EFFECTS
+# page's SPACE (its SENDS row, K3) with a step held locks both sends there; the step's locks removed by EDIT with the
+# step held
 settle
 wait 100
 press EDIT
@@ -546,7 +552,34 @@ wait 50
 expect seq 1
 expect track 3
 expect row 0
-expect knob3 225
+expect knob3 242
+key w2 down
+wait 250
+turn K3 -5
+wait 50
+key w2 up
+wait 100
+said CHORUS CANNOT BE LOCKED TO A STEP
+expect locks2 0
+expect tchorus2 0
+expect trig2_2 0
+key w3 down
+wait 250
+midi B0 1A 7F
+wait 50
+key w3 up
+wait 100
+said CHORUS CANNOT BE LOCKED TO A STEP
+expect locks2 0
+expect tchorus2 0
+tap FX
+wait 50
+expect page 2
+expect row 0
+turn SELECT 3
+wait 50
+expect row 3
+said EFFECTS: TRACK 3 SENDS
 key w2 down
 wait 250
 turn K3 -5
@@ -557,7 +590,7 @@ expect lock2_2_65 90
 expect lock2_2_81 90
 key w3 down
 wait 250
-midi B0 1A 00
+spin K3 -50
 wait 50
 key w3 up
 wait 100
@@ -572,6 +605,8 @@ wait 100
 expect lock2_3_65 -999
 expect lock2_3_81 -999
 expect lock2_2_65 90
+tap HOME
+wait 50
 press EDIT
 wait 1100
 release EDIT

@@ -1,0 +1,120 @@
+# Each track's CHORUS (0.21: the MIDImix's bottom knob, the home page's K3; the owner, 11-25, as COMBO 0.17's: "the
+# chorus instead of the space"), heard: a frozen chord on track 1 as one (mono) with CHORUS 0; all the way, wide (its
+# sides against its middle); the MIXER's FX OFF takes it out with the sends, ON brings it back; none again, as one
+# again, as before. A bass line's chorus (beside the pedals) the same. The output is recorded each time (OUTDIR/
+# chorus-*.wav). From the repository's root:
+#   app/build/host/dabke_host app/tests/chorus.txt OUTDIR
+# (side_mid: the output's last 186 ms, its sides (left less right) against its middle, x 1000; 0: mono)
+wait 900
+expect track 1
+# the lead on the ORGAN (an even sound to measure), POLY (sound page, row 1, K1 and K2); the automatic ornaments off
+# (ornaments page, row 1, K4), the drone off (row 3, K1)
+tap ENV
+wait 30
+turn K1 7
+wait 60
+turn K2 2
+wait 30
+expect ch0 7
+expect ch1 2
+tap LFO
+wait 30
+turn K4 -20
+wait 30
+expect ch3 0
+tap LFO
+tap LFO
+wait 30
+turn K1 -5
+wait 30
+expect ch6 0
+tap HOME
+wait 30
+listen
+
+# ---- a chord frozen (C, E, G), CHORUS 0 as it starts: as one
+key 7 down
+key 11 down
+key 14 down
+wait 100
+tap REC
+wait 60
+key 7 up
+key 11 up
+key 14 up
+wait 600
+expect held_n 3
+expect tchorus0 0
+expect side_mid 0
+wav chorus-0.wav
+wait 1000
+wavstop
+
+# ---- the MIDImix's bottom knob 1 all the way: CHORUS 100, wide
+midi B0 12 7F
+wait 600
+said TRACK 1: CHORUS 100
+expect tchorus0 100
+expect side_mid >400
+wav chorus-100.wav
+wait 1000
+wavstop
+
+# ---- the MIXER's FX (the EDIT page's last row, K2) OFF: the chorus out with the sends, as one; ON: wide again
+tap EDIT
+tap EDIT
+tap EDIT
+wait 30
+expect page 6
+expect row 2
+turn K2 -1
+wait 600
+said TRACK 1: EFFECTS OFF
+expect tfx 1
+expect side_mid 0
+turn K2 1
+wait 600
+expect tfx 0
+expect side_mid >400
+tap HOME
+wait 30
+
+# ---- none again: as one again
+midi B0 12 00
+wait 600
+said TRACK 1: CHORUS 0
+expect tchorus0 0
+expect side_mid 0
+wav chorus-0b.wav
+wait 1000
+wavstop
+tap REC
+wait 600
+said TRACK 1 LET GO
+expect held_n 0
+
+# ---- the bass line (track 4, its own chorus beside the pedals): a note frozen, as one; its bottom knob all the way:
+# wide; none: as one
+press SEL
+tapkey w3
+release SEL
+wait 30
+expect track 4
+key 7 down
+wait 60
+tap REC
+wait 60
+key 7 up
+wait 600
+expect fz_n3 1
+expect side_mid 0
+midi B0 1E 7F
+wait 600
+said TRACK 4: CHORUS 100
+expect side_mid >400
+midi B0 1E 00
+wait 600
+expect side_mid 0
+tap REC
+wait 300
+expect held_n 0

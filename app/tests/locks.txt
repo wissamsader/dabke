@@ -1,9 +1,9 @@
 # Locks (fm1-organ/LOGIC.md): in step mode (EDIT held a second) a step held while a knob turns holds that knob at a
 # value of its own, from that step until the track's next step with a hit or a note (or another lock of the same knob);
 # then the knob is back at its normal value. Any knob whose value can change while sounding: the track's strip (K1 to
-# K4 in the step view: the home page's row shown, its first PITCH, FILTER, SPACE, LEVEL; the MIDImix's strips:
-# tests/midimix.txt) and the knobs of the page on screen. SEQ held a second clears the picked track's loop and its
-# locks with it. From the repository's root:
+# K4 in the step view: the home page's row shown, its first PITCH, FILTER, CHORUS (0.21: no lock), LEVEL; the MIDImix's
+# strips: tests/midimix.txt) and the knobs of the page on screen. SEQ held a second clears the picked track's loop and
+# its locks with it. From the repository's root:
 #   app/build/host/dabke_host app/tests/locks.txt OUTDIR
 # Dabke Syria at 140: a step 107 ms. The kick (track 5) on steps 1, 5, 9, 13 of sixteen.
 # (lockT_S_ID: the lock on track T+1's step S of knob ID, its value in the knob's steps (-999: none); locks, locksT:
@@ -30,8 +30,10 @@ wait 60
 expect his4 1
 expect trig4_4 1
 
-# ---- a step held (step 5: a hit there) and the strip's knobs turned (the step view: K1 pitch, K2 filter, K3 space: its
-# two sends together, K4 level): each locked on that step, from its normal value; the knobs themselves stay as they were
+# ---- a step held (step 5: a hit there) and the strip's knobs turned (the step view: K1 pitch, K2 filter, K4 level;
+# K3, its CHORUS since 0.21, is a note sound's: on the kick it says so, nothing locked): each locked on that step, from
+# its normal value; the knobs themselves stay as they were. SPACE (its two sends together), on the EFFECTS page's SENDS
+# row since 0.21 (K3), turned there with the step held: both sends locked
 key w4 down
 wait 30
 expect sstep 4
@@ -42,10 +44,27 @@ expect par51 0
 expect locks 1
 turn K3 5
 wait 30
+said TRACK 5: CHORUS ONLY ON A NOTE SOUND
+expect locks 1
+expect tchorus4 0
+tap FX
+wait 30
+turn SELECT 3
+wait 30
+expect page 2
+expect row 3
+turn K3 5
+wait 30
 expect lock4_4_67 40
 expect lock4_4_83 40
 expect par67 30
 expect par83 30
+turn SELECT -3
+wait 30
+expect row 0
+tap HOME
+wait 30
+expect page 0
 turn K1 2
 wait 30
 expect lock4_4_75 8
@@ -456,9 +475,10 @@ wait 60
 said STEP 3: LOCKS REMOVED
 expect locks 0
 
-# ---- the pool: 240 locks. The MIDImix's strips with a step held, each knob and fader a lock (the bottom knob, SPACE:
-# two, its track's two sends): six steps of track 1 (his: a note on its last step), the thirty-two controls each, forty
-# locks a step. One more: "NO ROOM FOR MORE LOCKS", and nothing is lost
+# ---- the pool: 240 locks. The MIDImix's strips with a step held, each knob and fader a lock but the bottom knob (the
+# CHORUS since 0.21: none), then on its EFFECTS layer (SOLO) each top and bottom knob, the track's two sends: six steps
+# of track 1 (his: a note on its last step), forty locks a step (each strip's PITCH, FILTER, LEVEL, DELAY SEND and
+# REVERB SEND). One more: "NO ROOM FOR MORE LOCKS", and nothing is lost
 press SEL
 tapkey w0
 release SEL
@@ -503,6 +523,26 @@ midi B0 3A 20
 midi B0 3B 20
 midi B0 3C 20
 midi B0 3D 20
+midi 90 1B 7F
+midi 80 1B 00
+midi B0 10 20
+midi B0 12 20
+midi B0 14 20
+midi B0 16 20
+midi B0 18 20
+midi B0 1A 20
+midi B0 1C 20
+midi B0 1E 20
+midi B0 2E 20
+midi B0 30 20
+midi B0 32 20
+midi B0 34 20
+midi B0 36 20
+midi B0 38 20
+midi B0 3A 20
+midi B0 3C 20
+midi 90 1B 7F
+midi 80 1B 00
 wait 60
 key w0 up
 wait 30
@@ -540,6 +580,26 @@ midi B0 3A 20
 midi B0 3B 20
 midi B0 3C 20
 midi B0 3D 20
+midi 90 1B 7F
+midi 80 1B 00
+midi B0 10 20
+midi B0 12 20
+midi B0 14 20
+midi B0 16 20
+midi B0 18 20
+midi B0 1A 20
+midi B0 1C 20
+midi B0 1E 20
+midi B0 2E 20
+midi B0 30 20
+midi B0 32 20
+midi B0 34 20
+midi B0 36 20
+midi B0 38 20
+midi B0 3A 20
+midi B0 3C 20
+midi 90 1B 7F
+midi 80 1B 00
 wait 60
 key w1 up
 wait 30
@@ -577,6 +637,26 @@ midi B0 3A 20
 midi B0 3B 20
 midi B0 3C 20
 midi B0 3D 20
+midi 90 1B 7F
+midi 80 1B 00
+midi B0 10 20
+midi B0 12 20
+midi B0 14 20
+midi B0 16 20
+midi B0 18 20
+midi B0 1A 20
+midi B0 1C 20
+midi B0 1E 20
+midi B0 2E 20
+midi B0 30 20
+midi B0 32 20
+midi B0 34 20
+midi B0 36 20
+midi B0 38 20
+midi B0 3A 20
+midi B0 3C 20
+midi 90 1B 7F
+midi 80 1B 00
 wait 60
 key w2 up
 wait 30
@@ -614,6 +694,26 @@ midi B0 3A 20
 midi B0 3B 20
 midi B0 3C 20
 midi B0 3D 20
+midi 90 1B 7F
+midi 80 1B 00
+midi B0 10 20
+midi B0 12 20
+midi B0 14 20
+midi B0 16 20
+midi B0 18 20
+midi B0 1A 20
+midi B0 1C 20
+midi B0 1E 20
+midi B0 2E 20
+midi B0 30 20
+midi B0 32 20
+midi B0 34 20
+midi B0 36 20
+midi B0 38 20
+midi B0 3A 20
+midi B0 3C 20
+midi 90 1B 7F
+midi 80 1B 00
 wait 60
 key w3 up
 wait 30
@@ -651,6 +751,26 @@ midi B0 3A 20
 midi B0 3B 20
 midi B0 3C 20
 midi B0 3D 20
+midi 90 1B 7F
+midi 80 1B 00
+midi B0 10 20
+midi B0 12 20
+midi B0 14 20
+midi B0 16 20
+midi B0 18 20
+midi B0 1A 20
+midi B0 1C 20
+midi B0 1E 20
+midi B0 2E 20
+midi B0 30 20
+midi B0 32 20
+midi B0 34 20
+midi B0 36 20
+midi B0 38 20
+midi B0 3A 20
+midi B0 3C 20
+midi 90 1B 7F
+midi 80 1B 00
 wait 60
 key w4 up
 wait 30
@@ -688,6 +808,26 @@ midi B0 3A 20
 midi B0 3B 20
 midi B0 3C 20
 midi B0 3D 20
+midi 90 1B 7F
+midi 80 1B 00
+midi B0 10 20
+midi B0 12 20
+midi B0 14 20
+midi B0 16 20
+midi B0 18 20
+midi B0 1A 20
+midi B0 1C 20
+midi B0 1E 20
+midi B0 2E 20
+midi B0 30 20
+midi B0 32 20
+midi B0 34 20
+midi B0 36 20
+midi B0 38 20
+midi B0 3A 20
+midi B0 3C 20
+midi 90 1B 7F
+midi 80 1B 00
 wait 60
 key w5 up
 wait 30

@@ -173,10 +173,17 @@ expect held_n 2
 expect tone6000 >-40
 expect tone6700 >-40
 
-# ---- the track's PITCH (track 1 picked, K1 on the home page): the frozen notes go up a tone, stay frozen, and back
+# ---- the track's PITCH (track 1 picked, K1 on the home page): the frozen notes go up a tone, stay frozen, and back.
+# They slide there (0.21, as RAGA MEOW's PITCH: some 0.45 s whatever the distance; up to 0.20 at once): 120 ms after
+# the turn the C is on its way, near C#4 (a jump would be at D4 by now), the G near G#4; then at D4 and A4
 expect track 1
 turn K1 2
-wait 400
+wait 120
+expect tone6100 >-40
+expect tone6200 <-50
+expect tone6800 >-40
+expect tone6900 <-50
+wait 1200
 said TRACK 1: UP 2
 expect tone6200 >-40
 expect tone6900 >-40
@@ -184,7 +191,7 @@ expect tone6000 <-60
 expect tone6700 <-60
 expect held_n 2
 turn K1 -2
-wait 400
+wait 1200
 said TRACK 1: IN TUNE
 expect tone6000 >-40
 expect tone6700 >-40
@@ -516,8 +523,10 @@ expect arp 0
 expect voices0 0
 
 # ---- PLAY: the rhythm started, a note frozen while it runs; SEQ records and closes meanwhile, the note frozen still.
-# PLAY stops everything, the frozen note too ("ALL STOPPED"); PLAY again brings it all back ("ALL BACK"); stopped
-# again, REC ARM on the stopped track freezes it afresh (its note), again lets it go; nothing left sounding
+# PLAY stops everything, the frozen note too ("ALL STOPPED"); OCT+ meanwhile leaves it where it is (the owner, 11-25:
+# "it's frozen already"); PLAY again brings it all back ("ALL BACK"), on its own note (its key, under no key an octave
+# up, not lit; OCT- back: lit); stopped again, REC ARM on the stopped track freezes it afresh (its note), again lets it
+# go; nothing left sounding
 tap PLAY
 wait 400
 said DABKE SYRIA PLAYS
@@ -548,6 +557,9 @@ expect frozen 0
 expect held_n 0
 expect kept_frozen 1
 expect tone6000 <-60
+tap OCT+
+wait 100
+said OCTAVE +1
 tap PLAY
 wait 600
 said ALL BACK
@@ -556,6 +568,11 @@ expect frozen 1
 expect held_n 1
 expect kept_frozen 0
 expect tone6000 >-40
+expect fz_note0_0 60
+expect lit_key7 0
+tap OCT-
+wait 100
+expect lit_key7 1
 tap PLAY
 wait 400
 said ALL STOPPED

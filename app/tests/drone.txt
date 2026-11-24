@@ -66,6 +66,7 @@ expect ch7 6
 expect pitch_x10 >727
 expect pitch_x10 <741
 # the EFFECTS page, row 5 (TRACK 2 TONE): the drone's pitch, an octave up (K3, 12 semitones in FULL steps), and back
+# (since 0.21 a sounding track's pitch slides there, some 0.45 s: measured once it is there)
 tap FX
 tap FX
 tap FX
@@ -76,12 +77,12 @@ expect row 4
 expect track 2
 said EFFECTS: TRACK 2 TONE
 turn K3 12
-wait 400
+wait 1200
 expect par72 48
 expect pitch_x10 >1454
 expect pitch_x10 <1482
 turn K3 -12
-wait 400
+wait 1200
 expect par72 0
 expect pitch_x10 >727
 expect pitch_x10 <741

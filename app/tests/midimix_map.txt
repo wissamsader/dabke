@@ -1,9 +1,9 @@
 # The MIDImix, RAGA MEOW's map (fm1-organ/LOGIC.md version 2), each control once: strip N is track N, nothing on a
-# strip picks its track. Fader: LEVEL. Top knob: PITCH. Middle: FILTER. Bottom: SPACE (the delay and reverb sends
-# together). SOLO tapped: the knobs' EFFECTS layer (top DELAY SEND, middle DELAY TIME, the one delay's, bottom REVERB
-# SEND), BANK LEFT and RIGHT lit while on it; again, back. MUTE: mutes (lit while muted). REC ARM: freezes or lets go
-# (lit while frozen). BANK LEFT and RIGHT: the picked track's sound before and after. The master fader: the whole
-# level, live, never kept. No light blinks.
+# strip picks its track. Fader: LEVEL. Top knob: PITCH. Middle: FILTER. Bottom: CHORUS (0.21; up to 0.20 SPACE, the
+# delay and reverb sends together). SOLO tapped: the knobs' EFFECTS layer (top DELAY SEND, middle DELAY TIME, the one
+# delay's, bottom REVERB SEND, each all the way to 100), BANK LEFT and RIGHT lit while on it; again, back. MUTE: mutes
+# (lit while muted). REC ARM: freezes or lets go (lit while frozen). BANK LEFT and RIGHT: the picked track's sound
+# before and after. The master fader: the whole level, live, never kept. No light blinks.
 wait 900
 expect track 1
 listen
@@ -29,13 +29,14 @@ said TRACK 3: FILTER DARK 100
 midi B0 19 40
 wait 300
 expect par49 0
-midi B0 1A 00
-wait 300
-expect par65 0
-expect par81 0
-said TRACK 3: SPACE 0
 midi B0 1A 7F
 wait 300
+expect tchorus2 100
+said TRACK 3: CHORUS 100
+midi B0 1A 00
+wait 300
+expect tchorus2 0
+said TRACK 3: CHORUS 0
 expect par65 100
 expect par81 100
 expect track 1
@@ -54,6 +55,11 @@ midi B0 1A 40
 wait 300
 expect par81 50
 expect par65 0
+midi B0 1A 7F
+wait 300
+expect par81 100
+expect epar81 1000
+said TRACK 3: REVERB SEND 100
 midi B0 19 7F
 wait 300
 expect par20 70
@@ -65,7 +71,7 @@ midi 90 1B 7F
 midi 80 1B 00
 wait 300
 expect mix_fx 0
-said KNOBS: PITCH FILTER, SPACE
+said KNOBS: PITCH FILTER, CHORUS
 expect mixleds 0
 # ---- MUTE 3 (note 7): muted, lit; again: on, dark. Track 3 not picked
 midi 90 07 7F
