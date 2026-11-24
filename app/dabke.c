@@ -379,13 +379,17 @@ static float vibPhT[DAB_NTRK], vibST[DAB_NTRK], vibPT[DAB_NTRK], bendST[DAB_NTRK
                                          * a lead sound's on each track: its own vibrato's speed and depth, its bend range */
 static uint8_t pressTr;                  /* the tracks whose keys are leant on, a bit each */
 static float pitchS[DAB_NTRK];          /* each track's pitch as it sounds now (semitones): its knob's, eased in ~3 ms */
-/* 0.21 (the owner, 11-25: "the pitch should be more smooth", as RAGA MEOW's PITCH and COMBO 0.17's): a note track's
- * PITCH turned while it sounds slides there, some 0.45 s whatever the distance, as two one-pole steps a block (pgM the
- * first, pitchS the second: no corner at either end). Its notes keep sounding through it; a note started on the way
- * starts where the slide is. A lock on a step, a silent track, the settings as they load: there at once, as before */
-static float pgM[DAB_NTRK];
+/* 0.21 (the owner, 11-25: "the pitch should be more smooth"; "make sure it works similar to RAGA MEOW ... compare"):
+ * a note track's PITCH turned while it sounds slides there exactly as RAGA MEOW's PITCH does (its PITCH KNOB as it
+ * starts, RAAG NOTES: a meend to the new note), as COMBO 0.17's: from where it sounds now, over RAGA MEOW's slide time
+ * at its SLIDE TIME as it starts, 550 ms a fourth (a semitone 0.13 s, a tone 0.24 s, an octave 1.2 s; 35 ms at least),
+ * on RAGA MEOW's curve at its SHAPE as it starts, 75 (meend_curve: mostly the S of a smootherstep); a turn on the way
+ * starts again from where it is. Its notes keep sounding through it; a note started on the way starts where the slide
+ * is. A lock on a step, a silent track, the settings as they load: there at once, as before */
+static float pgFrom[DAB_NTRK], pgTo[DAB_NTRK], pgT[DAB_NTRK], pgDur[DAB_NTRK];
 static uint8_t pgGl;                    /* the tracks sliding, a bit each */
-#define PG_A 0.0076f                    /* a block's step of each smoothing (32 samples: 0.095 s each) */
+#define PG_FOURTH 0.55f                 /* RAGA MEOW's SLIDE TIME as it starts: a fourth's slide, s */
+#define PG_SHAPE 0.75f                  /* its SHAPE as it starts */
 static uint32_t busWas;                 /* the tracks that sounded in the last block */
 static uint32_t seedOrn = 777u;
 
@@ -810,8 +814,14 @@ static void par_now(int id, float v)    /* a knob at a value, now */
 static void pitch_turned(int t)         /* track t's PITCH from its knob (no lock holds it): a note sound sounding slides
                                          * there; a silent track, a drum sound's, there at once */
 {
-    if (!SF_DRUM(tfam[t]) && (busWas >> t & 1u)) pgGl |= (uint8_t)(1u << t);
-    else pitchS[t] = pgM[t] = par[P_PITCH + t];
+    if (!SF_DRUM(tfam[t]) && (busWas >> t & 1u)) {   /* (RAGA MEOW's meend: from where it is, its time by the distance) */
+        float d = fm_fabsf(par[P_PITCH + t] - pitchS[t]) * (100.0f / 498.045f);
+        pgFrom[t] = pitchS[t]; pgTo[t] = par[P_PITCH + t]; pgT[t] = 0.0f;
+        pgDur[t] = d > 0.005f ? PG_FOURTH * fm_powf(d, 0.9f) : 0.0f;
+        if (pgDur[t] < 0.035f) pgDur[t] = 0.035f;
+        pgGl |= (uint8_t)(1u << t);
+    } else
+        pitchS[t] = par[P_PITCH + t];
 }
 static void par_to(int id, float v)     /* a knob to a value: at once, or in a few blocks */
 {
@@ -3555,16 +3565,19 @@ static void block(int32_t *lr, int n, float gain)
                                          * moved at once on what sounds, eased so it does not click */
         float to = par[P_PITCH + k];
         if (pgGl >> k & 1u) {
-            pgM[k] += (to - pgM[k]) * PG_A;
-            pitchS[k] += (pgM[k] - pitchS[k]) * PG_A;
-            if (fm_fabsf(to - pitchS[k]) <= 0.002f && fm_fabsf(to - pgM[k]) <= 0.002f) {
-                pitchS[k] = pgM[k] = to;
+            float u;
+            pgT[k] += (float)BS / SR;
+            u = pgT[k] / pgDur[k];
+            if (u < 1.0f) {                  /* (RAGA MEOW's meend_curve) */
+                float sm = u * u * u * (u * (u * 6.0f - 15.0f) + 10.0f);
+                pitchS[k] = pgFrom[k] + (pgTo[k] - pgFrom[k]) * ((1.0f - PG_SHAPE) * u + PG_SHAPE * sm);
+            } else {
+                pitchS[k] = pgTo[k];
                 pgGl &= (uint8_t)~(1u << k);
             }
         } else {
             float d = to - pitchS[k];
             pitchS[k] = d > 0.002f || d < -0.002f ? pitchS[k] + d * 0.3f : to;
-            pgM[k] = pitchS[k];
         }
     }
     (void)k;                             /* (the buses: left empty by the last block's mix) */
@@ -3927,7 +3940,7 @@ void dabke_init(void)
     st.frozen = 0; st.holds = 0; st.loop_off = 0;
     for (i = 0; i < 3; i++) eqDb[i] = eqT[i] = 0.0f;
     for (i = 0; i < DAB_NTRK; i++) { st.fz_n[i] = 0; st.tlevel[i] = 0.0f; rsndS[i] = 0.0f; }
-    for (i = 0; i < DAB_NTRK; i++) { st.tfam[i] = tfam[i]; st.tidx[i] = tidx[i]; pitchS[i] = pgM[i] = 0.0f; }
+    for (i = 0; i < DAB_NTRK; i++) { st.tfam[i] = tfam[i]; st.tidx[i] = tidx[i]; pitchS[i] = 0.0f; }
     for (i = 0; i < DAB_NTRK; i++) choT[i] = choS[i] = 0.0f;
     pgGl = 0; choTailP = choTailB = 0; choStaleP = choStaleB = 1;
     for (i = 0; i < P_COUNT; i++) par[i] = 0.0f;

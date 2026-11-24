@@ -173,29 +173,30 @@ expect held_n 2
 expect tone6000 >-40
 expect tone6700 >-40
 
-# ---- the track's PITCH (track 1 picked, K1 on the home page): the frozen notes go up a tone, stay frozen, and back.
-# They slide there (0.21, as RAGA MEOW's PITCH: some 0.45 s whatever the distance; up to 0.20 at once): 120 ms after
-# the turn the C is on its way, near C#4 (a jump would be at D4 by now), the G near G#4; then at D4 and A4
+# ---- the track's PITCH (track 1 picked, K1 on the home page): the frozen notes go up a fourth, stay frozen, and back.
+# They slide there (0.21, as RAGA MEOW's PITCH: its slide time at its SLIDE TIME as it starts, 550 ms a fourth, on its
+# curve; up to 0.20 at once): 150 ms after the turn the C is on its way, near D#4, F4 not reached (a jump would be there
+# by now), the G near A#4, C5 not reached; then at F4 and C5
 expect track 1
-turn K1 2
-wait 120
-expect tone6100 >-40
-expect tone6200 <-50
-expect tone6800 >-40
-expect tone6900 <-50
-wait 1200
-said TRACK 1: UP 2
-expect tone6200 >-40
-expect tone6900 >-40
+turn K1 5
+wait 150
+expect tone6300 >-40
+expect tone6500 <-50
+expect tone7000 >-40
+expect tone7200 <-55
+wait 1500
+said TRACK 1: UP 5
+expect tone6500 >-40
+expect tone7200 >-40
 expect tone6000 <-60
-expect tone6700 <-60
+expect tone6300 <-60
 expect held_n 2
-turn K1 -2
-wait 1200
+turn K1 -5
+wait 1500
 said TRACK 1: IN TUNE
 expect tone6000 >-40
 expect tone6700 >-40
-expect tone6200 <-60
+expect tone6500 <-60
 # TRANSPOSE (sound page, row 3, K4: the page's button again, its next row): +2, and back
 tap ENV
 wait 30
