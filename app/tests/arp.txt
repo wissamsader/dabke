@@ -460,7 +460,7 @@ wait 30
 press ARP
 wait 20
 tap SEL
-turn K1 1
+turn K2 1
 wait 30
 release ARP
 wait 30
@@ -479,7 +479,7 @@ expect arp_count <9
 press ARP
 wait 20
 tap SEL
-turn K1 -1
+turn K2 -1
 wait 30
 release ARP
 wait 30
@@ -493,7 +493,7 @@ expect ch35 0
 press ARP
 wait 20
 tap SEL
-turn K2 1
+turn K3 1
 wait 30
 release ARP
 wait 30
@@ -522,7 +522,7 @@ expect arp_first7 60
 press ARP
 wait 20
 tap SEL
-turn K2 -1
+turn K3 -1
 wait 30
 release ARP
 wait 30
@@ -536,7 +536,7 @@ expect ch36 0
 press ARP
 wait 20
 tap SEL
-turn K3 4
+turn K4 4
 wait 30
 release ARP
 wait 30
@@ -554,7 +554,7 @@ expect arp_count >6
 press ARP
 wait 20
 tap SEL
-turn K3 -4
+turn K4 -4
 wait 30
 release ARP
 wait 30
@@ -568,7 +568,7 @@ expect ch37 0
 press ARP
 wait 20
 tap SEL
-turn K4 1
+turn K1 1
 wait 30
 release ARP
 wait 30
@@ -613,7 +613,7 @@ tap SEL
 wait 300
 expect arp_row 1
 shot arp-panel-2.png
-turn K4 -1
+turn K1 -1
 wait 30
 expect ch38 0
 release ARP

@@ -488,7 +488,7 @@ expect held_n 1
 press ARP
 wait 20
 tap SEL
-turn K4 1
+turn K1 1
 wait 30
 release ARP
 wait 30
@@ -508,7 +508,7 @@ said TRACK 1 LET GO
 press ARP
 wait 20
 tap SEL
-turn K4 -1
+turn K1 -1
 wait 30
 release ARP
 wait 30

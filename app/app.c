@@ -3263,7 +3263,8 @@ static void set_row(int pg, int r);
 static void row_say(void);
 static int kctl(int k);
 static const uint8_t ARP_ROW[2][4] = {{CH(C_ARPMODE), CH(C_ARPRATE), CH(C_ARPOCT), P_ARPGATE},
-                                       {CH(C_ARPPAT), CH(C_ARPREP), CH(C_ARPSWING), CH(C_ARPLATCH)}};
+                                       {CH(C_ARPLATCH), CH(C_ARPPAT), CH(C_ARPREP), CH(C_ARPSWING)}};   /* (the ARP
+                                          * panel's: its second row's K1 LATCH, as RAGA MEOW's, 0.22; up to 0.21 on K4) */
 static void turn(int e, int n)
 {
     if (ui.arp_held && e != EN_PRESET && e != EN_ALGO) {   /* ARP held: its controls (SELECT or SEL: the other row) */
