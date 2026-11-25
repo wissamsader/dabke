@@ -3692,11 +3692,16 @@ static void press(int b)
     const dabke_status_t *s = dabke_status();
     uint32_t now = plat_ms();
     ui.ver++;
-    if (ui.save && b != B_SAVE) {            /* (KEEP up: another button leaves it, HOME only that) */
+    if (ui.save && b != B_SAVE) {            /* (KEEP up: another button leaves it and does its job; HOME opens the home
+                                              * page, as RAGA MEOW's, its row as it was: 0.22, up to 0.21 HOME only
+                                              * left KEEP for the page it was opened from) */
         ui.save = 0;
         ui.keep_ask = 0;
-        if (b == B_HOME)
+        if (b == B_HOME) {
+            ui.page = PG_HOME;
+            say(PAGE_TITLE[PG_HOME]);
             return;
+        }
     }
     switch (b) {
     case B_HOME:                             /* the home page (in step mode: the step view); again, its next row */

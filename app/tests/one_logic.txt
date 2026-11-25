@@ -477,6 +477,20 @@ wait 100
 said KEPT IN 1
 expect save 0
 expect kept 1
+# HOME on KEEP: the home page, its row as it was (0.22, as RAGA MEOW's; up to 0.21 HOME only left KEEP for the page
+# it was opened from)
+tap FX
+wait 50
+expect page 2
+tap SAVE
+wait 50
+expect save 1
+tap HOME
+wait 50
+expect save 0
+expect page 0
+expect row 0
+said HOME
 
 # ---- PLAY brings back first what it stopped (the rhythm, still waiting since the loops' test), the frozen track playing
 # on; the next PLAY stops all of it
