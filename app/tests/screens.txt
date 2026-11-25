@@ -387,7 +387,7 @@ shot kept.png
 tap HOME
 wait 1600
 press ARP
-wait 400
+wait 450
 shot arp-panel.png
 tap SEL
 wait 300

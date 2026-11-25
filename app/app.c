@@ -581,6 +581,8 @@ static struct {
 
     uint8_t arp_held, arp_used, arp_row, arp_shown;   /* ARP held (used as a shift: no on/off), its row, its panel up */
     uint32_t arp_at;
+#define ARP_LOOK_MS 400u                 /* ARP held this long: its panel, and let go after that no on or off (RAGA
+                                          * MEOW's 0.4 s; LOGIC.md "Held: its page") */
     uint8_t master, master_was;          /* the scene fader: the MIDImix's master fader or FADE, 0..127 (as last moved) */
     uint8_t fade, fade_own;              /* FADE, 0..100 (fade_own: it moved last, not the MIDImix's) */
     uint8_t scene_dirty;                 /* the scene's controls to send again */
@@ -3730,7 +3732,8 @@ static void press(int b)
         else
             keep_sound();
         break;
-    case B_ARP:                              /* tapped: on or off (when let go); held: its panel, the knobs its controls */
+    case B_ARP:                              /* tapped: on or off (when let go); held: its panel, the knobs its controls,
+                                              * and let go nothing more */
         ui.arp_held = 1;
         ui.arp_used = 0;
         ui.arp_at = now;
@@ -4333,9 +4336,10 @@ static void input(void)
         }
         ui.ver++;
     }
-    if (ui.arp_held && !(btn >> B_ARP & 1u)) {   /* ARP let go: on or off, unless it was used as a shift */
+    if (ui.arp_held && !(btn >> B_ARP & 1u)) {   /* ARP let go: on or off, unless it was used as a shift or held long
+                                              * enough for its panel (only to look at it), as RAGA MEOW's */
         ui.arp_held = 0;
-        if (!ui.arp_used)
+        if (!ui.arp_used && plat_ms() - ui.arp_at < ARP_LOOK_MS)
             arp_toggle();
         ui.ver++;
     }
@@ -4852,7 +4856,7 @@ static void halfflat(int32_t x, int32_t yb, int32_t h, uint16_t c)
 /* ---- the screens ---- */
 static float fmodp(float a, float m) { return a - fm_floorf(a / m) * m; }   /* a % m, never below 0 */
 
-static int arp_panel_up(void) { return ui.arp_held && (ui.arp_used || ms_now - ui.arp_at >= 250u); }
+static int arp_panel_up(void) { return ui.arp_held && (ui.arp_used || ms_now - ui.arp_at >= ARP_LOOK_MS); }
 static void lock_name(int t, int id, char *b)   /* a locked knob by name, as seen from track t: its own strip's "FILTER",
                                                   * another track's "T2 FILTER", any other knob's own word */
 {

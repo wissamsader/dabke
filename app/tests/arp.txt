@@ -1,20 +1,26 @@
 # The arpeggio: ARP tapped on or off; ARP held, its panel over any page, the four knobs its controls (SEL or SELECT:
-# the other four), letting go without using it switches it. Every order, every speed, the octaves both ways, a pattern
-# with rests, each note repeated, the latch, its two rows on the sound page, and the loop (SEQ) recording what it plays.
+# the other four), and letting go never switches it (0.22, as RAGA MEOW's: held 0.4 s, only to look at its panel).
+# Every order, every speed, the octaves both ways, a pattern with rests, each note repeated, the latch, its two rows on
+# the sound page, and the loop (SEQ) recording what it plays.
 # Keys: 7 C (60), 9 D (62), 11 E (64), 14 G (67), 18 B (71). Checked by the notes it plays, the first sixteen of a set.
 #   app/build/host/dabke_host app/tests/arp.txt OUTDIR
 wait 900
 expect arp 0
-# ARP held: its panel over the home page; let go, nothing turned: on
+# ARP held: its panel over the home page; let go, nothing turned: still off (up to 0.21 it came on). Tapped: on
 press ARP
 wait 300
+expect arp_panel 0
+wait 150
 expect arp_panel 1
 expect page 0
 release ARP
 wait 30
 expect arp_panel 0
-expect arp 1
+expect arp 0
 shot arp-panel-none.png
+tap ARP
+wait 30
+expect arp 1
 # ORDER UP (C E G)
 expect ch27 0
 expect arp 1
@@ -600,7 +606,7 @@ tap FX
 wait 30
 expect page 2
 press ARP
-wait 300
+wait 450
 expect arp_panel 1
 shot arp-panel.png
 tap SEL
