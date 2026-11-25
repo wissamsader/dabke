@@ -2,7 +2,9 @@
 
 DABKE is a free firmware for the M-VAVE FM-1 that makes it an Arabic wedding keyboard. It has lead voices with quarter tones on any note, a drone, bass and backing from the left hand, and a rhythm box of darbuka, tabl, riq, daf, sagat, kick and claps. Eight tracks loop or freeze what you play, and an Akai MIDImix can work as its mixer.
 
-**Status.** This is version 0.20, a free public beta from STUDIOMORPHIK. It has been tested on one FM-1.
+**Status.** This is version 0.21, a free public beta from STUDIOMORPHIK. It has been tested on one FM-1.
+
+**New in 0.21.** Turn a track's PITCH while its notes sound and they slide to the new pitch. The MIDImix's bottom knob and the home page's K3 are each track's own CHORUS now, and SPACE is on the EFFECTS page's SENDS row. If you played 0.20, read What changed in 0.21, below.
 
 **New in 0.20.** New jobs for the buttons and the MIDImix: REC freezes the picked track, SEQ records its loop, and EDIT held a second is step mode. There is a MIXER and a MASTER EQ, and the screen has a new look. If you played 0.19, read What changed in 0.20, below, first.
 
@@ -11,6 +13,21 @@ DABKE is a free firmware for the M-VAVE FM-1 that makes it an Arabic wedding key
 **New in 0.17.** Each of the eight tracks keeps its own sound, so SAZ on track 2 and BUZUQ TREMOLO on track 3 play at the same time. SELECT on a picked track offers the 22 ready sounds and your MY SOUNDs, and the SOUND and ORNAMENTS pages edit the picked track's sound. The effects, the tempo, the maqam and the rhythm are still shared by the whole song. Saves from 0.16 load and sound as they did.
 
 ![The home page with the rhythm running: the singer on stage, the eight tracks as lanes under him, the rhythm's name at the bottom](img/screen-home.png "The home page, the rhythm running")
+
+---
+
+## What changed in 0.21
+
+PITCH slides, and each track has a CHORUS of its own where SPACE was. Everything else is as in 0.20, and everything 0.20 saved loads whole, each track's CHORUS at 0 (see Saving).
+
+| Part | In 0.20 | In 0.21 |
+| --- | --- | --- |
+| PITCH | A track's PITCH moved its notes at once | Turned while the track's notes sound, they slide to the new pitch: 0.13 s for a semitone, 0.55 s for a fourth, 1.2 s for an octave. A drum sound's pitch and locks move at once, as before |
+| Home page | Row 1: PITCH, FILTER, SPACE, LEVEL | Row 1: PITCH, FILTER, CHORUS, LEVEL. CHORUS is the track's own chorus, 0 to 100. A drum sound has none |
+| SENDS row | The EFFECTS page's row 4: DELAY SEND, REVERB SEND, SPACE | DELAY SEND, REVERB SEND, SPACE, CHORUS. SPACE is only here now. FX held a second puts CHORUS back to 0 with the sends |
+| MIDImix | Bottom knob SPACE. SOLO said KNOBS: PITCH FILTER, SPACE | Bottom knob CHORUS. SOLO says KNOBS: PITCH FILTER, CHORUS |
+| MIXER | FX took out the sends and BASS | FX takes out CHORUS too |
+| Locks | SPACE locked both sends on a held step, and a recording kept its moves | CHORUS cannot be locked to a step, and a recording does not keep its moves. SPACE on the SENDS row still locks both sends |
 
 ---
 
@@ -77,7 +94,7 @@ You can also install DABKE with any FM-1 installer that takes a `.fwsc` package.
 
 To go back to another firmware, install that one the same way. When an installer starts writing over USB while DABKE runs, DABKE first saves anything it had not saved yet. When you install DABKE again, it goes on where you left it: its saves stay in the flash, unless the other firmware wrote over them (see below). To begin again from DABKE's first start instead, hold SAVE while you switch the FM-1 on (see Start fresh, in Saving).
 
-DABKE 0.20 loads what 0.19 saved, whole (see Saving). DABKE 0.17 loads what 0.16 saved, and it sounds as it did. Going back to 0.16 after 0.17 has saved starts 0.16's settings fresh. The kept sounds stay.
+DABKE 0.21 loads what 0.20 and 0.19 saved, whole (see Saving). Going back to 0.20 after 0.21 has saved keeps the sounds, the loops, the steps and the locks. Each track's REVERB SEND then takes its DELAY SEND's value, the MASTER EQ goes flat, the MIXER's FX and the background's MUTE go back to how DABKE starts, and PLAY has no frozen tracks to bring back. DABKE 0.17 loads what 0.16 saved, and it sounds as it did. Going back to 0.16 after 0.17 has saved starts 0.16's settings fresh. The kept sounds stay.
 
 > Some other FM-1 firmwares keep their saves in the same part of the flash as DABKE. After you install one of them, DABKE can start fresh when you come back to it, as on its first start.
 
@@ -126,7 +143,7 @@ The home page shows the singer over the eight tracks. Its four knobs work on the
 
 | Row | K1 | K2 | K3 | K4 |
 | --- | --- | --- | --- | --- |
-| 1 TRACK | PITCH | FILTER | SPACE | LEVEL |
+| 1 TRACK | PITCH | FILTER | CHORUS | LEVEL |
 | 2 MIX | DELAY SEND | REVERB SEND | BASS | SOUND |
 | 3 PLAYING | HOW OFTEN | VIB DEPTH | GLIDE | ORNAMENT |
 
@@ -134,9 +151,9 @@ Row 1 is the picked track's strip as the MIDImix has it: its top knob, middle kn
 
 | Knob | What it does |
 | --- | --- |
-| PITCH | The track's pitch, an octave down to an octave up, drums too. PITCH STEPS says whether it moves by semitones or quarter tones. +1 1/4 means one and a quarter semitones up. |
+| PITCH | The track's pitch, an octave down to an octave up, drums too. PITCH STEPS says whether it moves by semitones or quarter tones. +1 1/4 means one and a quarter semitones up. Turned while the track's notes sound, they slide to the new pitch, slow at both ends: a semitone takes 0.13 s, a fourth 0.55 s and an octave 1.2 s. A note you play on the way starts where the slide is. A drum sound's pitch moves at once. So does a lock, and a turn made while the track records its loop is kept as a lock (see Loops). |
 | FILTER | Left: DARK, a low-pass that closes down to 150 Hz. OPEN in the middle. Right: THIN, a high-pass that rises to 2.5 kHz. |
-| SPACE | DELAY SEND and REVERB SEND together, each moved by as much. It shows their middle. |
+| CHORUS | The track's own chorus, 0 to 100, 0 as DABKE starts. It makes the sound wider, left and right. A drum sound has none: its glass shows `--`, and turning it says TRACK 5: CHORUS ONLY ON A NOTE SOUND. |
 | LEVEL | The track's volume, 0 to 100. Track 2's is DRONE VOL. |
 | DELAY SEND | How much of the track goes into the delay, 0 to 100. |
 | REVERB SEND | How much of the track goes into the reverb, 0 to 100. |
@@ -216,7 +233,7 @@ The rhythm plays tracks 5 to 8, and with LEFT KEYS on BASS also the bass line (t
 
 The ready sounds are MIJWIZ, MIJWIZ BUZZ, ZURNA, KEY LEAD, FAST LEAD, WHISTLE LEAD, SQUARE LEAD, VIOLIN, STRINGS, NEY, ACCORDION, ORGAN, BUZUQ, BUZUQ TREMOLO, SAZ, OUD, QANUN, QANUN TREMOLO, BRASS, WEDDING ZURNA, CASSETTE MIJWIZ and SHAABI LEAD. After them come the sounds you kept, MY SOUND 1 to MY SOUND 8. SELECT on the home page goes through them on the picked track: they are its LEAD sounds (see Any sound on any track).
 
-Each track keeps its own full sound: its instrument, the SOUND page's knobs (apart from VEL AMOUNT and the arpeggio), the vibrato and the ornaments. A track's LEVEL, sends, FILTER, BASS, PITCH and MUTE are its own too, and stay when its sound changes. The effects (the EFFECTS page's first three rows and the MASTER EQ), the tempo, the maqam, the rhythm, KEY TOUCH, PRESSURE, VEL AMOUNT and the arpeggio are shared by all the tracks.
+Each track keeps its own full sound: its instrument, the SOUND page's knobs (apart from VEL AMOUNT and the arpeggio), the vibrato and the ornaments. A track's LEVEL, sends, CHORUS, FILTER, BASS, PITCH and MUTE are its own too, and stay when its sound changes. The effects (the EFFECTS page's first three rows and the MASTER EQ), the tempo, the maqam, the rhythm, KEY TOUCH, PRESSURE, VEL AMOUNT and the arpeggio are shared by all the tracks.
 
 On track 1, a ready sound or a MY SOUND also sets the effects on the EFFECTS page's first three rows, as ALL did in 0.19: WEDDING ZURNA brings its PA and drive, CASSETTE MIJWIZ its tape wobble, age and hiss. On any other track it sets that track's sound alone and never the effects, because the effects work on the whole song. Picking a sound never changes another track's sound. The drone, the levels, the rhythm, the arpeggio and the maqam stay as they are.
 
@@ -450,7 +467,7 @@ Notes land on the nearest step of the rhythm, or of the arpeggio when it is on a
 
 A drum track records the drums you play on the keys, each hit on the step it falls on. It is yours from the first hit. With the rhythm stopped, your first hit starts it. A drum track's loop is its own steps: SEQ stops them and plays them again as it does a loop, and SEQ held a second gives the track back to the rhythm.
 
-While a track records, turning its PITCH, FILTER, SPACE, DELAY SEND or REVERB SEND (on the home page, or its MIDImix knobs) is kept as locks on the steps the recording passes, so the move comes back with the loop. Its LEVEL is not kept.
+While a track records, turning its PITCH, FILTER, DELAY SEND, REVERB SEND or SPACE (on the home page, the EFFECTS page or its MIDImix knobs) is kept as locks on the steps the recording passes, so the move comes back with the loop. Its LEVEL and its CHORUS are not kept.
 
 The loops play whenever the rhythm runs, apart from those SEQ stopped. A track holds up to 128 notes, and all the tracks 512: past that, NO ROOM FOR MORE NOTES.
 
@@ -471,7 +488,7 @@ Hold EDIT a second for step mode (STEP MODE: WHITE KEYS ARE STEPS). It starts no
 | Upper half | A drum track: its drums lane by lane. A note track: its notes by pitch, as long as they sound. |
 | Row of steps | The steps as the white keys have them: filled where something of yours begins, outlined where the rhythm plays, dotted where empty. A blue padlock on a locked step, a line under the step playing, a frame round the step held. A track longer than a page has a small box a page at the left: the one shown dark, the one playing red. |
 | Lines of words | The track and whose it is (YOURS, THE RHYTHM'S or EMPTY) and its length. What a tap adds, and the track's locks counted. The page shown, as PAGE 1 OF 2. |
-| K1 to K4 | The home page's row shown: the picked track's PITCH, FILTER, SPACE and LEVEL first. HOME again: the next row. |
+| K1 to K4 | The home page's row shown: the picked track's PITCH, FILTER, CHORUS and LEVEL first. HOME again: the next row. |
 
 ### The white keys are steps
 
@@ -488,7 +505,7 @@ A page is a bar: 16 steps, or as many whole bars of the rhythm as fit in 16 (12 
 
 Hold a step and turn a knob: that knob is locked on that step. From that step to the track's next step with a note or a hit, the knob holds the lock's value, then goes back. The top line names the step's locks, for example STEP 3: FILTER DARK 20, and the knob's value shows in blue. A small padlock by a knob's name means the track has a lock of that knob somewhere.
 
-Most knobs that turn through values can be locked: K1 to K4 of the step view, the knobs of the SOUND, ORNAMENTS, EFFECTS and RHYTHM pages, and the MIDImix's knobs and faders. On a knob page in step mode, the track's steps show under the knobs, so you can hold a step and lock that page's knob. A lock of one of a sound's knobs, such as TONE or VIB DEPTH, works on the sound the page shows and no other: VIB DEPTH locked on a step of track 2, with SAZ on it, changes track 2's vibrato, and the other tracks keep theirs. When a control cannot be locked, the screen says so: the tempo, the rhythm, choices such as ORNAMENT, the MIXER's MUTE, FX and SOLO, the MASTER EQ and FADE are among them.
+Most knobs that turn through values can be locked: K1 to K4 of the step view, the knobs of the SOUND, ORNAMENTS, EFFECTS and RHYTHM pages, and the MIDImix's knobs and faders. On a knob page in step mode, the track's steps show under the knobs, so you can hold a step and lock that page's knob. A lock of one of a sound's knobs, such as TONE or VIB DEPTH, works on the sound the page shows and no other: VIB DEPTH locked on a step of track 2, with SAZ on it, changes track 2's vibrato, and the other tracks keep theirs. When a control cannot be locked, the screen says so, as in CHORUS CANNOT BE LOCKED TO A STEP: the tempo, the rhythm, choices such as ORNAMENT, each track's CHORUS, the MIXER's MUTE, FX and SOLO, the MASTER EQ and FADE are among them.
 
 ![A knob page in step mode: TRACK, LENGTH, DRUM and PITCH STEPS over the kick's steps](img/fx-track.png "A knob page in step mode: the steps under the knobs")
 
@@ -515,7 +532,7 @@ REC again lets everything on the track go (TRACK 1 LET GO). A drum sound holds n
 
 Freeze several tracks and they sound together while the keys play another. REC ARM on the MIDImix freezes its strip's track, or lets it go, without picking it. Its light is lit while that track is frozen.
 
-OCT- and OCT+ do not move frozen notes. The track's PITCH, its TRANSPOSE and TUNE, and a quarter tone set with EDIT do move them, and they stay there. A pitch wheel and the keys' pressure bend frozen notes only while you move them.
+OCT- and OCT+ do not move frozen notes. The track's PITCH slides them to its new pitch. Its TRANSPOSE and TUNE, and a quarter tone set with EDIT, move them too. They stay there. A pitch wheel and the keys' pressure bend frozen notes only while you move them.
 
 A new sound on a frozen track keeps its notes sounding, in the new sound. A drum sound holds no notes, so on a drum sound they stop (TRACK 3 LET GO).
 
@@ -562,15 +579,19 @@ Hold ARP for its panel: eight controls in two rows. The row on K1 to K4 is dark,
 
 ## 16. Saving
 
-DABKE keeps everything you set by itself: every track's sound, every page's settings, the maqam, the rhythm and the tempo, each track's LEVEL, sends, FILTER, BASS, PITCH, MUTE and FX, the background's MUTE and FX, the MASTER EQ, the loops, the steps and the locks. They come back when the FM-1 starts.
+DABKE keeps everything you set by itself: every track's sound, every page's settings, the maqam, the rhythm and the tempo, each track's LEVEL, sends, CHORUS, FILTER, BASS, PITCH, MUTE and FX, the background's MUTE and FX, the MASTER EQ, the loops, the steps and the locks. They come back when the FM-1 starts.
 
 It writes them a few seconds after your last change, in a quiet moment: with the rhythm stopped, nothing recording, no key down and the sound faded. Writing to the flash stops the sound for a moment, which is why it waits. Frozen notes never fade, so then it writes a minute after the change. So before you switch the FM-1 off, press PLAY to stop everything and wait a few seconds.
 
 Some things are not kept: step mode, the SOLOs, which loops SEQ stopped, the MIDImix's master fader and FADE's place. DABKE starts with step mode off, nothing soloed, every loop ready to play with the rhythm, the whole level full and FADE at 0. Nothing sounds when it starts. The tracks PLAY stopped while frozen are kept, and PLAY brings them back. A track still frozen and sounding when the FM-1 goes off is not kept.
 
+### From 0.20
+
+DABKE 0.21 loads what 0.20 saved, whole. Each track's CHORUS starts at 0, so the tracks sound as they did.
+
 ### From 0.19
 
-DABKE 0.20 loads what 0.19 saved, whole: every track's sound, the loops, the steps, the locks and the kept sounds. In 0.19 one send a track, EFFECT, fed both the delay and the reverb, so each track's REVERB SEND starts where its EFFECT was. The MASTER EQ starts flat and every track's effects in. With ALL picked in 0.19, DABKE opens on track 1.
+DABKE 0.21 loads what 0.19 saved, whole, as 0.20 did: every track's sound, the loops, the steps, the locks and the kept sounds. In 0.19 one send a track, EFFECT, fed both the delay and the reverb, so each track's REVERB SEND starts where its EFFECT was. The MASTER EQ starts flat and every track's effects in. With ALL picked in 0.19, DABKE opens on track 1.
 
 ### Keep a sound
 
@@ -678,7 +699,7 @@ The first three rows and the MASTER EQ work on the whole song and are the same w
 | 1 DELAY AND REVERB | DELAY | DELAY TIME | REPEATS | REVERB |
 | 2 WEDDING PA | DRIVE | CHORUS | WEDDING PA | BRIGHTNESS |
 | 3 TAPE | WOBBLE | TAPE AGE | HISS | DELAY SYNC |
-| 4 SENDS | DELAY SEND | REVERB SEND | SPACE | (none) |
+| 4 SENDS | DELAY SEND | REVERB SEND | SPACE | CHORUS |
 | 5 TONE | FILTER | BASS | PITCH | LEVEL |
 | 6 MASTER EQ | LOW | MID | HIGH | (none) |
 
@@ -689,14 +710,16 @@ The first three rows and the MASTER EQ work on the whole song and are the same w
 | REPEATS | 0 to 90. |
 | REVERB | 0 to 100: a hall. Each track's DELAY SEND and REVERB SEND set how much of it goes into the delay and into the reverb. |
 | DRIVE | 0 to 100: the lead, the drone and the left hand pushed into distortion. The bass and the drums stay clean. |
-| CHORUS | 0 to 100, on the lead, the drone and the left hand. |
+| CHORUS, row 2 | 0 to 100: one chorus for the whole song, on the lead, the drone and the left hand. |
 | WEDDING PA | 0 to 100: the whole sound through a wedding hall's PA, with no lows, a horn's honk, pushed hard, with the hall's slap-back. |
 | BRIGHTNESS | 0 to 100: a filter on the whole sound. 100 is open. |
 | WOBBLE | 0 to 100: the pitch wobbles, as on an old cassette. |
 | TAPE AGE | 0 to 100: a worn tape, saturated, with fewer highs and lows. |
 | HISS | 0 to 100: tape hiss. |
 | DELAY SYNC | OWN TIME (DELAY TIME), or 1/8, 3/16, 1/4: the echo in time with the tempo. |
-| DELAY SEND, REVERB SEND, SPACE | The picked track's sends, as on the home page (see The home page). |
+| DELAY SEND, REVERB SEND | The picked track's sends, as on the home page's MIX row (see The home page). |
+| SPACE | DELAY SEND and REVERB SEND together, each moved by as much. It shows their middle. |
+| CHORUS, row 4 | The picked track's own chorus, as on the home page. |
 | FILTER, BASS, PITCH, LEVEL | The picked track's tone and level, as on the home page. |
 | LOW | A shelf under 250 Hz. |
 | MID | A wide bell at 1 kHz. |
@@ -706,7 +729,7 @@ The MASTER EQ is the last thing on the whole sound, after every effect. LOW, MID
 
 ### The background's rows
 
-Hold SEL and press the ninth white key, G4: rows 4 and 5 become the background's, the rhythm's drums, which are every track with a drum sound. BACKGROUND SENDS has DELAY SEND, REVERB SEND and SPACE, moving all the drum tracks' sends together. BACKGROUND TONE has KIT TONE, LOW / HIGH and KIT TUNE, as on the RHYTHM page, row 7, and DRUMS, the volume of all the drums together. With no drum sound on any track, the sends show `--`, and turning them says NO TRACK HAS A DRUM SOUND. Hold SEL and press a track's key to give the rows back to that track.
+Hold SEL and press the ninth white key, G4: rows 4 and 5 become the background's, the rhythm's drums, which are every track with a drum sound. BACKGROUND SENDS has DELAY SEND, REVERB SEND and SPACE, moving all the drum tracks' sends together, and no CHORUS. BACKGROUND TONE has KIT TONE, LOW / HIGH and KIT TUNE, as on the RHYTHM page, row 7, and DRUMS, the volume of all the drums together. With no drum sound on any track, the sends show `--`, and turning them says NO TRACK HAS A DRUM SOUND. Hold SEL and press a track's key to give the rows back to that track.
 
 ---
 
@@ -789,7 +812,7 @@ The page shows the eight tracks and the background, BG, side by side. Each has i
 | Knob | What it does |
 | --- | --- |
 | LEVEL | The track's volume, 0 to 100, as its MIDImix fader. |
-| FX | Left: the track's effects out, its delay and reverb sends and its BASS, each kept as set (TRACK 3: EFFECTS OFF). Right: back in (TRACK 3: EFFECTS ON). It shows `-` while the track has none of them set. |
+| FX | Left: the track's effects out, its delay and reverb sends, its CHORUS and its BASS, each kept as set (TRACK 3: EFFECTS OFF). Right: back in (TRACK 3: EFFECTS ON). It shows `-` while the track has none of them set. |
 | MUTE | Right: the track muted (TRACK 3: MUTE ON). Left: on again (TRACK 3: MUTE OFF). |
 | SOLO | Right: the track soloed (TRACK 2: SOLO ON), and only soloed tracks are heard. Left: off. With several soloed, all of them are heard. |
 
@@ -804,6 +827,8 @@ FADE moves between two settings of the tracks: the sound as set, and a top sound
 1. Turn FADE to its top, 97 and up. The screen says FADER UP: THIS IS THE TOP SOUND.
 2. Move the controls you want to change, on the home page or on the MIDImix's strips: you set their top values.
 3. Turn FADE down: the sound as set (FADER DOWN: THE SOUND AS SET). In between, those controls move from their set values toward their top values.
+
+The other controls, CHORUS among them, have no top value: with FADE at its top they change the sound as set.
 
 Turn TOP SOUND to clear the top sound (TOP SOUND CLEARED). The top sound is kept with the settings. FADE's place is not: DABKE starts with it at 0.
 
@@ -823,9 +848,9 @@ DABKE reads the MIDImix as it comes from the factory, on channel 1.
 | --- | --- | --- |
 | Strips 1 to 8 | Tracks 1 to 8. Nothing on a strip picks its track. | The picked track: SEL held and a white key |
 | Fader | The track's LEVEL. | K4 on the home page, or LEVEL on the MIXER |
-| Top knob | The track's PITCH: in tune in the middle, an octave down or up at the ends, in steps as PITCH STEPS says. | K1 on the home page |
+| Top knob | The track's PITCH: in tune in the middle, an octave down or up at the ends, in steps as PITCH STEPS says. A note sounding slides there (see The home page). | K1 on the home page |
 | Middle knob | The track's FILTER. | K2 on the home page |
-| Bottom knob | The track's SPACE: its delay and reverb sends together. | K3 on the home page |
+| Bottom knob | The track's CHORUS. A drum sound has none (TRACK 5: CHORUS ONLY ON A NOTE SOUND). | K3 on the home page, or CHORUS on the EFFECTS page's SENDS row |
 | SOLO | Tapped: the knobs' EFFECTS layer. The top knob is then the track's DELAY SEND, the middle knob DELAY TIME (the one delay all the tracks share: any strip's middle knob sets it), the bottom knob the track's REVERB SEND. BANK LEFT and RIGHT are lit while the knobs are on it. Tapped again: back. | The home page's MIX row; DELAY TIME on the EFFECTS page, row 1 |
 | MUTE | The track muted, or on again. Lit while it is muted. | MUTE on the MIXER |
 | REC ARM | Freezes the track, or lets it go, as REC does. Lit while the track holds anything. | REC |
@@ -834,9 +859,9 @@ DABKE reads the MIDImix as it comes from the factory, on channel 1.
 
 The master fader is no longer the scene fader: that is FADE, on the EDIT page (see The scene).
 
-A fader or a knob moves its own strip's track and never picks it: the keys stay where they are while you ride another track. The screen says what moved, for example TRACK 6: LEVEL 70. SOLO says which layer the knobs are on: KNOBS: EFFECTS DELAY, TIME, REVERB, or KNOBS: PITCH FILTER, SPACE. The SEND ALL button sends every value at once: DABKE takes them all and says nothing. No light blinks: each one shows what its label says. The MIDImix lights SOLO only while it is held, so BANK LEFT and RIGHT show the EFFECTS layer instead.
+A fader or a knob moves its own strip's track and never picks it: the keys stay where they are while you ride another track. The screen says what moved, for example TRACK 6: LEVEL 70. SOLO says which layer the knobs are on: KNOBS: EFFECTS DELAY, TIME, REVERB, or KNOBS: PITCH FILTER, CHORUS. The SEND ALL button sends every value at once: DABKE takes them all and says nothing. No light blinks: each one shows what its label says. The MIDImix lights SOLO only while it is held, so BANK LEFT and RIGHT show the EFFECTS layer instead.
 
-In step mode, with a step held, a strip's knob or fader is locked on that step. While a track records its loop, its knobs are kept as locks on the steps the recording passes. Its fader is not.
+In step mode, with a step held, a strip's knob or fader is locked on that step, but not CHORUS: the screen says CHORUS CANNOT BE LOCKED TO A STEP. While a track records its loop, its PITCH, FILTER and sends are kept as locks on the steps the recording passes. Its fader and its CHORUS are not.
 
 ---
 
@@ -878,7 +903,7 @@ Over the USB cable the FM-1 is also a sound card. Your computer can record DABKE
 
 **NO ROOM FOR MORE NOTES, NO ROOM FOR MORE LOCKS.** A track holds 128 notes, all the tracks 512, and all the locks 240. Clear a loop you no longer need (SEQ held a second on its track), or remove some steps or locks.
 
-**CANNOT BE LOCKED TO A STEP.** That control cannot hold a value of its own on a step. The tempo, the rhythm, choices such as ORNAMENT, the MIXER's MUTE, FX and SOLO, the MASTER EQ and FADE are among them.
+**CANNOT BE LOCKED TO A STEP.** That control cannot hold a value of its own on a step. The tempo, the rhythm, choices such as ORNAMENT, each track's CHORUS, the MIXER's MUTE, FX and SOLO, the MASTER EQ and FADE are among them.
 
 **The installer does not find the FM-1.** Use Chrome or Edge, and allow MIDI when the browser asks. Close other programs that use the FM-1's MIDI port.
 
