@@ -3968,7 +3968,8 @@ void dabke_init(void)
     par[P_KITTUNE] = 1.0f; par[P_KITDECAY] = 1.0f; par[P_KITTONE] = 1.0f;
     par[P_GDRUM] = par[P_GKICK] = par[P_GCLAP] = par[P_GMETAL] = 1.0f;
     for (i = 0; i < DAB_NPART; i++) par[P_SEND + i] = par[P_RSEND + i] = i < PART_KICK ? (i == PART_BASS ? 0.0f : 1.0f) : 0.3f;
-    par[P_SEND + PART_DRONE] = 0.0f;    /* (the drone out of the delay, in the reverb: 0.22) */
+    for (i = 0; i < DAB_NPART; i++) par[P_SEND + i] = 0.0f;   /* (every track out of the delay as it starts: 0.22) */
+    par[P_ECHO] = 0.3f;
     clapV = -1;
     for (i = 0; i < DAB_NTRK; i++) st.trk_ev[i] = kt[i].ev;
     st.rec_track = -1;

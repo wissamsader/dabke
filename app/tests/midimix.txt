@@ -81,14 +81,14 @@ expect par51 0
 expect par52 0
 expect par53 0
 expect par54 0
-expect par63 100
+expect par63 0
 expect par64 0
-expect par65 100
+expect par65 0
 expect par66 0
-expect par67 30
-expect par68 30
-expect par69 30
-expect par70 30
+expect par67 0
+expect par68 0
+expect par69 0
+expect par70 0
 expect par79 100
 expect par80 100
 expect par81 100
@@ -156,15 +156,15 @@ expect par47 0
 midi B0 12 7F
 wait 30
 expect tchorus0 100
-expect par63 100
+expect par63 0
 midi B0 12 00
 wait 30
 expect tchorus0 0
-expect par63 100
+expect par63 0
 midi B0 12 40
 wait 30
 expect tchorus0 50
-expect par63 100
+expect par63 0
 wait 300
 expect track 1
 tap ENV
@@ -331,15 +331,15 @@ expect par49 0
 midi B0 1A 7F
 wait 30
 expect tchorus2 100
-expect par65 100
+expect par65 0
 midi B0 1A 00
 wait 30
 expect tchorus2 0
-expect par65 100
+expect par65 0
 midi B0 1A 40
 wait 30
 expect tchorus2 50
-expect par65 100
+expect par65 0
 wait 300
 expect track 1
 tap ENV
@@ -506,15 +506,15 @@ expect par51 0
 midi B0 30 7F
 wait 30
 expect tchorus4 0
-expect par67 30
+expect par67 0
 midi B0 30 00
 wait 30
 expect tchorus4 0
-expect par67 30
+expect par67 0
 midi B0 30 40
 wait 30
 expect tchorus4 0
-expect par67 30
+expect par67 0
 wait 300
 expect track 1
 tap ENV
@@ -550,7 +550,7 @@ midi B0 30 59
 wait 200
 expect tchorus4 0
 said TRACK 5: CHORUS ONLY ON A NOTE SOUND
-expect par67 30
+expect par67 0
 expect par83 30
 expect track 1
 expect page 3
@@ -591,15 +591,15 @@ expect par52 0
 midi B0 34 7F
 wait 30
 expect tchorus5 0
-expect par68 30
+expect par68 0
 midi B0 34 00
 wait 30
 expect tchorus5 0
-expect par68 30
+expect par68 0
 midi B0 34 40
 wait 30
 expect tchorus5 0
-expect par68 30
+expect par68 0
 wait 300
 expect track 1
 tap ENV
@@ -635,7 +635,7 @@ midi B0 34 59
 wait 200
 expect tchorus5 0
 said TRACK 6: CHORUS ONLY ON A NOTE SOUND
-expect par68 30
+expect par68 0
 expect par84 30
 expect track 1
 expect page 3
@@ -675,15 +675,15 @@ expect par53 0
 midi B0 38 7F
 wait 30
 expect tchorus6 0
-expect par69 30
+expect par69 0
 midi B0 38 00
 wait 30
 expect tchorus6 0
-expect par69 30
+expect par69 0
 midi B0 38 40
 wait 30
 expect tchorus6 0
-expect par69 30
+expect par69 0
 wait 300
 expect track 1
 tap ENV
@@ -719,7 +719,7 @@ midi B0 38 59
 wait 200
 expect tchorus6 0
 said TRACK 7: CHORUS ONLY ON A NOTE SOUND
-expect par69 30
+expect par69 0
 expect par85 30
 expect track 1
 expect page 3
@@ -760,15 +760,15 @@ expect par54 0
 midi B0 3C 7F
 wait 30
 expect tchorus7 0
-expect par70 30
+expect par70 0
 midi B0 3C 00
 wait 30
 expect tchorus7 0
-expect par70 30
+expect par70 0
 midi B0 3C 40
 wait 30
 expect tchorus7 0
-expect par70 30
+expect par70 0
 wait 300
 expect track 1
 tap ENV
@@ -804,7 +804,7 @@ midi B0 3C 59
 wait 200
 expect tchorus7 0
 said TRACK 8: CHORUS ONLY ON A NOTE SOUND
-expect par70 30
+expect par70 0
 expect par86 30
 expect track 1
 expect page 3
@@ -1319,7 +1319,7 @@ expect mix_fx 1
 midi B0 10 20
 wait 30
 expect lock0_2_63 25
-expect par63 100
+expect par63 0
 midi B0 11 7F
 wait 30
 expect lock0_2_20 70
@@ -1360,7 +1360,7 @@ expect running 0
 expect epar47 0
 expect epar0 800
 expect lk_at47 -999
-expect epar63 1000
+expect epar63 0
 # SOLO in step mode is the EFFECTS layer too; a strip's knob with no step held is the knob itself (its own track's,
 # said), and the track picked stays picked
 out
@@ -1426,8 +1426,8 @@ expect epar47 <-300
 midi B0 12 40
 wait 30
 expect tchorus0 50
-expect par63 100
-expect epar63 1000
+expect par63 0
+expect epar63 0
 expect lock0_0_63 -999
 midi B0 12 00
 wait 30

@@ -87,7 +87,7 @@ static const par_t PAR[P_COUNT] = {
     [P_VIBDELAY] = {"VIB DELAY", 0, 150, 25, 1000, 2, U_MS, 0},
     [P_ORNSPEED] = {"ORN SPEED", 40, 240, 120, 10, 1, U_HZ, 0},
     [P_ORNAMOUNT] = {"HOW OFTEN", 0, 100, 40, 100, 0, U_PCT, 0},
-    [P_ECHO] = {"DELAY", 0, 100, 0, 100, 0, U_NONE, 0},
+    [P_ECHO] = {"DELAY", 0, 100, 30, 100, 0, U_NONE, 0},
     [P_ECHOTIME] = {"DELAY TIME", 6, 70, 30, 1000, 2, U_MS, 0},
     [P_ECHOFB] = {"REPEATS", 0, 90, 45, 100, 0, U_NONE, 0},
     [P_REVERB] = {"REVERB", 0, 100, 25, 100, 0, U_NONE, 0},
@@ -120,10 +120,12 @@ static const par_t PAR[P_COUNT] = {
 #define TRKK(k, d0, s0) [P_SEND + (k)] = {"DELAY SEND", 0, 100, d0, 100, 0, U_NONE, 1}, \
                     [P_RSEND + (k)] = {"REVERB SEND", 0, 100, s0, 100, 0, U_NONE, 1}, \
                     [P_PITCH + (k)] = {"PITCH", -48, 48, 0, 25, 1, U_QT, 1}
-    TRKK(0, 100, 100), TRKK(1, 0, 100), TRKK(2, 100, 100), TRKK(3, 0, 0), TRKK(4, 30, 30), TRKK(5, 30, 30),
-    TRKK(6, 30, 30), TRKK(7, 30, 30),   /* (0.22: the drone's track starts out of the delay, as RAGA MEOW's background
-                                         * does; the owner, 11-25: "when I select number one and add delay it also adds
-                                         * delay to the drone") each
+    TRKK(0, 0, 100), TRKK(1, 0, 100), TRKK(2, 0, 100), TRKK(3, 0, 0), TRKK(4, 0, 30), TRKK(5, 0, 30),
+    TRKK(6, 0, 30), TRKK(7, 0, 30),     /* (0.22: every track starts out of the delay, its DELAY SEND its own delay, the
+                                         * EFFECTS page's DELAY how loud the delay is, 30 as it starts, as RAGA MEOW's
+                                         * DELAY MIX; the owner, 11-25: "if I put on track 1 delay 100 the track 2 and
+                                         * others shouldn't be affected". Up to 0.21 every note track's started at 100,
+                                         * the drums' at 30, the DELAY at 0: the DELAY turned them all at once) each
                                          * track into the delay, into the reverb (up to 0.19 one send, EFFECT, fed both:
                                          * each took its value), and its pitch */
 };
@@ -7602,6 +7604,16 @@ int app_host_cmd(const char *cmd, const char *a, const char *b, const char *c, c
     (void)b, (void)c, (void)d;
     if (!strcmp(cmd, "scene")) {
         set.ch[C_SCENE] = (uint8_t)(atoi(a) & 3);
+        changed();
+        return 1;
+    }
+    if (!strcmp(cmd, "sends021")) {      /* sends021: every track's DELAY SEND and the DELAY as they started up to 0.21
+                                          * (as a record from then keeps them), for the tests about something else */
+        static const int16_t D0[DAB_NTRK] = {100, 100, 100, 0, 30, 30, 30, 30};
+        int t;
+        for (t = 0; t < DAB_NTRK; t++)
+            set_par(P_SEND + t, D0[t]);
+        set_par(P_ECHO, 0);
         changed();
         return 1;
     }

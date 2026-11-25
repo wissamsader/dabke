@@ -5,6 +5,9 @@
 # (lit while muted). REC ARM: freezes or lets go (lit while frozen). BANK LEFT and RIGHT: the picked track's sound
 # before and after. The master fader: the whole level, live, never kept. No light blinks.
 wait 900
+# (every track's DELAY SEND and the DELAY as 0.21 started them: what follows counts from them)
+sends021
+wait 30
 expect track 1
 listen
 # ---- strip 3 (CCs 24..27): its fader, its top, middle and bottom knobs; track 1 stays picked

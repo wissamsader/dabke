@@ -4,6 +4,8 @@
 # 0.19 kept it (DKB8: no one logic's block, one send a track) loads whole after the update, each track's REVERB SEND its
 # old EFFECT's, the EQ flat; a record of this version keeps the EQ, the MIXER's FX and the frozen tracks.
 wait 900
+# (every track's DELAY SEND and the DELAY as 0.21 started them: what follows counts from them)
+sends021
 expect eq0 0
 expect eq1 0
 expect eq2 0
@@ -162,10 +164,8 @@ wait 900
 expect size_settings 3772
 expect par63 94
 expect par79 94
-# (the drone's track: its delay send as it starts, 0 since 0.22, and its reverb send from it, as a record from before
-# the one logic gets it)
-expect par64 0
-expect par80 0
+expect par64 100
+expect par80 100
 expect par67 30
 expect par83 30
 expect par0 74

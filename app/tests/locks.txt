@@ -12,6 +12,9 @@
 # 83 its reverb send (x 0.01), 75 its pitch (x 0.25 semitone), 43 its level (x 0.01), 22 the reverb, 14 and 15 the
 # vibrato's speed and depth; mid_keyN: key N's light at the second level, a locked step)
 wait 900
+# (every track's DELAY SEND and the DELAY as 0.21 started them: what follows counts from them)
+sends021
+wait 30
 listen
 press SEL
 tapkey w4

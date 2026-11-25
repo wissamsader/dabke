@@ -3,6 +3,9 @@
 # ninth the background: the rhythm's drums (every track with a drum sound), for the MIXER and the EFFECTS page's track
 # rows (BACKGROUND SENDS, BACKGROUND TONE). A muted track is silent from its next note's first sample.
 wait 900
+# (every track's DELAY SEND and the DELAY as 0.21 started them: what follows counts from them)
+sends021
+wait 30
 listen
 tap EDIT
 tap EDIT

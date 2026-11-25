@@ -3,6 +3,9 @@
 # page and held a second is step mode, FX held a second resets the row shown, SEL tapped opens the MAQAM page and held
 # with a white key picks a track (the ninth: the background), each page's button again shows its next row.
 wait 900
+# (every track's DELAY SEND and the DELAY as 0.21 started them: what follows counts from them)
+sends021
+wait 30
 expect track 1
 expect page 0
 expect row 0
@@ -217,7 +220,8 @@ said DELAY AND REVERB RESET
 release FX
 wait 50
 expect row 0
-expect par19 0
+# (the DELAY as it starts: 30 since 0.22)
+expect par19 30
 expect par22 25
 press FX
 wait 300
@@ -240,7 +244,8 @@ wait 1100
 release FX
 wait 50
 said TRACK 1 SENDS RESET
-expect par63 100
+# (its DELAY SEND as it starts: 0 since 0.22, every track out of the delay)
+expect par63 0
 expect par79 100
 expect tchorus0 0
 

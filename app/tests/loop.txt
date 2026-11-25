@@ -10,6 +10,9 @@
 # a step 107 ms, a bar 8 steps (857 ms), 48 ticks. From the repository's root:
 #   app/build/host/dabke_host app/tests/loop.txt OUTDIR
 wait 900
+# (every track's DELAY SEND and the DELAY as 0.21 started them: what follows counts from them)
+sends021
+wait 30
 expect rec_track -1
 expect track 1
 listen

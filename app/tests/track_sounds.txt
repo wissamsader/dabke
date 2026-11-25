@@ -12,6 +12,9 @@
 # DRIVE, 24 CHORUS, 25 PA, 27 WOBBLE, 28 TAPE AGE, 29 HISS; choices: 3 ORNAMENT, 5 PICKING; the engine's: 90 ORNAMENT,
 # 92 PICKING)
 wait 900
+# (every track's DELAY SEND and the DELAY as 0.21 started them: what follows counts from them)
+sends021
+wait 30
 expect track 1
 expect sound 0
 expect tfam0 0
@@ -156,7 +159,8 @@ expect tfam3 0
 expect sndn3 21
 said TRACK 4: SHAABI LEAD
 expect par25 60
-expect par19 0
+# (the DELAY as WEDDING ZURNA left it: its start, 30 since 0.22)
+expect par19 30
 expect par24 0
 expect par22 40
 turn SELECT -26

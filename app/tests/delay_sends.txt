@@ -1,0 +1,57 @@
+# Each track's own delay (0.22; the owner, 11-25: "if I put on track 1 delay 100 the track 2 and others shouldn't be
+# affected"). Every track starts out of the delay (its DELAY SEND 0) and the EFFECTS page's DELAY (how loud the delay
+# is) at 30, as RAGA MEOW's DELAY MIX. A note on track 1 ends with nothing after it; the MIDImix's EFFECTS layer
+# (SOLO), strip 1's top knob all the way: track 1's DELAY SEND 100, every other track's still 0, and the same note
+# rings on in the delay. (Up to 0.21 every note track's started at 100, the drums' at 30, the DELAY at 0: the DELAY
+# turned them all at once.) From the repository's root:
+#   app/build/host/dabke_host app/tests/delay_sends.txt OUTDIR
+# (tone587: the output at the note's pitch, dB)
+wait 900
+expect par19 30
+expect par63 0
+expect par64 0
+expect par65 0
+expect par66 0
+expect par67 0
+expect par68 0
+expect par69 0
+expect par70 0
+expect epar63 0
+expect epar64 0
+# the drone off (ornaments page, row 3, K1), so only the note is heard
+tap LFO
+tap LFO
+tap LFO
+wait 30
+turn K1 -5
+wait 30
+expect ch6 0
+tap HOME
+wait 30
+listen
+# ---- track 1 out of the delay: its note ends there
+key 21 down
+wait 300
+key 21 up
+wait 450
+expect tone587 <-85
+wait 500
+# ---- track 1's DELAY SEND all the way, from the MIDImix: its note rings on; the others' sends stay at 0
+midi 90 1B 7F
+midi 80 1B 7F
+wait 100
+expect mix_fx 1
+midi B0 10 7F
+wait 300
+said TRACK 1: DELAY SEND 100
+expect par63 100
+expect epar63 1000
+expect par64 0
+expect epar64 0
+expect par65 0
+expect par67 0
+key 21 down
+wait 300
+key 21 up
+wait 450
+expect tone587 >-80
