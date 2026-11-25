@@ -91,7 +91,8 @@ static const par_t PAR[P_COUNT] = {
                                                                 * a track's; up to 0.21 "DELAY") */
     [P_ECHOTIME] = {"DELAY TIME", 6, 70, 30, 1000, 2, U_MS, 0},
     [P_ECHOFB] = {"REPEATS", 0, 90, 45, 100, 0, U_NONE, 0},
-    [P_REVERB] = {"REVERB MIX", 0, 100, 25, 100, 0, U_NONE, 0},   /* (0.22: as RAGA MEOW's; up to 0.21 "REVERB") */
+    [P_REVERB] = {"REVERB MIX", 0, 100, 60, 100, 0, U_NONE, 0},   /* (0.22: as RAGA MEOW's; up to 0.21 "REVERB", at 25,
+                                                                   * every note track's REVERB SEND at 100) */
     [P_DRIVE] = {"DRIVE", 0, 100, 0, 100, 0, U_NONE, 0},
     [P_CHORUS] = {"CHORUS", 0, 100, 0, 100, 0, U_NONE, 0},
     [P_PA] = {"WEDDING PA", 0, 100, 0, 100, 0, U_NONE, 0},
@@ -121,14 +122,17 @@ static const par_t PAR[P_COUNT] = {
 #define TRKK(k, d0, s0) [P_SEND + (k)] = {"DELAY SEND", 0, 100, d0, 100, 0, U_NONE, 1}, \
                     [P_RSEND + (k)] = {"REVERB SEND", 0, 100, s0, 100, 0, U_NONE, 1}, \
                     [P_PITCH + (k)] = {"PITCH", -48, 48, 0, 25, 1, U_QT, 1}
-    TRKK(0, 0, 100), TRKK(1, 0, 100), TRKK(2, 0, 100), TRKK(3, 0, 0), TRKK(4, 0, 30), TRKK(5, 0, 30),
-    TRKK(6, 0, 30), TRKK(7, 0, 30),     /* (0.22: every track starts out of the delay, its DELAY SEND its own delay, the
+    TRKK(0, 0, 40), TRKK(1, 0, 40), TRKK(2, 0, 40), TRKK(3, 0, 0), TRKK(4, 0, 12), TRKK(5, 0, 12),
+    TRKK(6, 0, 12), TRKK(7, 0, 12),     /* (0.22: every track starts out of the delay, its DELAY SEND its own delay, the
                                          * EFFECTS page's DELAY how loud the delay is, 30 as it starts, as RAGA MEOW's
                                          * DELAY MIX; the owner, 11-25: "if I put on track 1 delay 100 the track 2 and
                                          * others shouldn't be affected". Up to 0.21 every note track's started at 100,
-                                         * the drums' at 30, the DELAY at 0: the DELAY turned them all at once) each
-                                         * track into the delay, into the reverb (up to 0.19 one send, EFFECT, fed both:
-                                         * each took its value), and its pitch */
+                                         * the drums' at 30, the DELAY at 0: the DELAY turned them all at once. The
+                                         * reverb the same way: the note tracks' REVERB SEND starts at 40, the drums' at
+                                         * 12, the REVERB MIX at 60, so a track's own send counts and a new song's
+                                         * reverb is about as it was, 40 x 60 against 100 x 25; up to 0.21 100 and 30,
+                                         * the REVERB 25) each track into the delay, into the reverb (up to 0.19 one
+                                         * send, EFFECT, fed both: each took its value), and its pitch */
 };
 #define IS_KNOB(id) ((id) < P_COUNT && PAR[id].step)
 
@@ -7603,13 +7607,17 @@ int app_host_cmd(const char *cmd, const char *a, const char *b, const char *c, c
         changed();
         return 1;
     }
-    if (!strcmp(cmd, "sends021")) {      /* sends021: every track's DELAY SEND and the DELAY as they started up to 0.21
-                                          * (as a record from then keeps them), for the tests about something else */
+    if (!strcmp(cmd, "sends021")) {      /* sends021: every track's DELAY SEND and REVERB SEND, the DELAY and the REVERB
+                                          * MIX as they started up to 0.21 (as a record from then keeps them), for the
+                                          * tests about something else */
         static const int16_t D0[DAB_NTRK] = {100, 100, 100, 0, 30, 30, 30, 30};
         int t;
-        for (t = 0; t < DAB_NTRK; t++)
+        for (t = 0; t < DAB_NTRK; t++) {
             set_par(P_SEND + t, D0[t]);
+            set_par(P_RSEND + t, D0[t]);
+        }
         set_par(P_ECHO, 0);
+        set_par(P_REVERB, 25);
         changed();
         return 1;
     }

@@ -1,0 +1,94 @@
+# Each track's own reverb, as its own delay (delay_sends.txt), 0.22: every note track's REVERB SEND starts at 40 (the
+# bass line's at 0, the drums' at 12) and the EFFECTS page's REVERB MIX at 60, so one track's send counts and a new
+# song's reverb is about as it was (40 x 60 against 100 x 25). Up to 0.21 every note track's started at 100, the drums'
+# at 30, the REVERB at 25: the REVERB turned them all at once. FX held a second puts a row back to these; a record
+# keeps its own values. From the repository's root:
+#   app/build/host/dabke_host app/tests/reverb_sends.txt OUTDIR
+# (par22 the REVERB MIX, par79 to par86 tracks 1 to 8's REVERB SEND; epar: as the engine has it, x 1000)
+wait 900
+expect par22 60
+expect epar22 600
+expect par79 40
+expect par80 40
+expect par81 40
+expect par82 0
+expect par83 12
+expect par84 12
+expect par85 12
+expect par86 12
+expect epar79 400
+expect epar81 400
+expect epar82 0
+expect epar83 120
+expect epar86 120
+listen
+# ---- track 1's SENDS (EFFECTS, row 4): its REVERB SEND up, FX held a second: 40 again, the others as they were
+tap FX
+tap FX
+tap FX
+tap FX
+wait 50
+expect page 2
+expect row 3
+said EFFECTS: TRACK 1 SENDS
+turn K2 10
+wait 50
+expect par79 >40
+expect par80 40
+press FX
+wait 1100
+release FX
+wait 50
+said TRACK 1 SENDS RESET
+expect par79 40
+expect epar79 400
+# ---- the background's SENDS (SEL held and the ninth white key): its REVERB SEND up, FX held: the drums' 12 again
+press SEL
+tapkey w8
+release SEL
+wait 50
+turn K2 10
+wait 50
+expect par83 >12
+press FX
+wait 1100
+release FX
+wait 50
+said BACKGROUND SENDS RESET
+expect par83 12
+expect par84 12
+expect par85 12
+expect par86 12
+expect epar83 120
+press SEL
+tapkey w0
+release SEL
+wait 50
+# ---- the DELAY AND REVERB row (row 1): the REVERB MIX down, FX held a second: 60 again
+tap FX
+tap FX
+tap FX
+wait 50
+expect row 0
+turn K4 -10
+wait 50
+expect par22 <60
+press FX
+wait 1100
+release FX
+wait 50
+said DELAY AND REVERB RESET
+expect par22 60
+expect epar22 600
+# ---- a record keeps its own: 0.21's starts (as sends021 sets them), saved, and after a power cycle as they were
+sends021
+wait 6000
+expect dirty 0
+reboot
+wait 900
+expect par22 25
+expect par79 100
+expect par82 0
+expect par83 30
+expect epar22 250
+expect epar79 1000

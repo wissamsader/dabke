@@ -221,9 +221,9 @@ said DELAY AND REVERB RESET
 release FX
 wait 50
 expect row 0
-# (the DELAY as it starts: 30 since 0.22)
+# (the DELAY as it starts: 30 since 0.22; the REVERB MIX 60 since 0.22, each track's REVERB SEND lower)
 expect par19 30
-expect par22 25
+expect par22 60
 press FX
 wait 300
 release FX
@@ -245,9 +245,9 @@ wait 1100
 release FX
 wait 50
 said TRACK 1 SENDS RESET
-# (its DELAY SEND as it starts: 0 since 0.22, every track out of the delay)
+# (its DELAY SEND as it starts: 0 since 0.22, every track out of the delay; its REVERB SEND 40 since 0.22)
 expect par63 0
-expect par79 100
+expect par79 40
 expect tchorus0 0
 
 # ---- REC: the picked track frozen. Its key down: that note sounds on without it

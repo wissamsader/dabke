@@ -155,7 +155,8 @@ turn SELECT -3
 wait 30
 expect sound 0
 expect ch0 0
-expect par22 25
+# (the reverb as it starts, 60 since 0.22: a sound leaves it)
+expect par22 60
 
 # the drone stays as it is through three more sounds; at zero it stays at zero when the sound changes
 turn SELECT 6

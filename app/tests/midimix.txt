@@ -89,14 +89,14 @@ expect par67 0
 expect par68 0
 expect par69 0
 expect par70 0
-expect par79 100
-expect par80 100
-expect par81 100
+expect par79 40
+expect par80 40
+expect par81 40
 expect par82 0
-expect par83 30
-expect par84 30
-expect par85 30
-expect par86 30
+expect par83 12
+expect par84 12
+expect par85 12
+expect par86 12
 expect tchorus0 50
 expect tchorus1 50
 expect tchorus2 50
@@ -204,7 +204,7 @@ midi B0 12 00
 wait 30
 expect tchorus0 0
 said TRACK 1: CHORUS 0
-expect par79 100
+expect par79 40
 expect track 1
 expect page 3
 tap HOME
@@ -291,7 +291,7 @@ midi B0 16 00
 wait 30
 expect tchorus1 0
 said TRACK 2: CHORUS 0
-expect par80 100
+expect par80 40
 expect track 1
 expect page 3
 tap HOME
@@ -379,7 +379,7 @@ midi B0 1A 00
 wait 30
 expect tchorus2 0
 said TRACK 3: CHORUS 0
-expect par81 100
+expect par81 40
 expect track 1
 expect page 3
 tap HOME
@@ -551,7 +551,7 @@ wait 200
 expect tchorus4 0
 said TRACK 5: CHORUS ONLY ON A NOTE SOUND
 expect par67 0
-expect par83 30
+expect par83 12
 expect track 1
 expect page 3
 tap HOME
@@ -636,7 +636,7 @@ wait 200
 expect tchorus5 0
 said TRACK 6: CHORUS ONLY ON A NOTE SOUND
 expect par68 0
-expect par84 30
+expect par84 12
 expect track 1
 expect page 3
 tap HOME
@@ -720,7 +720,7 @@ wait 200
 expect tchorus6 0
 said TRACK 7: CHORUS ONLY ON A NOTE SOUND
 expect par69 0
-expect par85 30
+expect par85 12
 expect track 1
 expect page 3
 tap HOME
@@ -805,7 +805,7 @@ wait 200
 expect tchorus7 0
 said TRACK 8: CHORUS ONLY ON A NOTE SOUND
 expect par70 0
-expect par86 30
+expect par86 12
 expect track 1
 expect page 3
 tap HOME
@@ -1189,7 +1189,7 @@ midi B0 18 7F
 wait 200
 expect par65 100
 said TRACK 3: DELAY SEND 100
-expect par81 100
+expect par81 40
 expect par73 0
 wait 300
 midi B0 1A 00

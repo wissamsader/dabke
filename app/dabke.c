@@ -3963,12 +3963,16 @@ void dabke_init(void)
     par[P_TONE] = 0.7f; par[P_BUZZ] = 0.45f; par[P_DETUNE] = 14.0f; par[P_BREATH] = 0.15f; par[P_BODY] = 0.55f;
     par[P_ATTACK] = 0.01f; par[P_RELEASE] = 0.05f; par[P_GLIDE] = 0.03f;
     par[P_VIBRATE] = 5.5f; par[P_VIBDEPTH] = 0.2f; par[P_VIBDELAY] = 0.25f; par[P_ORNSPEED] = 12.0f; par[P_ORNAMOUNT] = 0.4f;
-    par[P_ECHOTIME] = 0.3f; par[P_ECHOFB] = 0.45f; par[P_REVERB] = 0.25f; par[P_BRIGHT] = 1.0f;
+    par[P_ECHOTIME] = 0.3f; par[P_ECHOFB] = 0.45f; par[P_REVERB] = 0.6f; par[P_BRIGHT] = 1.0f;   /* (the REVERB MIX
+                                         * at 60: 0.22) */
     par[P_VELAMT] = 0.5f; par[P_BASSTONE] = 600.0f; par[P_BASSDECAY] = 1.0f; par[P_ACCENT] = 0.5f;
     par[P_KITTUNE] = 1.0f; par[P_KITDECAY] = 1.0f; par[P_KITTONE] = 1.0f;
     par[P_GDRUM] = par[P_GKICK] = par[P_GCLAP] = par[P_GMETAL] = 1.0f;
-    for (i = 0; i < DAB_NPART; i++) par[P_SEND + i] = par[P_RSEND + i] = i < PART_KICK ? (i == PART_BASS ? 0.0f : 1.0f) : 0.3f;
-    for (i = 0; i < DAB_NPART; i++) par[P_SEND + i] = 0.0f;   /* (every track out of the delay as it starts: 0.22) */
+    for (i = 0; i < DAB_NPART; i++) {   /* (every track out of the delay as it starts; the note tracks' REVERB SEND at
+                                         * 40, the bass line's 0, the drums' 12: 0.22) */
+        par[P_SEND + i] = 0.0f;
+        par[P_RSEND + i] = i < PART_KICK ? (i == PART_BASS ? 0.0f : 0.4f) : 0.12f;
+    }
     par[P_ECHO] = 0.3f;
     clapV = -1;
     for (i = 0; i < DAB_NTRK; i++) st.trk_ev[i] = kt[i].ev;

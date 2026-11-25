@@ -10,7 +10,7 @@ PARTS = ["lead", "drone", "left hand", "bass line", "kick", "darbuka and tabl", 
 VOL = [0, 4, 1, 2, 43, 42, 44, 45]            # the parts' levels (dabke.h P_*)
 FILTER, SEND, PITCH, RSEND = 47, 63, 71, 79   # each track's filter, delay send, pitch, reverb send (dabke.h P_*)
 DSEND0 = [0, 0, 0, 0, 0, 0, 0, 0]             # each track's delay send as it starts (app.c TRKK; 0.22: all 0)
-RSEND0 = [100, 100, 100, 0, 30, 30, 30, 30]   # each track's reverb send as it starts
+RSEND0 = [40, 40, 40, 0, 12, 12, 12, 12]      # each track's reverb send as it starts (0.22; up to 0.21 100 and 30)
 NOTE = [1, 1, 1, 1, 0, 0, 0, 0]               # a note sound on it as it starts (tracks 5 to 8: drum sounds, no CHORUS)
 DTIME = 20                                    # the one delay's time (P_ECHOTIME)
 L = []
@@ -169,7 +169,7 @@ w("# middle knob), bottom REVERB SEND, the faders their LEVEL still. BANK LEFT a
 w("# never lit); tapped again: back, the BANK lights dark (0.19: SOLO was HOLD)")
 w("out"); press(27, 100); w("expect mix_fx 1"); w("said KNOBS: EFFECTS DELAY, TIME, REVERB"); w("expect mixleds 196608")
 w("expect_out USB 90 19 7F"); w("expect_out USB 90 1A 7F"); w("expect_no_out USB 90 1B 7F")
-w("wait 300"); cc(24, 0x7F, f"par{SEND+2}", 100, 200); w("said TRACK 3: DELAY SEND 100"); w(f"expect par{RSEND+2} 100"); w("expect par73 0")
+w("wait 300"); cc(24, 0x7F, f"par{SEND+2}", 100, 200); w("said TRACK 3: DELAY SEND 100"); w(f"expect par{RSEND+2} {RSEND0[2]}"); w("expect par73 0")
 w("wait 300"); cc(26, 0x00, f"par{RSEND+2}", 0, 200); w("said TRACK 3: REVERB SEND 0"); w(f"expect par{SEND+2} 100")
 w("# the REVERB SEND all the way: 100, on the screen and in the engine (1.0), not half of it")
 w("wait 300"); cc(26, 0x7F, f"par{RSEND+2}", 100, 200); w("said TRACK 3: REVERB SEND 100"); w(f"expect epar{RSEND+2} 1000")
