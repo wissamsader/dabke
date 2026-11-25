@@ -466,7 +466,9 @@ tap PLAY
 wait 100
 expect running 0
 
-# ---- a save still happens while notes are frozen (a minute after the change); nothing frozen after a power cycle
+# ---- no save while notes are frozen, even a minute after the change (a flash write stops the sound: 0.22, as RAGA
+# MEOW; up to 0.21 it saved over them after a minute, a click in them); let go (REC), the tail dies away and it is
+# saved. Nothing frozen after a power cycle
 key 7 down
 wait 60
 tap REC
@@ -477,6 +479,13 @@ wait 30
 expect dirty 1
 wait 61000
 expect held_n 1
+expect dirty 1
+expect why_unsaved >15
+tap REC
+wait 60
+expect held_n 0
+wait 9000
+expect why_unsaved 0
 expect dirty 0
 reboot
 wait 900

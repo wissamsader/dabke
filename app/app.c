@@ -551,6 +551,7 @@ static seq_t sq PLAT_POOL;
 static uint8_t set_dirty, sq_dirty;      /* changed since the last save (the settings; the sequencer's part) */
 static uint32_t set_changed_at;
 #define LAZY_SAVE_MS 3000u
+#define QUIET_LVL 0.0005f                /* the output silent enough to write the flash (RAGA MEOW's) */
 
 /* ---------------------------------------------------------------- the UI --- */
 static struct {
@@ -6959,11 +6960,15 @@ void app_frame(void)
         ui.msg_until = 0;
         ui.ver++;
     }
-    /* a few seconds after the last change, and only in a quiet moment: a save erases a flash sector with the
-     * interrupts off, which stops the sound and the rhythm for that long */
+    /* a few seconds after the last change, and only when everything is silent, as RAGA MEOW's all_silent: a save
+     * erases a flash sector with the interrupts off, which stops the sound for that long (14 ms on the owner's unit).
+     * No key down, the rhythm stopped, nothing recording, no note sounding or frozen, the output's tail died away
+     * (0.0005, some -66 dB) and nothing waiting for the audio side. Up to 0.21 a quiet moment was enough (0.02, some
+     * -34 dB, still heard) and frozen notes were saved over after a minute: a click in what sounded (the owner, 11-25:
+     * "it's glitching ... when I turn filter or I turn pitch"). Changes made while frozen notes play wait for them to
+     * stop; an update saves first anyway (app_update_save) */
     if ((set_dirty || sq_dirty) && ms_now - set_changed_at >= (set_dirty > 1 || sq_dirty > 1 ? 60000u : LAZY_SAVE_MS) &&
-        !s->running && s->rec_track < 0 && !ui.keys &&
-        (ui.level < 0.02f || (s->held_n && ms_now - set_changed_at >= 60000u)))   /* (notes held: a minute on, even so) */
+        !s->running && s->rec_track < 0 && !ui.keys && !s->held_n && !s->voices && ui.level < QUIET_LVL && dabke_idle())
         save_settings();
     if (arp_panel_up() != ui.arp_shown) {    /* (the arpeggio's panel up or down: everything again) */
         ui.arp_shown = (uint8_t)arp_panel_up();
@@ -7239,9 +7244,10 @@ int app_expect(const char *what, int *got)
     else if (!strncmp(what, "dim_key", 7) && what[7] >= '0' && what[7] <= '9')
         *got = (int)(ui.dim_keys >> (atoi(what + 7) & 31) & 1u);
     else if (!strcmp(what, "why_unsaved")) { /* what keeps a change from being saved now, as bits: 1 running, 2 a
-                                              * recording, 4 a key down, 8 not quiet, 16 notes held; 0: nothing does */
-        *got = (s->running ? 1 : 0) | (s->rec_track >= 0 ? 2 : 0) | (ui.keys ? 4 : 0) | (ui.level >= 0.02f ? 8 : 0) |
-               (s->held_n ? 16 : 0);
+                                              * recording, 4 a key down, 8 not silent (QUIET_LVL), 16 notes held, 32 a
+                                              * note sounding; 0: nothing does */
+        *got = (s->running ? 1 : 0) | (s->rec_track >= 0 ? 2 : 0) | (ui.keys ? 4 : 0) | (ui.level >= QUIET_LVL ? 8 : 0) |
+               (s->held_n ? 16 : 0) | (s->voices ? 32 : 0);
     } else if (!strcmp(what, "level1000"))
         *got = ui.level != ui.level || s->level != s->level ? -777 : (int)(ui.level * 1000.0f);   /* (-777: not a number) */
     else if (!strcmp(what, "gated")) {       /* the notes sounding by a key, a hold, a loop or the accompaniment (not the
