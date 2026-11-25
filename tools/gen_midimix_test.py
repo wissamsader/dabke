@@ -9,7 +9,8 @@ BASE = [16, 20, 24, 28, 46, 50, 54, 58]
 PARTS = ["lead", "drone", "left hand", "bass line", "kick", "darbuka and tabl", "claps", "riq and sagat"]
 VOL = [0, 4, 1, 2, 43, 42, 44, 45]            # the parts' levels (dabke.h P_*)
 FILTER, SEND, PITCH, RSEND = 47, 63, 71, 79   # each track's filter, delay send, pitch, reverb send (dabke.h P_*)
-SEND0 = [100, 100, 100, 0, 30, 30, 30, 30]    # each track's sends as they start (app.c TRKK)
+DSEND0 = [100, 0, 100, 0, 30, 30, 30, 30]     # each track's delay send as it starts (app.c TRKK; 0.22: the drone's 0)
+RSEND0 = [100, 100, 100, 0, 30, 30, 30, 30]   # each track's reverb send as it starts
 NOTE = [1, 1, 1, 1, 0, 0, 0, 0]               # a note sound on it as it starts (tracks 5 to 8: drum sounds, no CHORUS)
 DTIME = 20                                    # the one delay's time (P_ECHOTIME)
 L = []
@@ -54,8 +55,8 @@ for c in list(range(16, 32)) + list(range(46, 63)): w(f"midi B0 {c:02X} 40")
 w("wait 200")
 w("said_none")
 for par, e in ([(f"par{VOL[i]}", 50) for i in range(8)] + [(f"par{PITCH+i}", 0) for i in range(8)] +
-               [(f"par{FILTER+i}", 0) for i in range(8)] + [(f"par{SEND+i}", SEND0[i]) for i in range(8)] +
-               [(f"par{RSEND+i}", SEND0[i]) for i in range(8)] + [(f"tchorus{i}", 50 * NOTE[i]) for i in range(8)] +
+               [(f"par{FILTER+i}", 0) for i in range(8)] + [(f"par{SEND+i}", DSEND0[i]) for i in range(8)] +
+               [(f"par{RSEND+i}", RSEND0[i]) for i in range(8)] + [(f"tchorus{i}", 50 * NOTE[i]) for i in range(8)] +
                [("maqam", 2), ("root", 2), ("mix_lvl", 50), ("master", 0), ("track", 1), ("top_mask", 0)]):
     w(f"expect {par} {e}")
 for pkt in ("90 01 00", "90 16 00", "90 03 00", "90 18 00", "90 19 00", "90 1A 00", "90 1B 00"): w(f"expect_out USB {pkt}")
@@ -69,7 +70,7 @@ for i, p in enumerate(PARTS):
     for v, e in ((0x7F, 100), (0x00, 0), (0x40, 50)): cc(BASE[i] + 3, v, f"par{VOL[i]}", e)
     for v, e in ((0x7F, 48), (0x00, -48), (0x40, 0)): cc(BASE[i], v, f"par{PITCH+i}", e)
     for v, e in ((0x7F, 50), (0x00, -50), (0x40, 0)): cc(BASE[i] + 1, v, f"par{FILTER+i}", e)
-    for v, e in ((0x7F, 100), (0x00, 0), (0x40, 50)): cc(BASE[i] + 2, v, f"tchorus{i}", e * NOTE[i]); w(f"expect par{SEND+i} {SEND0[i]}")
+    for v, e in ((0x7F, 100), (0x00, 0), (0x40, 50)): cc(BASE[i] + 2, v, f"tchorus{i}", e * NOTE[i]); w(f"expect par{SEND+i} {DSEND0[i]}")
     w("wait 300"); w("expect track 1")
     w("tap ENV"); w("wait 30")
     cc(BASE[i] + 3, 0x59, f"par{VOL[i]}", 70, 200); w(f"said TRACK {i+1}: LEVEL 70")
@@ -80,10 +81,10 @@ for i, p in enumerate(PARTS):
     cc(BASE[i], 0x40, f"par{PITCH+i}", 0); w(f"said TRACK {i+1}: IN TUNE")
     if NOTE[i]:
         w("wait 300"); cc(BASE[i] + 2, 0x59, f"tchorus{i}", 70, 200); w(f"said TRACK {i+1}: CHORUS 70")
-        cc(BASE[i] + 2, 0x00, f"tchorus{i}", 0); w(f"said TRACK {i+1}: CHORUS 0"); w(f"expect par{RSEND+i} {SEND0[i]}")
+        cc(BASE[i] + 2, 0x00, f"tchorus{i}", 0); w(f"said TRACK {i+1}: CHORUS 0"); w(f"expect par{RSEND+i} {RSEND0[i]}")
     else:
         w("wait 300"); cc(BASE[i] + 2, 0x59, f"tchorus{i}", 0, 200); w(f"said TRACK {i+1}: CHORUS ONLY ON A NOTE SOUND")
-        w(f"expect par{SEND+i} {SEND0[i]}"); w(f"expect par{RSEND+i} {SEND0[i]}")
+        w(f"expect par{SEND+i} {DSEND0[i]}"); w(f"expect par{RSEND+i} {RSEND0[i]}")
     w("expect track 1"); w("expect page 3"); w("tap HOME"); w("wait 300")
 w(""); w("# the top knob, the track's pitch: its middle (CC 60 to 67) in tune; FULL (as it starts) whole semitones, an octave")
 w("# either way at its ends; said in words")

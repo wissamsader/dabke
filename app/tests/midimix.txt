@@ -82,7 +82,7 @@ expect par52 0
 expect par53 0
 expect par54 0
 expect par63 100
-expect par64 100
+expect par64 0
 expect par65 100
 expect par66 0
 expect par67 30
@@ -243,15 +243,15 @@ expect par48 0
 midi B0 16 7F
 wait 30
 expect tchorus1 100
-expect par64 100
+expect par64 0
 midi B0 16 00
 wait 30
 expect tchorus1 0
-expect par64 100
+expect par64 0
 midi B0 16 40
 wait 30
 expect tchorus1 50
-expect par64 100
+expect par64 0
 wait 300
 expect track 1
 tap ENV

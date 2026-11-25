@@ -117,10 +117,13 @@ static const par_t PAR[P_COUNT] = {
     [P_ARPGATE] = {"ARP LENGTH", 2, 20, 12, 500, 0, U_PCT, 1},
 #define MIXK(k) [P_FILTER + (k)] = {"FILTER", -50, 50, 0, 200, 0, U_NONE, 1}, [P_LOWEQ + (k)] = {"BASS", -50, 50, 0, 200, 0, U_NONE, 1}
     MIXK(0), MIXK(1), MIXK(2), MIXK(3), MIXK(4), MIXK(5), MIXK(6), MIXK(7),   /* the mixer: each part's filter, bass */
-#define TRKK(k, s0) [P_SEND + (k)] = {"DELAY SEND", 0, 100, s0, 100, 0, U_NONE, 1}, \
+#define TRKK(k, d0, s0) [P_SEND + (k)] = {"DELAY SEND", 0, 100, d0, 100, 0, U_NONE, 1}, \
                     [P_RSEND + (k)] = {"REVERB SEND", 0, 100, s0, 100, 0, U_NONE, 1}, \
                     [P_PITCH + (k)] = {"PITCH", -48, 48, 0, 25, 1, U_QT, 1}
-    TRKK(0, 100), TRKK(1, 100), TRKK(2, 100), TRKK(3, 0), TRKK(4, 30), TRKK(5, 30), TRKK(6, 30), TRKK(7, 30),   /* each
+    TRKK(0, 100, 100), TRKK(1, 0, 100), TRKK(2, 100, 100), TRKK(3, 0, 0), TRKK(4, 30, 30), TRKK(5, 30, 30),
+    TRKK(6, 30, 30), TRKK(7, 30, 30),   /* (0.22: the drone's track starts out of the delay, as RAGA MEOW's background
+                                         * does; the owner, 11-25: "when I select number one and add delay it also adds
+                                         * delay to the drone") each
                                          * track into the delay, into the reverb (up to 0.19 one send, EFFECT, fed both:
                                          * each took its value), and its pitch */
 };

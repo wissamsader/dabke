@@ -1,0 +1,52 @@
+# A lead sound's loop plays as its PLAY says, as its keys do (0.22; the owner, 11-25: "the legato mono and poly seems
+# like not working"; up to 0.21 a loop played every sound POLY). Two notes recorded overlapping (C, then E while C is
+# still down) on track 1: POLY plays both together in their overlap, MONO only the later one (a new attack), LEGATO
+# only one too (the sounding note moves to it, no new attack); POLY again both. From the repository's root:
+#   app/build/host/dabke_host app/tests/loop_play.txt OUTDIR
+# (voices0: track 1's notes sounding)
+wait 900
+expect track 1
+# POLY (sound page, row 1, K2) to record, so both notes are in the loop as played
+tap ENV
+wait 30
+turn K2 2
+wait 30
+expect ch1 2
+tap PLAY
+wait 20
+tap SEQ
+wait 130
+key 7 down
+wait 200
+key 11 down
+wait 300
+key 7 up
+key 11 up
+wait 100
+tap SEQ
+wait 57
+wait 857
+# ---- POLY: both in the overlap
+wait 550
+expect voices0 2
+wait 1350
+# ---- MONO: one
+turn K2 -1
+wait 30
+expect ch1 1
+wait 170
+expect voices0 1
+wait 1600
+# ---- LEGATO: one
+turn K2 -1
+wait 30
+expect ch1 0
+wait 1720
+expect voices0 1
+wait 50
+# ---- POLY again: both
+turn K2 2
+wait 30
+expect ch1 2
+wait 1520
+expect voices0 2

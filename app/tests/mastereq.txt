@@ -162,8 +162,10 @@ wait 900
 expect size_settings 3772
 expect par63 94
 expect par79 94
-expect par64 100
-expect par80 100
+# (the drone's track: its delay send as it starts, 0 since 0.22, and its reverb send from it, as a record from before
+# the one logic gets it)
+expect par64 0
+expect par80 0
 expect par67 30
 expect par83 30
 expect par0 74

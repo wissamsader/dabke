@@ -1059,21 +1059,33 @@ static int start(int m, int tr, int note, int vel)   /* a note of that role on t
     }
     return slot;
 }
+static void move_voice(voice_t *v, int note, int vel)   /* legato: a sounding note moves to another, no new attack */
+{
+    float now = v->base + v->gl, nb = key_pitch(note) + (float)v->oct + KT[v->tr].tune;
+    v->n = (uint8_t)note; v->base = nb; v->gl = KT[v->tr].glideK < 1.0f ? now - nb : 0.0f;
+    if (v->gl > 24.0f || v->gl < -24.0f) v->gl = 0.0f;
+    v->vel += (vel_gain(vel) * (v->oct ? 0.6f : 1.0f) - v->vel) * 0.5f;
+    orn_start(v); v->age = 0.0f;
+    if (v->oct == 0) lastPitch = nb;
+}
 static void retarget(int note, int vel)             /* one note at a time, legato: the sounding note moves to another key */
 {
     int i;
+    for (i = 0; i < NV; i++)
+        if (vo[i].used && vo[i].m == R_KEY && vo[i].tr == leadTr && vo[i].gate) move_voice(&vo[i], note, vel);
+}
+static void loop_one(int t, int note)   /* a loop's note on a lead sound that plays one note at a time (LEGATO, MONO), as
+                                         * its keys would: LEGATO moves the note sounding there, MONO starts it afresh
+                                         * (0.22; up to 0.21 a loop played every sound POLY) */
+{
+    int i, moved = 0, legato = (int)tpar[t][S_PLAY] == 0 && !MD_PLUCKED(TT[t].model);
     for (i = 0; i < NV; i++) {
         voice_t *v = &vo[i];
-        float now, nb;
-        if (!v->used || v->m != R_KEY || v->tr != leadTr || !v->gate) continue;
-        now = v->base + v->gl;
-        nb = key_pitch(note) + (float)v->oct + KT[v->tr].tune;
-        v->n = (uint8_t)note; v->base = nb; v->gl = KT[v->tr].glideK < 1.0f ? now - nb : 0.0f;
-        if (v->gl > 24.0f || v->gl < -24.0f) v->gl = 0.0f;
-        v->vel += (vel_gain(vel) * (v->oct ? 0.6f : 1.0f) - v->vel) * 0.5f;
-        orn_start(v); v->age = 0.0f;
-        if (v->oct == 0) lastPitch = nb;
+        if (!v->used || v->m != R_LOOP || v->tr != t || !v->gate) continue;
+        if (legato) { move_voice(v, note, 100); moved = 1; }
+        else v->gate = 0;
     }
+    if (!moved) start(R_LOOP, t, note, 100);
 }
 
 /* ------------------------------------------------- automatic accompaniment --- */
@@ -1922,8 +1934,10 @@ static void trk_note(int t, int note, int on)   /* track t's note sounds (or sto
             release(R_LOOP, t, note);
             if (lowerHeld[note] & 2) { lower_hold(note, 2, 0); left_after_off(); }
         }
-    } else if (on) start(R_LOOP, t, note, 100);
-    else {
+    } else if (on) {
+        if (tfam[t] == SF_LEAD && (int)tpar[t][S_PLAY] != 2) loop_one(t, note);
+        else start(R_LOOP, t, note, 100);
+    } else {
         release(R_LOOP, t, note);
         if (t == PART_LEFT && (lowerHeld[note] & 2)) { lower_hold(note, 2, 0); if (accOn) left_after_off(); }
     }
@@ -3954,6 +3968,7 @@ void dabke_init(void)
     par[P_KITTUNE] = 1.0f; par[P_KITDECAY] = 1.0f; par[P_KITTONE] = 1.0f;
     par[P_GDRUM] = par[P_GKICK] = par[P_GCLAP] = par[P_GMETAL] = 1.0f;
     for (i = 0; i < DAB_NPART; i++) par[P_SEND + i] = par[P_RSEND + i] = i < PART_KICK ? (i == PART_BASS ? 0.0f : 1.0f) : 0.3f;
+    par[P_SEND + PART_DRONE] = 0.0f;    /* (the drone out of the delay, in the reverb: 0.22) */
     clapV = -1;
     for (i = 0; i < DAB_NTRK; i++) st.trk_ev[i] = kt[i].ev;
     st.rec_track = -1;
