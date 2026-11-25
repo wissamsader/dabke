@@ -2,7 +2,9 @@
 
 DABKE is a free firmware for the M-VAVE FM-1 that makes it an Arabic wedding keyboard. It has lead voices with quarter tones on any note, a drone, bass and backing from the left hand, and a rhythm box of darbuka, tabl, riq, daf, sagat, kick and claps. Eight tracks loop or freeze what you play, and an Akai MIDImix can work as its mixer.
 
-**Status.** This is version 0.21, a free public beta from STUDIOMORPHIK. It has been tested on one FM-1.
+**Status.** This is version 0.22, a free public beta from STUDIOMORPHIK. It has been tested on one FM-1.
+
+**New in 0.22.** Each track's DELAY SEND is its own delay: every track starts out of it, and the EFFECTS page's first row is the whole song's DELAY TIME, REPEATS, DELAY MIX and REVERB MIX. A lead sound's loop and arpeggio play as its PLAY says, and picking a sound never changes the song's effects. If you played 0.21, read What changed in 0.22, below.
 
 **New in 0.21.** Turn a track's PITCH while its notes sound and they slide to the new pitch. The MIDImix's bottom knob and the home page's K3 are each track's own CHORUS now, and SPACE is on the EFFECTS page's SENDS row. If you played 0.20, read What changed in 0.21, below.
 
@@ -13,6 +15,27 @@ DABKE is a free firmware for the M-VAVE FM-1 that makes it an Arabic wedding key
 **New in 0.17.** Each of the eight tracks keeps its own sound, so SAZ on track 2 and BUZUQ TREMOLO on track 3 play at the same time. SELECT on a picked track offers the 22 ready sounds and your MY SOUNDs, and the SOUND and ORNAMENTS pages edit the picked track's sound. The effects, the tempo, the maqam and the rhythm are still shared by the whole song. Saves from 0.16 load and sound as they did.
 
 ![The home page with the rhythm running: the singer on stage, the eight tracks as lanes under him, the rhythm's name at the bottom](img/screen-home.png "The home page, the rhythm running")
+
+---
+
+## What changed in 0.22
+
+Each track's delay is its own, a lead sound's loop and arpeggio follow its PLAY, and a track's sound never changes the song's effects. Everything else is as in 0.21. Everything 0.21 saved loads whole, with its own sends and mixes (see Saving).
+
+| Part | In 0.21 | In 0.22 |
+| --- | --- | --- |
+| Loops | A lead sound's loop played as recorded, whatever its PLAY said | A lead sound's loop plays as its PLAY says. LEGATO: one note at a time, moving to the next with no new attack. MONO: one note at a time, each note struck. POLY: as recorded |
+| Arpeggio | It played every sound as POLY: on LEGATO or MONO its notes rang into each other | It plays as its track's PLAY says: one note at a time on LEGATO and MONO, sliding from note to note on LEGATO. The CHORD order keeps its chords |
+| Delay | The DELAY SENDs of tracks 1 to 3 started at 100, those of tracks 5 to 8 at 30, and the EFFECTS page's DELAY at 0, so DELAY turned all of them at once | Every track's DELAY SEND starts at 0, and the DELAY MIX at 30. A track's DELAY SEND turned up puts that track alone in the delay |
+| Reverb | The REVERB SENDs of tracks 1 to 3 started at 100, those of tracks 5 to 8 at 30, and the REVERB at 25 | Tracks 1 to 3 start at 40, track 4 at 0, tracks 5 to 8 at 12, and the REVERB MIX at 60. Each track's REVERB SEND counts, and a new song's reverb is about as before |
+| EFFECTS page | Row 1: DELAY, DELAY TIME, REPEATS, REVERB | Row 1: DELAY TIME, REPEATS, DELAY MIX, REVERB MIX, the whole song's delay and reverb |
+| Sounds | A ready sound or a MY SOUND picked on track 1 brought its effects: WEDDING ZURNA its PA, CASSETTE MIJWIZ its tape, SHAABI LEAD its echo | A track's sound never changes the song's effects, on track 1 too |
+| ARP | Held, it showed its panel, and let go with nothing turned, it switched the arpeggio on or off | A tap switches it on or off. Held 0.4 s, it shows its panel, and letting go changes nothing |
+| ARP panel | Second row: PATTERN, REPEAT, SWING, LATCH | Second row: LATCH, PATTERN, REPEAT, SWING. The SOUND page's row 6 is as it was |
+| Home page | Row 3, PLAYING, turned track 1's sound while a track with no lead sound was picked | There it shows `--`, and a knob turned says ONLY ON A LEAD SOUND and changes nothing |
+| Freezing | A key on a frozen track that plays one note at a time moved the note there at once | On LEGATO it slides there with the sound's GLIDE, and back to a key still down when you let go of the newest |
+| SAVE | HOME on KEEP THE SOUND left it, back to the page it was opened from | HOME on KEEP THE SOUND opens the home page |
+| Saving | Saved a few seconds after a change in a quiet moment, and a minute after it even while frozen notes sounded | Your settings are saved only when nothing sounds (no note, no frozen track, no rhythm, the sound faded out), so a save never interrupts the sound. Changes made while frozen notes play are saved once they stop |
 
 ---
 
@@ -94,7 +117,7 @@ You can also install DABKE with any FM-1 installer that takes a `.fwsc` package.
 
 To go back to another firmware, install that one the same way. When an installer starts writing over USB while DABKE runs, DABKE first saves anything it had not saved yet. When you install DABKE again, it goes on where you left it: its saves stay in the flash, unless the other firmware wrote over them (see below). To begin again from DABKE's first start instead, hold SAVE while you switch the FM-1 on (see Start fresh, in Saving).
 
-DABKE 0.21 loads what 0.20 and 0.19 saved, whole (see Saving). Going back to 0.20 after 0.21 has saved keeps the sounds, the loops, the steps and the locks. Each track's REVERB SEND then takes its DELAY SEND's value, the MASTER EQ goes flat, the MIXER's FX and the background's MUTE go back to how DABKE starts, and PLAY has no frozen tracks to bring back. DABKE 0.17 loads what 0.16 saved, and it sounds as it did. Going back to 0.16 after 0.17 has saved starts 0.16's settings fresh. The kept sounds stay.
+DABKE 0.22 loads what 0.21, 0.20 and 0.19 saved, whole (see Saving). Going back to 0.21 after 0.22 has saved keeps everything: 0.21 loads it whole and plays it its own way, its DELAY and REVERB at what 0.22's DELAY MIX and REVERB MIX were. Going back to 0.20 after 0.21 or 0.22 has saved keeps the sounds, the loops, the steps and the locks. Each track's REVERB SEND then takes its DELAY SEND's value, so a track left at 0.22's DELAY SEND of 0 has no reverb in 0.20. The MASTER EQ goes flat, the MIXER's FX and the background's MUTE go back to how DABKE starts, and PLAY has no frozen tracks to bring back. DABKE 0.17 loads what 0.16 saved, and it sounds as it did. Going back to 0.16 after 0.17 has saved starts 0.16's settings fresh. The kept sounds stay.
 
 > Some other FM-1 firmwares keep their saves in the same part of the flash as DABKE. After you install one of them, DABKE can start fresh when you come back to it, as on its first start.
 
@@ -120,7 +143,7 @@ DABKE 0.21 loads what 0.20 and 0.19 saved, whole (see Saving). Going back to 0.2
 | SEQ, tapped | The picked track's loop: it records, closes and plays, stops, plays again (see Loops). |
 | SEQ, held a second | The picked track's loop cleared. |
 | PLAY | Stops everything that sounds. Again: it all comes back. With nothing to bring back: the rhythm starts. While the rhythm runs, held 0.4 s: a fill-in (see PLAY). |
-| ARP | Tap it: the arpeggio on or off. Hold it: the arpeggio's panel. |
+| ARP | Tap it: the arpeggio on or off. Hold it 0.4 s: the arpeggio's panel, and letting go changes nothing. |
 | SAVE | KEEP THE SOUND: keeps a track's sound in one of eight places (see Saving). |
 | SELECT | On the home page: the picked track's sound. On the RHYTHM page: the rhythm. On the MAQAM page: the maqam, or on its TUNING row the note to tune. On the save page: the place. On any other page: the rows. |
 | PRESET | The rhythm. |
@@ -155,11 +178,11 @@ Row 1 is the picked track's strip as the MIDImix has it: its top knob, middle kn
 | FILTER | Left: DARK, a low-pass that closes down to 150 Hz. OPEN in the middle. Right: THIN, a high-pass that rises to 2.5 kHz. |
 | CHORUS | The track's own chorus, 0 to 100, 0 as DABKE starts. It makes the sound wider, left and right. A drum sound has none: its glass shows `--`, and turning it says TRACK 5: CHORUS ONLY ON A NOTE SOUND. |
 | LEVEL | The track's volume, 0 to 100. Track 2's is DRONE VOL. |
-| DELAY SEND | How much of the track goes into the delay, 0 to 100. |
-| REVERB SEND | How much of the track goes into the reverb, 0 to 100. |
+| DELAY SEND | How much of the track goes into the delay, 0 to 100, 0 as DABKE starts. It is the track's own: one track's DELAY SEND turned up puts that track alone in the delay. The DELAY MIX, on the EFFECTS page, sets how loud the delay is. |
+| REVERB SEND | How much of the track goes into the reverb, 0 to 100. As DABKE starts: 40 on tracks 1 to 3, 0 on track 4, 12 on tracks 5 to 8. The REVERB MIX, on the EFFECTS page, sets how loud the reverb is. |
 | BASS | LESS or MORE of the lows under 150 Hz, FLAT in the middle. |
 | SOUND | The track's sound, as SELECT on the home page turns it. |
-| Row 3 | HOW OFTEN, VIB DEPTH, GLIDE and ORNAMENT: the same knobs as on the SOUND and ORNAMENTS pages, for the sound those pages show (see The SOUND page). |
+| Row 3 | HOW OFTEN, VIB DEPTH, GLIDE and ORNAMENT of the picked track's lead sound: the same knobs as on the SOUND and ORNAMENTS pages (see The SOUND page). On a track with no lead sound they show `--`: a knob turned says ONLY ON A LEAD SOUND and changes nothing, and a step held gets no lock. |
 
 In step mode HOME shows the step view instead, with the row shown on K1 to K4 (see Steps and locks).
 
@@ -217,7 +240,7 @@ With SPLIT or BASS, those twelve keys are lit dim. In step mode LEFT KEYS does n
 
 ### Any sound on any track
 
-Turn SELECT on the home page to change the picked track's sound. SOUND, K4 of the home page's MIX row, does the same, and so do BANK LEFT and BANK RIGHT on the MIDImix. It goes through the track's own family first, then the others in this order: LEAD, DRONE, LEFT HAND, BASS, KICK, DARBUKA, CLAPS, RIQ. LEAD's sounds are the 22 ready sounds, then the MY SOUNDs you kept (see Sounds). On track 1 a lead sound brings its effects too. A note sound makes the track a track of notes: its keys play notes and it records loops. A drum sound makes it a drum track: its keys play drums and it records steps.
+Turn SELECT on the home page to change the picked track's sound. SOUND, K4 of the home page's MIX row, does the same, and so do BANK LEFT and BANK RIGHT on the MIDImix. It goes through the track's own family first, then the others in this order: LEAD, DRONE, LEFT HAND, BASS, KICK, DARBUKA, CLAPS, RIQ. LEAD's sounds are the 22 ready sounds, then the MY SOUNDs you kept (see Sounds). A sound never changes the song's effects, on track 1 too. A note sound makes the track a track of notes: its keys play notes and it records loops. A drum sound makes it a drum track: its keys play drums and it records steps.
 
 Each track keeps its own sound. SAZ on track 2 and BUZUQ TREMOLO on track 3 play at the same time, each with its own settings. The screen names a lead sound by its own name, as in TRACK 2: SAZ. A sound of another family whose name is shared gets its family in front, as in TRACK 2: DRONE ORGAN.
 
@@ -235,7 +258,7 @@ The ready sounds are MIJWIZ, MIJWIZ BUZZ, ZURNA, KEY LEAD, FAST LEAD, WHISTLE LE
 
 Each track keeps its own full sound: its instrument, the SOUND page's knobs (apart from VEL AMOUNT and the arpeggio), the vibrato and the ornaments. A track's LEVEL, sends, CHORUS, FILTER, BASS, PITCH and MUTE are its own too, and stay when its sound changes. The effects (the EFFECTS page's first three rows and the MASTER EQ), the tempo, the maqam, the rhythm, KEY TOUCH, PRESSURE, VEL AMOUNT and the arpeggio are shared by all the tracks.
 
-On track 1, a ready sound or a MY SOUND also sets the effects on the EFFECTS page's first three rows, as ALL did in 0.19: WEDDING ZURNA brings its PA and drive, CASSETTE MIJWIZ its tape wobble, age and hiss. On any other track it sets that track's sound alone and never the effects, because the effects work on the whole song. Picking a sound never changes another track's sound. The drone, the levels, the rhythm, the arpeggio and the maqam stay as they are.
+A ready sound or a MY SOUND sets the picked track's sound alone, on track 1 as on any other track. It never changes the effects, because they work on the whole song: WEDDING ZURNA, CASSETTE MIJWIZ and SHAABI LEAD bring no PA, tape or echo, and you set those on the EFFECTS page. Picking a sound never changes another track's sound. The drone, the levels, the rhythm, the arpeggio and the maqam stay as they are.
 
 ### The lead's instruments
 
@@ -467,6 +490,8 @@ Notes land on the nearest step of the rhythm, or of the arpeggio when it is on a
 
 A drum track records the drums you play on the keys, each hit on the step it falls on. It is yours from the first hit. With the rhythm stopped, your first hit starts it. A drum track's loop is its own steps: SEQ stops them and plays them again as it does a loop, and SEQ held a second gives the track back to the rhythm.
 
+A lead sound's loop plays as its PLAY says (the SOUND page, row 1, K2), as its keys do. On LEGATO it plays one note at a time, the note sounding moving to the next with the sound's GLIDE and no new attack. On MONO it plays one note at a time, each note struck. On POLY it plays as you played it, chords and all. A plucked sound on LEGATO is struck afresh, as its keys are. The loop keeps what you played, so with PLAY changed it plays the new way. Other note sounds play their loops as you played them.
+
 While a track records, turning its PITCH, FILTER, DELAY SEND, REVERB SEND or SPACE (on the home page, the EFFECTS page or its MIDImix knobs) is kept as locks on the steps the recording passes, so the move comes back with the loop. Its LEVEL and its CHORUS are not kept.
 
 The loops play whenever the rhythm runs, apart from those SEQ stopped. A track holds up to 128 notes, and all the tracks 512: past that, NO ROOM FOR MORE NOTES.
@@ -524,7 +549,7 @@ REC freezes the picked track: the notes of its keys down sound on after you let 
 
 On a frozen track:
 
-- A lead sound that plays one note at a time (PLAY on LEGATO or MONO, the arpeggio off): a key moves the frozen note to that key's note, with no new attack, and it stays frozen there.
+- A lead sound that plays one note at a time (PLAY on LEGATO or MONO, the arpeggio off): a key moves the frozen note to that key's note, with no new attack, and it stays frozen there. On LEGATO it slides there with the sound's GLIDE. Let go of that key while other keys of the track are still down, and it slides back to the last of them you pressed. When you let go of the last key, the note stays where it is. On MONO, and with BUZUQ, OUD and QANUN, it moves at once.
 - A POLY lead sound, the left hand and the bass line: each key you press is frozen too.
 - Press the key of a frozen note again and that note stops, while the others go on. When the last one stops, the screen says TRACK 1 LET GO and the track is no longer frozen.
 
@@ -560,9 +585,11 @@ The tracks PLAY stopped while frozen are kept with the settings: after the FM-1 
 
 Tap ARP to switch the arpeggio on or off (ARPEGGIO ON). It plays the keys you hold on a lead sound, track 1 or any track with a lead sound, a note at a time on its own grid. It keeps time with the rhythm when it runs, and with the tempo when not. Its notes keep their quarter tones, and a loop recorded on its track keeps them.
 
-Hold ARP for its panel: eight controls in two rows. The row on K1 to K4 is dark, with its values in the glasses, and the other row is faint. SEL or SELECT moves to the other row. Let go of ARP after using the panel and the arpeggio stays on or off as it was. The same eight are on the SOUND page, rows 5 and 6.
+It plays as its track's PLAY says (the SOUND page, row 1, K2). On LEGATO and MONO each new note ends the last. On LEGATO the note still sounding moves to the next with the sound's GLIDE and no new attack, and a plucked sound is struck afresh. On POLY each note sounds for its whole ARP LENGTH, over the next ones when it is long. The CHORD order plays its chords whatever PLAY says.
 
-![The arpeggio's panel: ORDER, SPEED, OVER and LENGTH on K1 to K4, at UP, 16THS, 1 OCT and 60 %; PATTERN, REPEAT, SWING and LATCH faint below them](img/arp-panel.png "ARP held: the arpeggio's panel")
+Hold ARP 0.4 s for its panel: eight controls in two rows, ORDER, SPEED, OVER and LENGTH, then LATCH, PATTERN, REPEAT and SWING. The row on K1 to K4 is dark, with its values in the glasses, and the other row is faint. SEL or SELECT moves to the other row. Let go of ARP and the arpeggio stays on or off as it was: only a tap switches it. The same eight are on the SOUND page, rows 5 and 6, where row 6 has LATCH on K4.
+
+![The arpeggio's panel: ORDER, SPEED, OVER and LENGTH on K1 to K4, at UP, 16THS, 1 OCT and 60 %; LATCH, PATTERN, REPEAT and SWING faint below them](img/arp-panel.png "ARP held: the arpeggio's panel")
 
 | Control | Choices |
 | --- | --- |
@@ -581,27 +608,31 @@ Hold ARP for its panel: eight controls in two rows. The row on K1 to K4 is dark,
 
 DABKE keeps everything you set by itself: every track's sound, every page's settings, the maqam, the rhythm and the tempo, each track's LEVEL, sends, CHORUS, FILTER, BASS, PITCH, MUTE and FX, the background's MUTE and FX, the MASTER EQ, the loops, the steps and the locks. They come back when the FM-1 starts.
 
-It writes them a few seconds after your last change, in a quiet moment: with the rhythm stopped, nothing recording, no key down and the sound faded. Writing to the flash stops the sound for a moment, which is why it waits. Frozen notes never fade, so then it writes a minute after the change. So before you switch the FM-1 off, press PLAY to stop everything and wait a few seconds.
+It writes them a few seconds after your last change, when nothing sounds: the rhythm stopped, nothing recording, no key down, no note sounding or frozen, and the sound faded out. Writing to the flash stops the sound for a moment, so it waits until nothing sounds, and a save never interrupts the sound. Changes made while frozen notes play are saved once they stop. So before you switch the FM-1 off, press PLAY to stop everything and wait a few seconds.
 
-Some things are not kept: step mode, the SOLOs, which loops SEQ stopped, the MIDImix's master fader and FADE's place. DABKE starts with step mode off, nothing soloed, every loop ready to play with the rhythm, the whole level full and FADE at 0. Nothing sounds when it starts. The tracks PLAY stopped while frozen are kept, and PLAY brings them back. A track still frozen and sounding when the FM-1 goes off is not kept.
+Some things are not kept: step mode, the SOLOs, which loops SEQ stopped, the MIDImix's master fader and FADE's place. DABKE starts with step mode off, nothing soloed, every loop ready to play with the rhythm, the whole level full and FADE at 0. Nothing sounds when it starts. The tracks PLAY stopped while frozen are kept, and PLAY brings them back. A track still frozen and sounding when the FM-1 goes off is not kept, and neither is what you changed while it sounded.
+
+### From 0.21
+
+DABKE 0.22 loads what 0.21 saved, whole. A song keeps its own sends and mixes, so its mix sounds as it did. A song from 0.21 most likely has tracks 1 to 3 sending 100 into the delay and the reverb and tracks 5 to 8 sending 30, as 0.21 started them, so there the DELAY MIX still moves the echo of every track at once. To start from 0.22's sends, hold FX a second on a track's SENDS row: its DELAY SEND goes to 0, its REVERB SEND to its start (40, 0 or 12) and its CHORUS to 0. On the background's SENDS row it puts the sends of every track with a drum sound at their starts. On DELAY AND REVERB it puts the DELAY MIX at 30 and the REVERB MIX at 60, with DELAY TIME and REPEATS at their starts. DABKE's first start and START FRESH begin with 0.22's starts.
 
 ### From 0.20
 
-DABKE 0.21 loads what 0.20 saved, whole. Each track's CHORUS starts at 0, so the tracks sound as they did.
+DABKE 0.22 loads what 0.20 saved, whole, as 0.21 did. Each track's CHORUS starts at 0, so the tracks sound as they did.
 
 ### From 0.19
 
-DABKE 0.21 loads what 0.19 saved, whole, as 0.20 did: every track's sound, the loops, the steps, the locks and the kept sounds. In 0.19 one send a track, EFFECT, fed both the delay and the reverb, so each track's REVERB SEND starts where its EFFECT was. The MASTER EQ starts flat and every track's effects in. With ALL picked in 0.19, DABKE opens on track 1.
+DABKE 0.22 loads what 0.19 saved, whole, as 0.20 and 0.21 did: every track's sound, the loops, the steps, the locks and the kept sounds. In 0.19 one send a track, EFFECT, fed both the delay and the reverb, so each track's REVERB SEND starts where its EFFECT was. The MASTER EQ starts flat and every track's effects in. With ALL picked in 0.19, DABKE opens on track 1.
 
 ### Keep a sound
 
 ![The save page: KEEP THE SOUND, eight places, place 3 picked](img/save.png "SAVE: the eight places")
 
-Press SAVE: the KEEP THE SOUND page shows eight places, red where a sound is kept, and opens on the first free one, slid out. Turn SELECT to pick a place (PLACE 3 FREE, or PLACE 3 USED) and press SAVE again: the screen says KEPT IN 3. On a used place, the first SAVE asks (PLACE 3 IS USED: SAVE AGAIN TO REPLACE), and SAVE again replaces it. HOME leaves without keeping. Any other button leaves too, and does its own job. SAVE keeps the sound the SOUND page shows: the picked track's, or track 1's (see The SOUND page).
+Press SAVE: the KEEP THE SOUND page shows eight places, red where a sound is kept, and opens on the first free one, slid out. Turn SELECT to pick a place (PLACE 3 FREE, or PLACE 3 USED) and press SAVE again: the screen says KEPT IN 3. On a used place, the first SAVE asks (PLACE 3 IS USED: SAVE AGAIN TO REPLACE), and SAVE again replaces it. HOME leaves without keeping and opens the home page. Any other button leaves too, and does its own job. SAVE keeps the sound the SOUND page shows: the picked track's, or track 1's (see The SOUND page).
 
 To load a kept sound, turn SELECT on the home page: the kept sounds come after the ready ones, as MY SOUND 1 to MY SOUND 8. It goes on the picked track.
 
-A kept sound holds a track's sound: its instrument and its settings, the vibrato and the ornaments. It also holds the effects on the EFFECTS page's first three rows, which come back only when you pick it on track 1. Picking a kept sound never changes another track's sound. A kept sound does not hold the loops, the steps, the rhythm or the maqam.
+A kept sound holds a track's sound: its instrument and its settings, the vibrato and the ornaments. Picking it changes that track's sound alone, never the effects or another track's sound. A kept sound does not hold the loops, the steps, the rhythm or the maqam.
 
 ### Start fresh
 
@@ -622,7 +653,7 @@ Press ENV. The SOUND page shapes one track's sound, and holds the arpeggio's con
 - With a track picked that plays a lead sound, that track's, as in TRACK 3 BUZUQ.
 - With a track picked that plays a drum, drone, left-hand or bass sound, track 1's, and the line says TRACK 1. INSTRUMENT there changes track 1. It never turns the picked track into a lead sound: SELECT on the home page does that (see Any sound on any track).
 
-VEL AMOUNT is shared by all the tracks, and so is the arpeggio on rows 5 and 6. The dots by the title show the row, the one shown in red. Each knob of the row has a picture, with the row's name under them. The home page's PLAYING row (HOW OFTEN, VIB DEPTH, GLIDE, ORNAMENT) changes the same sound.
+VEL AMOUNT is shared by all the tracks, and so is the arpeggio on rows 5 and 6. The dots by the title show the row, the one shown in red. Each knob of the row has a picture, with the row's name under them. The home page's PLAYING row (HOW OFTEN, VIB DEPTH, GLIDE, ORNAMENT) changes the same sound while the picked track has a lead sound. With any other sound on the picked track it shows `--` and changes nothing, and this page shows track 1's sound.
 
 ![The SOUND page, row 1: INSTRUMENT MIJWIZ, PLAY LEGATO, TONE 70, BUZZ 45](img/sound-1.png "Track 1's sound")
 ![The SOUND page, row 1, with track 3 picked: TRACK 3 BUZUQ under the title, INSTRUMENT BUZUQ, PLAY POLY, TONE 75, BUZZ 35](img/sound-track3.png "Track 3 picked, playing BUZUQ TREMOLO")
@@ -639,7 +670,7 @@ VEL AMOUNT is shared by all the tracks, and so is the arpeggio on rows 5 and 6. 
 | Knob | What it does |
 | --- | --- |
 | INSTRUMENT | The sound's instrument (see Sounds). Each comes with its own TONE, BUZZ, PIPES APART, BREATH, BODY, ATTACK, RELEASE, GLIDE and PLAY. |
-| PLAY | LEGATO: one note at a time; a key pressed while another is held moves the note there without starting it again (the plucked instruments start again). MONO: one note at a time, each key starts it again. POLY: chords. |
+| PLAY | LEGATO: one note at a time; a key pressed while another is held moves the note there without starting it again (the plucked instruments start again). MONO: one note at a time, each key starts it again. POLY: chords. The track's loop and its arpeggio play the same way (see Loops, and The arpeggio). |
 | TONE | 0 to 100: darker to brighter. |
 | BUZZ | 0 to 100: the reed's buzz. |
 | PIPES APART | 0 to 40 cents: how far apart two pipes are tuned, for the beating of a mijwiz. |
@@ -690,13 +721,13 @@ Press LFO. The vibrato and the ornaments, the drone, and a few settings. Rows 1 
 
 Press FX. FX again shows the next row, when you let go of it, and SELECT turns the rows too. Hold FX a second and the row shown goes back to its start values, as DABKE starts them: the screen says so, as in DELAY AND REVERB RESET, and the row stays shown.
 
-The first three rows and the MASTER EQ work on the whole song and are the same whichever track is picked. A ready sound or a MY SOUND picked on track 1 sets the first three rows; picked on any other track, it leaves them as they are. Rows 4 and 5 are the picked track's own, and their title says whose, as in TRACK 3 SENDS.
+The first three rows and the MASTER EQ work on the whole song and are the same whichever track is picked. A ready sound or a MY SOUND never changes them, on any track. Rows 4 and 5 are the picked track's own, and their title says whose, as in TRACK 3 SENDS.
 
-![The EFFECTS page, row 1: DELAY, DELAY TIME, REPEATS and REVERB](img/fx-1.png "The EFFECTS page, row 1")
+![The EFFECTS page, row 1: DELAY TIME, REPEATS, DELAY MIX and REVERB MIX, at 300 MS, 45, 30 and 60; the singer in the hall with his echoes](img/fx-1.png "The EFFECTS page, row 1")
 
 | Row | K1 | K2 | K3 | K4 |
 | --- | --- | --- | --- | --- |
-| 1 DELAY AND REVERB | DELAY | DELAY TIME | REPEATS | REVERB |
+| 1 DELAY AND REVERB | DELAY TIME | REPEATS | DELAY MIX | REVERB MIX |
 | 2 WEDDING PA | DRIVE | CHORUS | WEDDING PA | BRIGHTNESS |
 | 3 TAPE | WOBBLE | TAPE AGE | HISS | DELAY SYNC |
 | 4 SENDS | DELAY SEND | REVERB SEND | SPACE | CHORUS |
@@ -705,10 +736,10 @@ The first three rows and the MASTER EQ work on the whole song and are the same w
 
 | Knob | What it does |
 | --- | --- |
-| DELAY | 0 to 100: the echo's level. |
-| DELAY TIME | 60 to 700 ms. Changing it bends what is already in the echo, as a tape echo does. With DELAY SYNC on 1/8, 3/16 or 1/4 it shows `--`, and turning it says DELAY SYNC SETS THE TIME. |
+| DELAY TIME | 60 to 700 ms, 300 ms as DABKE starts. Changing it bends what is already in the echo, as a tape echo does. With DELAY SYNC on 1/8, 3/16 or 1/4 it shows `--`, and turning it says DELAY SYNC SETS THE TIME. |
 | REPEATS | 0 to 90. |
-| REVERB | 0 to 100: a hall. Each track's DELAY SEND and REVERB SEND set how much of it goes into the delay and into the reverb. |
+| DELAY MIX | 0 to 100, 30 as DABKE starts: how loud the delay is, for the whole song. Each track's DELAY SEND sets how much of that track goes into it. They start at 0, so turn a track's DELAY SEND up to hear its echo. |
+| REVERB MIX | 0 to 100, 60 as DABKE starts: how loud the reverb, a hall, is for the whole song. Each track's REVERB SEND sets how much of that track goes into it. |
 | DRIVE | 0 to 100: the lead, the drone and the left hand pushed into distortion. The bass and the drums stay clean. |
 | CHORUS, row 2 | 0 to 100: one chorus for the whole song, on the lead, the drone and the left hand. |
 | WEDDING PA | 0 to 100: the whole sound through a wedding hall's PA, with no lows, a horn's honk, pushed hard, with the hall's slap-back. |
@@ -851,7 +882,7 @@ DABKE reads the MIDImix as it comes from the factory, on channel 1.
 | Top knob | The track's PITCH: in tune in the middle, an octave down or up at the ends, in steps as PITCH STEPS says. A note sounding slides there (see The home page). | K1 on the home page |
 | Middle knob | The track's FILTER. | K2 on the home page |
 | Bottom knob | The track's CHORUS. A drum sound has none (TRACK 5: CHORUS ONLY ON A NOTE SOUND). | K3 on the home page, or CHORUS on the EFFECTS page's SENDS row |
-| SOLO | Tapped: the knobs' EFFECTS layer. The top knob is then the track's DELAY SEND, the middle knob DELAY TIME (the one delay all the tracks share: any strip's middle knob sets it), the bottom knob the track's REVERB SEND. BANK LEFT and RIGHT are lit while the knobs are on it. Tapped again: back. | The home page's MIX row; DELAY TIME on the EFFECTS page, row 1 |
+| SOLO | Tapped: the knobs' EFFECTS layer. The top knob is then the track's DELAY SEND, the middle knob DELAY TIME (the one delay all the tracks share: any strip's middle knob sets it), the bottom knob the track's REVERB SEND. Every DELAY SEND starts at 0: turn a strip's top knob up to put its track in the delay. BANK LEFT and RIGHT are lit while the knobs are on it. Tapped again: back. | The home page's MIX row; DELAY TIME on the EFFECTS page, row 1, K1 |
 | MUTE | The track muted, or on again. Lit while it is muted. | MUTE on the MIXER |
 | REC ARM | Freezes the track, or lets it go, as REC does. Lit while the track holds anything. | REC |
 | BANK LEFT, BANK RIGHT | The picked track's sound before or after. | SELECT on the home page |
@@ -883,6 +914,8 @@ Over the USB cable the FM-1 is also a sound card. Your computer can record DABKE
 
 **No sound.** Turn MASTER up, and the MIDImix's master fader if one is plugged in. A track's LEVEL is K4 on the home page, or its MIDImix fader. A muted track's lane is dimmed: switch it on with MUTE on the MIXER (the EDIT page's last row), or MUTE on the MIDImix. While any track is soloed, only the soloed ones are heard. The background's MUTE silences every track with a drum sound.
 
+**No echo.** Each track's DELAY SEND starts at 0. Turn it up on the home page's MIX row (K1), or with the strip's top knob on the MIDImix's EFFECTS layer. The DELAY MIX, K3 of the EFFECTS page's first row, sets how loud the echo is.
+
 **A note goes on after I let go.** The track is frozen, and REC is lit. Press that note's key again, or REC, to let it go. PLAY stops every frozen track.
 
 **SEQ does not record.** The track has a loop already, and SEQ stops it or plays it again. Hold SEQ a second to clear it, then tap SEQ to record.
@@ -895,7 +928,7 @@ Over the USB cable the FM-1 is also a sound card. Your computer can record DABKE
 
 **The MIDImix does nothing.** Set USB PORT to AUTO. With a computer on the port, the port stays the computer's. After the FM-1 starts, the port looks for a controller only after 30 seconds. Wait for CONTROLLER READY.
 
-**My changes were not kept.** DABKE saves only with the rhythm stopped and the sound quiet. Press PLAY to stop everything and wait a few seconds before you switch the FM-1 off.
+**My changes were not kept.** DABKE saves only when nothing sounds: the rhythm stopped, no note sounding or frozen, and the sound faded out. Press PLAY to stop everything and wait a few seconds before you switch the FM-1 off.
 
 **DABKE started fresh.** Another firmware installed since may have written over DABKE's saves (see Install).
 
