@@ -6963,12 +6963,13 @@ void app_frame(void)
     /* a few seconds after the last change, and only when everything is silent, as RAGA MEOW's all_silent: a save
      * erases a flash sector with the interrupts off, which stops the sound for that long (14 ms on the owner's unit).
      * No key down, the rhythm stopped, nothing recording, no note sounding or frozen, the output's tail died away
-     * (0.0005, some -66 dB) and nothing waiting for the audio side. Up to 0.21 a quiet moment was enough (0.02, some
+     * (0.0005, some -66 dB, measured without the tape's HISS, which never stops) and nothing waiting for the audio
+     * side. Up to 0.21 a quiet moment was enough (0.02, some
      * -34 dB, still heard) and frozen notes were saved over after a minute: a click in what sounded (the owner, 11-25:
      * "it's glitching ... when I turn filter or I turn pitch"). Changes made while frozen notes play wait for them to
      * stop; an update saves first anyway (app_update_save) */
     if ((set_dirty || sq_dirty) && ms_now - set_changed_at >= (set_dirty > 1 || sq_dirty > 1 ? 60000u : LAZY_SAVE_MS) &&
-        !s->running && s->rec_track < 0 && !ui.keys && !s->held_n && !s->voices && ui.level < QUIET_LVL && dabke_idle())
+        !s->running && s->rec_track < 0 && !ui.keys && !s->held_n && !s->voices && s->music < QUIET_LVL && dabke_idle())
         save_settings();
     if (arp_panel_up() != ui.arp_shown) {    /* (the arpeggio's panel up or down: everything again) */
         ui.arp_shown = (uint8_t)arp_panel_up();
@@ -7246,7 +7247,7 @@ int app_expect(const char *what, int *got)
     else if (!strcmp(what, "why_unsaved")) { /* what keeps a change from being saved now, as bits: 1 running, 2 a
                                               * recording, 4 a key down, 8 not silent (QUIET_LVL), 16 notes held, 32 a
                                               * note sounding; 0: nothing does */
-        *got = (s->running ? 1 : 0) | (s->rec_track >= 0 ? 2 : 0) | (ui.keys ? 4 : 0) | (ui.level >= QUIET_LVL ? 8 : 0) |
+        *got = (s->running ? 1 : 0) | (s->rec_track >= 0 ? 2 : 0) | (ui.keys ? 4 : 0) | (s->music >= QUIET_LVL ? 8 : 0) |
                (s->held_n ? 16 : 0) | (s->voices ? 32 : 0);
     } else if (!strcmp(what, "level1000"))
         *got = ui.level != ui.level || s->level != s->level ? -777 : (int)(ui.level * 1000.0f);   /* (-777: not a number) */

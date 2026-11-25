@@ -3343,7 +3343,7 @@ static void eq_block(void)              /* the MASTER EQ for this block: each ga
 }
 static void post_chain(int32_t *lr, int n, float gain, int lowAny, uint32_t busOn)
 {
-    float vol[DAB_NTRK], snd[DAB_NTRK], rsnd[DAB_NTRK], cho[DAB_NTRK], sq_sum = 0.0f, lsum = 0.0f, lvl, mg, dmg;
+    float vol[DAB_NTRK], snd[DAB_NTRK], rsnd[DAB_NTRK], cho[DAB_NTRK], sq_sum = 0.0f, dq_sum = 0.0f, lsum = 0.0f, lvl, mg, dmg;
     float gd = par[P_DRUMS] * 0.34f * fadeG;   /* (the drums all together; the bass with them in a fade) */
     uint8_t act[DAB_NTRK], grp[DAB_NTRK];
     int on[DAB_NTRK], nact2 = 0, drumAny, choInP = 0, choInB = 0, choRunP, choRunB;
@@ -3580,6 +3580,7 @@ static void post_chain(int32_t *lr, int n, float gain, int lowAny, uint32_t busO
             ahL += (agL - ahL) * K.ageHp; ahR += (agR - ahR) * K.ageHp;
             xL = agL - ahL; xR = agR - ahR;
         }
+        { float h = (xL + xR) * 0.5f; dq_sum += h * h; }   /* (the save's silence: the sound without the tape's hiss) */
         if (hissAmt != 0.0f) { xL += noise() * hissAmt; xR += noise() * hissAmt; }
         if (brightOn) { xL = bq_run(&fBrL, xL); xR = bq_run(&fBrR, xR); }
         if (eqOn) {                 /* the MASTER EQ, the last on the whole sound (after every effect, before the limit):
@@ -3606,6 +3607,10 @@ static void post_chain(int32_t *lr, int n, float gain, int lowAny, uint32_t busO
     if (lvl > 1.0f) lvl = 1.0f;
     st.level += (lvl - st.level) * (lvl > st.level ? 0.5f : 0.1f);
     if (st.level < 1e-6f) st.level = 0.0f;
+    lvl = fm_sqrtf(dq_sum / (float)n) * 4.0f;   /* (the same without the hiss: HISS never lets the save find silence) */
+    if (lvl > 1.0f) lvl = 1.0f;
+    st.music += (lvl - st.music) * (lvl > st.music ? 0.5f : 0.1f);
+    if (st.music < 1e-6f) st.music = 0.0f;
     lvl = fm_sqrtf(lsum / (float)n) * 5.0f;
     if (lvl > 1.0f) lvl = 1.0f;
     st.lead += (lvl - st.lead) * (lvl > st.lead ? 0.5f : 0.08f);

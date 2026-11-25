@@ -313,6 +313,8 @@ typedef struct {
     uint16_t arp_count;                 /* notes it has played since this set began */
     uint8_t arp_first[16];              /* and the first sixteen of them */
     float level, lead;                  /* how loud the output and the lead are now, 0..1 */
+    float music;                        /* how loud the output is without the tape's HISS, 0..1 (the save waits for
+                                         * it to be silent: 0.22) */
     float bend;                         /* the lead's bend now, semitones */
     uint32_t notes;                     /* keys pressed since the start: a change is a new note */
     uint32_t hits[DAB_NDRUM];           /* each drum's hits since the start */

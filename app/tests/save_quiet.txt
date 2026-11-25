@@ -87,3 +87,19 @@ wait 6000
 expect dirty 0
 # the lock alone changed, so the sequencer's part alone is written
 expect store_writes 5
+# ---- the tape's HISS never stops, and never keeps a save from finding silence: silence is measured without it (0.22;
+# the first 0.22 build counted it and never saved with HISS on: a 0.21 song with CASSETTE MIJWIZ's HISS 25 would have
+# kept nothing changed after)
+tap FX
+wait 30
+tap FX
+tap FX
+wait 30
+expect row 2
+turn K3 13
+wait 30
+expect par29 26
+expect dirty 1
+wait 10000
+expect why_unsaved 0
+expect dirty 0
