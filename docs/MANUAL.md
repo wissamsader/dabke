@@ -159,7 +159,7 @@ Row 1 is the picked track's strip as the MIDImix has it: its top knob, middle kn
 | REVERB SEND | How much of the track goes into the reverb, 0 to 100. |
 | BASS | LESS or MORE of the lows under 150 Hz, FLAT in the middle. |
 | SOUND | The track's sound, as SELECT on the home page turns it. |
-| HOW OFTEN, VIB DEPTH, GLIDE, ORNAMENT | The same knobs as on the SOUND and ORNAMENTS pages, for the sound those pages show (see The SOUND page). |
+| Row 3 | HOW OFTEN, VIB DEPTH, GLIDE and ORNAMENT: the same knobs as on the SOUND and ORNAMENTS pages, for the sound those pages show (see The SOUND page). |
 
 In step mode HOME shows the step view instead, with the row shown on K1 to K4 (see Steps and locks).
 
