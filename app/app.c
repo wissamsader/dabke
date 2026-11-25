@@ -340,7 +340,8 @@ typedef struct {
 typedef struct {                         /* (no drone: the drone is the player's part, kept when the sound changes) */
     const char *name;
     uint8_t model, orn, dbl, pick;
-    pv_t par[7];
+    pv_t par[7];                         /* (the song's effects here, a reverb, a PA, the tape, are kept as the sound was
+                                          * made, no longer given: since 0.22 a track's sound never changes them) */
 } preset_t;
 static const preset_t PRESETS[] = {
     {"MIJWIZ", MD_MIJWIZ, ORN_AUTO, 0, 0, {{P_ORNAMOUNT, 45}, {P_REVERB, 25}}},
@@ -386,9 +387,10 @@ static const preset_t PRESETS[] = {
                                           * them, read and given the sounds the tracks start with) */
 #define KEPT_MAGIC1 0x314B4B44u
 #define NSK 30                           /* the knobs a sound changes (27 now), packed in P_* order */
-typedef struct {                         /* a MY SOUND: a track's sound and the effects as they were (picked on a track: the
-                                          * sound alone; with ALL: track 1's sound and the effects). The tracks' sounds
-                                          * then are kept too, as 0.16 kept and gave them back: no longer given back */
+typedef struct {                         /* a MY SOUND: a track's sound and the effects as they were (picked on any track:
+                                          * the sound alone; the effects kept in it are no longer given back, 0.22; up to
+                                          * 0.21 track 1's brought them, as ALL's had). The tracks' sounds then are kept
+                                          * too, as 0.16 kept and gave them back: no longer given back */
     int16_t par[NSK];                    /* those knobs, in their own steps */
     uint8_t ch[NSCH];                    /* its choices */
     uint8_t tsnd[DAB_NTRK][2];           /* each track's sound */
@@ -1314,10 +1316,10 @@ static int step_lane(int t, int st, int lane)   /* a drum sound's step, one lane
 /* A whole sound (sound_t: a MY SOUND, a ready sound, 0.16's one sound) is a track's sound and the effects. Each track
  * has its own sound (set.ts): the SOUND and ORNAMENTS pages show the picked track's when it has a lead sound, else
  * (and with ALL) track 1's (ed_trk), in set.par and set.ch as every page reads them, and what they change goes to that
- * track alone. A ready sound or a MY SOUND picked with ALL is track 1's and the effects with it; picked on a track,
- * that track's alone. Either way every other track keeps its own sound */
+ * track alone. A ready sound or a MY SOUND picked is that track's sound alone, on track 1 too: the song's effects
+ * never change with it (0.22, as RAGA MEOW's instrument; up to 0.21 track 1's brought its delay, reverb, drive, chorus,
+ * PA, brightness and tape with it, as ALL's had). Every other track keeps its own sound */
 #define SOUND_KNOB(i) (IS_KNOB(i) && !PAR[i].keep)
-#define DRONE_OWN(i) ((i) == C_DRONE || (i) == C_DRONESND || (i) == C_DRONEOCT)   /* the player's, not the sound's */
 static int16_t *sk_slot(sound_t *o, int id)  /* where knob id is in a sound (0: not one of its knobs) */
 {
     int i, k = 0;
@@ -1374,36 +1376,18 @@ static void view_load(void)              /* the pages: ed_trk's sound (a lead tr
         set.ch[TSC[k]] = o->ch[k];
 }
 
-/* a whole sound given to track t: its own sound that sound's (and its instrument on it), named; effects: the effects
- * kept with it too (ALL: the whole instrument's; the drone is the player's). Every other track keeps its own sound */
-static void sound_put(int t, sound_t *o, int name, int effects)
+/* a whole sound given to track t: its own sound that sound's (and its instrument on it), named. The effects kept in it
+ * stay where they are, as every other track's sound does */
+static void sound_put(int t, sound_t *o, int name)
 {
-    int i, k = 0;
     ts_from(&set.ts[t], o);
     set.ts[t].name = (uint8_t)name;
     ts_send(t);
     if (set.tsnd[t][0] != SF_LEAD || set.tsnd[t][1] != set.ts[t].ch[0])
         tsnd_put(t, SF_LEAD, set.ts[t].ch[0]);
-    else                                 /* (a track's sound changed: what it played stops, as for any other sound; track
-                                          * 1's with its effects too) */
+    else                                 /* (a track's sound changed: what it played stops, as for any other sound) */
         dabke_track_sound(t, SF_LEAD, set.ts[t].ch[0] + DAB_AGAIN);
     view_load();
-    if (effects) {                       /* (the other tracks' sounds stay as they are: a sound is one track's) */
-        for (i = 0; i < NSCH; i++)       /* (DELAY SYNC) */
-            if (sc_of(i) < 0 && !DRONE_OWN(i)) {
-                int v = clamp(o->ch[i], 0, CHOICE[i].n - 1);
-                if (set.ch[i] != v) {
-                    set.ch[i] = (uint8_t)v;
-                    choice_send(i);
-                }
-            }
-        for (i = 0; i < P_COUNT && k < NSK; i++)
-            if (SOUND_KNOB(i)) {
-                if (i != P_DRONE && DAB_SK(i) < 0)   /* (the drone's volume stays; its place in a sound is kept, unused) */
-                    set_par(i, o->par[k]);
-                k++;
-            }
-    }
     changed();
 }
 
@@ -1433,11 +1417,11 @@ static void preset_make(int k, sound_t *o)   /* ready sound k, whole */
             *q = p->par[i].v;
     }
 }
-static void preset_give(int k)           /* ready sound k, ALL: track 1's and the effects */
+static void preset_give(int k)           /* ready sound k on track 1 (the first start) */
 {
     static sound_t o;
     preset_make(k, &o);
-    sound_put(PART_LEAD, &o, k, 1);
+    sound_put(PART_LEAD, &o, k);
 }
 
 static int sound_count(void)             /* the sounds a lead sound can be: the ready ones, then the MY SOUNDs kept */
@@ -1462,19 +1446,19 @@ static int lead_pos(int t)               /* track t's own sound among them (no n
             return i;
     return 0;
 }
-static void lead_give(int t, int pos, int effects)   /* the pos-th of them on track t (effects: with ALL) */
+static void lead_give(int t, int pos)    /* the pos-th of them on track t */
 {
     static sound_t o;
     int i;
     if (pos < NPRESET) {
         preset_make(pos, &o);
-        sound_put(t, &o, pos, effects);
+        sound_put(t, &o, pos);
         return;
     }
     pos -= NPRESET;
     for (i = 0; i < NKEPT; i++)
         if (kept.used[i] && pos-- == 0) {
-            sound_put(t, &kept.s[i], SOUND_OWN + i, effects);
+            sound_put(t, &kept.s[i], SOUND_OWN + i);
             return;
         }
 }
@@ -1497,12 +1481,6 @@ static void lead_name(int t, char *b)    /* its name: a ready sound's, "MY SOUND
         text_cat(b, MODEL_NAME[set.ts[t & 7].ch[0] % MD_COUNT]);
 }
 static void sound_name(char *b) { lead_name(PART_LEAD, b); }   /* (track 1's: what the home page names with ALL) */
-
-static void sound_step(int n)            /* SELECT on the home page, ALL picked: the next sound, track 1's and the effects */
-{
-    int len = sound_count();
-    lead_give(PART_LEAD, ((lead_pos(PART_LEAD) + n) % len + len) % len, 1);
-}
 
 /* 0.16's one sound (DKB7, DKB6 read: in set.par and set.ch, its name in set.sound) to each track, so that every track
  * sounds as it did: a lead instrument beside the sound's own its instrument's own tone, with the sound's vibrato,
@@ -2135,9 +2113,9 @@ static void trk_sound_step(int t, int n) /* track t's sound, n on in its order *
     int tot = sel_total(), f = set.tsnd[t][0], pos = sel_pos(t, f, f == SF_LEAD ? lead_pos(t) : set.tsnd[t][1]), x;
     pos = ((pos + n) % tot + tot) % tot;
     sel_at(t, pos, &f, &x);
-    if (f == SF_LEAD) {                      /* (a lead sound: that sound on it; track 1's, the keys' as ALL had them
-                                              * before the one logic: its effects with it, as ALL's were) */
-        lead_give(t, x, t == PART_LEAD);
+    if (f == SF_LEAD) {                      /* (a lead sound: that sound on it, on track 1 as on any other: the effects
+                                              * as they are, 0.22) */
+        lead_give(t, x);
         return;
     }
     if (f == t)

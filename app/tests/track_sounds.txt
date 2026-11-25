@@ -2,9 +2,10 @@
 # of everything a sound is: its instrument and its knobs, vibrato, ornaments, glide, TRANSPOSE, TUNE, PLAY, DOUBLE,
 # PICKING, TRILL TO and BEND RANGE. The effects (the EFFECTS page), the tempo, the maqam, the rhythm, the mixer and KEY
 # TOUCH stay the whole instrument's. The SOUND and ORNAMENTS pages edit the picked track's sound (a track without a lead
-# sound picked: track 1's). A ready sound or a MY SOUND picked (SELECT on the home page) is that track's sound alone; on
-# track 1, which plays the keys as ALL did before the one logic, the effects come with it (the whole setup, as ALL had
-# it). A track is picked with SEL held and its white key (the first start: track 1). From the repository's root:
+# sound picked: track 1's). A ready sound or a MY SOUND picked (SELECT on the home page, BANK, the home page's SOUND)
+# is that track's sound alone, on track 1 too: the effects stay as they are (0.22, as RAGA MEOW's instrument; up to
+# 0.21 track 1's brought its effects, as ALL's had). A track is picked with SEL held and its white key (the first
+# start: track 1). From the repository's root:
 #   app/build/host/dabke_host app/tests/track_sounds.txt OUTDIR
 # (sndpT_ID: knob ID of track T+1's own sound, in its steps; sndcT_C: its choice C; sndnT: its name, 0.. a ready sound,
 # 100 + i MY SOUND i+1, -1 its instrument's; sndxT: 1 its instrument's own tone; esndT_ID: knob or choice ID of it as
@@ -133,20 +134,43 @@ expect par6 70
 tap HOME
 wait 30
 
-# ---- on track 1 a ready sound is track 1's and the effects with it (as ALL's was): WEDDING ZURNA (the PA, the drive,
-# its reverb)
+# ---- on track 1 too a ready sound is track 1's alone, the effects as they are (0.22; up to 0.21 they came with it, as
+# ALL's): WEDDING ZURNA (made with the PA at 60, the drive at 25, a reverb of 40) leaves the PA, the drive, the reverb
+# and the delay where they were. So do BANK RIGHT (CASSETTE MIJWIZ, made with the tape) and the home page's SOUND
+# (row 2, K4) turned back
 expect par25 0
+expect row 0
 turn SELECT 19
 wait 30
 expect sound 19
 expect sndn0 19
 expect tidx0 1
-expect par25 60
-expect par23 25
-expect par22 40
-expect epar25 600
-# on another track it sets that track's sound alone: SHAABI LEAD (its echo 30, chorus 30, PA 25) on track 4 (the bass's
-# five first): the effects stay as WEDDING ZURNA set them
+expect par25 0
+expect par23 0
+expect par22 25
+expect par19 0
+expect epar25 0
+expect epar22 250
+midi 90 1A 7F
+midi 80 1A 00
+wait 300
+expect sound 20
+expect par27 0
+expect par28 0
+expect par29 0
+tap HOME
+wait 30
+turn K4 -1
+wait 30
+expect sound 19
+expect par27 0
+expect par25 0
+tap HOME
+tap HOME
+wait 30
+expect row 0
+# on another track it sets that track's sound alone: SHAABI LEAD (made with an echo of 30, a chorus of 30, the PA at
+# 25) on track 4 (the bass's five first): the effects as they were
 press SEL
 tapkey w3
 release SEL
@@ -158,11 +182,10 @@ wait 30
 expect tfam3 0
 expect sndn3 21
 said TRACK 4: SHAABI LEAD
-expect par25 60
-# (the DELAY as WEDDING ZURNA left it: its start, 30 since 0.22)
-expect par19 30
+expect par25 0
+expect par19 0
 expect par24 0
-expect par22 40
+expect par22 25
 turn SELECT -26
 wait 30
 expect tfam3 3
@@ -327,13 +350,13 @@ expect sound -1
 expect tidx0 2
 expect sndp0_6 65
 expect tfam6 6
-expect par25 60
+expect par25 0
 
-# ---- MY SOUND 1 picked on track 1: track 1's sound and the effects kept with it (as ALL's was); every other track keeps
+# ---- MY SOUND 1 picked on track 1: track 1's sound alone, the effects as they are (0.22); every other track keeps
 # its own sound as it is, settings and name: SAZ on track 2 (its tone turned down), BUZUQ TREMOLO on track 3 (its
 # vibrato deeper, kept as MY SOUND 1), MY SOUND 1 on track 5, the claps on track 7. First another ready sound on track
-# 1, CASSETTE MIJWIZ (its wobble, tape age and hiss, no PA), so the effects that come back are MY SOUND 1's (WEDDING
-# ZURNA's PA 60, drive 25 and reverb 40 when it was kept)
+# 1, CASSETTE MIJWIZ (made with the wobble, tape age and hiss): the tape stays off. Then the WOBBLE turned up by hand
+# (EFFECTS, row 3, K1): MY SOUND 1, kept with none, leaves it there
 press SEL
 tapkey w0
 release SEL
@@ -342,12 +365,23 @@ expect track 1
 turn SELECT 17
 wait 30
 expect sound 20
-expect par27 40
-expect par28 50
-expect par29 25
+expect par27 0
+expect par28 0
+expect par29 0
 expect par25 0
 expect par23 0
 expect par22 25
+tap FX
+tap FX
+tap FX
+wait 30
+expect page 2
+expect row 2
+turn K1 4
+wait 30
+expect par27 8
+tap HOME
+wait 30
 turn SELECT 2
 wait 30
 expect sound 100
@@ -356,13 +390,13 @@ expect tidx0 8
 expect sndp0_15 26
 expect esnd0_92 1000
 expect esnd0_15 260
-expect par25 60
-expect par23 25
-expect par22 40
-expect par27 0
+expect par25 0
+expect par23 0
+expect par22 25
+expect par27 8
 expect par28 0
 expect par29 0
-expect epar25 600
+expect epar25 0
 expect tfam1 0
 expect tidx1 8
 expect sndn1 14
