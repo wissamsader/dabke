@@ -1065,7 +1065,12 @@ static void move_voice(voice_t *v, int note, int vel)   /* legato: a sounding no
     v->n = (uint8_t)note; v->base = nb; v->gl = KT[v->tr].glideK < 1.0f ? now - nb : 0.0f;
     if (v->gl > 24.0f || v->gl < -24.0f) v->gl = 0.0f;
     v->vel += (vel_gain(vel) * (v->oct ? 0.6f : 1.0f) - v->vel) * 0.5f;
-    orn_start(v); v->age = 0.0f;
+    if (!ornOff) orn_start(v);
+    else {                              /* (a fast arpeggio's note: no ornament, as a note it starts gets none) */
+        v->up = step_up(note, v->tr); v->down = step_down(note, v->tr);
+        v->orn = ORN_OFF; v->shake = -1.0f; v->ot = 0.0f;
+    }
+    v->age = 0.0f;
     if (v->oct == 0) lastPitch = nb;
 }
 static void retarget(int note, int vel)             /* one note at a time, legato: the sounding note moves to another key */
@@ -1549,9 +1554,42 @@ static void arp_latch_off(void)         /* LATCH let go: only the keys held stay
     int i;
     for (i = nArp - 1; i >= 0; i--) if (!arpDown[arpNotes[i]] && !BGET(heldArp, arpNotes[i])) arp_remove(arpNotes[i]);
 }
-static void arp_sound(int note, int vel, uint32_t off)
+static void arp_sound(int note, int vel, uint32_t off, int one)   /* one: its track plays one note at a time (LEGATO,
+                                         * MONO): this note ends the last, and on LEGATO the note sounding moves to it,
+                                         * no new attack (0.22, as its loop and its keys play, and as RAGA MEOW's
+                                         * arpeggio; up to 0.21 the arpeggio played every sound POLY) */
 {
+    int t = arpTr & 7;
     if (note < 0 || note > 127) return;
+    if (one && nArpSnd > 0) {
+        int i, k, keep = -1, kn = -1;
+        if ((int)tpar[t][S_PLAY] == 0 && !MD_PLUCKED(TT[t].model))   /* LEGATO: the newest still sounding moves */
+            for (k = nArpSnd - 1; k >= 0 && keep < 0; k--)
+                for (i = 0; i < NV; i++)
+                    if (vo[i].used && vo[i].m == R_KEY && vo[i].tr == t && vo[i].n == arpSnd[k].note && vo[i].gate) {
+                        keep = k;
+                        kn = arpSnd[k].note;
+                        break;
+                    }
+        for (k = 0; k < nArpSnd; k++) {  /* the others end */
+            if (k == keep) continue;
+            if (arpSnd[k].note != kn) release(R_KEY, arpTr, arpSnd[k].note);
+            trk_key(arpTr, arpSnd[k].note, 0);
+        }
+        nArpSnd = 0;
+        if (keep >= 0) {
+            for (i = 0; i < NV; i++)    /* (a DOUBLE's octave with it) */
+                if (vo[i].used && vo[i].m == R_KEY && vo[i].tr == t && vo[i].n == kn && vo[i].gate)
+                    move_voice(&vo[i], note, vel);
+            trk_key(arpTr, kn, 0);
+            trk_key(arpTr, note, vel);
+            arpSnd[0].note = (uint8_t)note; arpSnd[0].off = off; nArpSnd = 1;
+            st.arp_plays++; st.arp_last = (uint8_t)note;
+            if (st.arp_count < 16u) st.arp_first[st.arp_count] = (uint8_t)note;
+            if (st.arp_count < 65535u) st.arp_count++;
+            return;
+        }
+    }
     if (nArpSnd >= 16) {                /* (full: the oldest ends) */
         int i;
         release(R_KEY, arpTr, arpSnd[0].note); trk_key(arpTr, arpSnd[0].note, 0);
@@ -1584,9 +1622,9 @@ static void arp_tick(uint32_t k, uint32_t t, int r)   /* tick k, due at t */
     pos = arpPlayed++ / (uint32_t)rep;
     off = g >= 0.999f ? t + tick + tick / 8u : t + (uint32_t)(g * (float)tick);   /* (at the top: into the next note) */
     ornOff = SR * 60.0f / (par[P_TEMPO] < 20.0f ? 20.0f : par[P_TEMPO]) / (float)r < KT[arpTr & 7].ornD * 4.0f;
-    if (mode == ARP_CHORD) {            /* all the set together, an octave a time */
+    if (mode == ARP_CHORD) {            /* all the set together, an octave a time (whatever PLAY says: a chord) */
         int oc = lo + (int)(pos % (uint32_t)noct);
-        for (i = 0; i < n; i++) arp_sound(arpNotes[i] + 12 * oc, vel, off);
+        for (i = 0; i < n; i++) arp_sound(arpNotes[i] + 12 * oc, vel, off, 0);
         ornOff = 0;
         return;
     }
@@ -1607,7 +1645,8 @@ static void arp_tick(uint32_t k, uint32_t t, int r)   /* tick k, due at t */
     }
     default: i = (int)(pos % (uint32_t)L); break;   /* UP; AS PLAYED (its own list, below) */
     }
-    arp_sound((mode == ARP_PLAYED ? arpOrd[i % n] : arpNotes[i % n]) + 12 * (lo + i / n), vel, off);
+    arp_sound((mode == ARP_PLAYED ? arpOrd[i % n] : arpNotes[i % n]) + 12 * (lo + i / n), vel, off,
+              (int)tpar[arpTr & 7][S_PLAY] != 2);
     ornOff = 0;
 }
 static void arp_step(uint32_t clock, int n)   /* each block of n: notes ending, the ticks due */

@@ -1,0 +1,74 @@
+# The arpeggio plays as its track's PLAY says, as its loop and its keys do (0.22, as RAGA MEOW's arpeggio; up to 0.21
+# it played every sound POLY). Its notes at their longest (ARP LENGTH at its top, TIED: each runs into the next), at
+# quarters, C and E held on track 1: POLY as before, each note its own, the last ringing into the new one (two at once
+# there); MONO one at a time, the new note ends the last (a new attack each); LEGATO one at a time, the note sounding
+# moves to the new one (no new attack: one note started, the arpeggio going on). From the repository's root:
+#   app/build/host/dabke_host app/tests/arp_play.txt OUTDIR
+# (voices0: track 1's notes sounding; starts0: its notes started since the start; ch1 PLAY, ch28 ARP SPEED; par46 ARP
+# LENGTH)
+wait 900
+expect track 1
+expect ch1 0
+# ARP held: K4 its LENGTH to the top, K2 its SPEED to quarters; let go (it was used: still off); tapped: on
+press ARP
+wait 20
+turn K4 10
+turn K2 -3
+wait 30
+release ARP
+wait 30
+tap ARP
+wait 30
+expect arp 1
+expect ch28 0
+expect par46 20
+tap ENV
+wait 30
+expect row 0
+# ---- POLY: two at once where a note rings into the next
+turn K2 2
+wait 30
+expect ch1 2
+key 7 down
+key 11 down
+wait 460
+expect voices0 2
+expect starts0 2
+key 7 up
+key 11 up
+wait 1000
+# ---- MONO: one at a time, each a new note
+turn K2 -1
+wait 30
+expect ch1 1
+key 7 down
+key 11 down
+wait 400
+expect voices0 1
+expect starts0 4
+wait 420
+expect voices0 1
+expect starts0 5
+key 7 up
+key 11 up
+wait 1000
+# ---- LEGATO: one at a time, moved: the one note started goes on through the arpeggio's notes
+turn K2 -1
+wait 30
+expect ch1 0
+key 7 down
+key 11 down
+wait 400
+expect voices0 1
+expect starts0 6
+wait 500
+expect voices0 1
+expect starts0 6
+expect arp_count 3
+expect arp_first0 60
+expect arp_first1 64
+expect arp_first2 60
+key 7 up
+key 11 up
+wait 1000
+expect voices0 0
