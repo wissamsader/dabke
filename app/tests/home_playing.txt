@@ -1,0 +1,79 @@
+# The home page's third row, PLAYING (HOW OFTEN, VIB DEPTH, GLIDE, ORNAMENT), is the picked track's lead sound's. With
+# a track picked that has no lead sound (the drone's, the left hand's, the bass line's, a drum sound's) it does nothing
+# there, as RAGA MEOW's knobs that do nothing: "--" on its four glasses, turned it says why and changes nothing, a step
+# held locks nothing (0.22; up to 0.21 it changed track 1's sound, unseen). A lead sound on that track: its own again.
+# The SOUND and ORNAMENTS pages are as they were (they show track 1's there, and say so). From the repository's root:
+#   app/build/host/dabke_host app/tests/home_playing.txt OUTDIR
+# (sndpT_ID: knob ID of track T+1's own sound, in its steps; sndcT_C: its choice C. Knobs: 13 GLIDE, 15 VIB DEPTH,
+# 18 HOW OFTEN; choice 3 ORNAMENT)
+wait 900
+listen
+expect track 1
+expect sndp0_18 45
+expect sndp0_15 20
+expect sndp0_13 6
+expect sndc0_3 6
+tap HOME
+tap HOME
+wait 30
+expect row 2
+said HOME: PLAYING
+# ---- track 1, a lead sound: the row is its own
+turn K3 2
+wait 30
+expect sndp0_13 >6
+# ---- track 3, the left hand's sound: "--", said why, nothing changes (track 1's as it was, its own too)
+press SEL
+tapkey w2
+release SEL
+wait 30
+expect track 3
+expect tfam2 2
+expect row 2
+where
+said PLAYING: HOW OFTEN --, VIB DEPTH --, GLIDE --, ORNAMENT --.
+turn K1 3
+wait 30
+said ONLY ON A LEAD SOUND
+expect sndp0_18 45
+expect sndp2_18 45
+turn K2 3
+wait 30
+expect sndp0_15 20
+turn K3 -2
+wait 30
+expect sndp0_13 >6
+turn K4 1
+wait 30
+expect sndc0_3 6
+expect epar18 450
+# ---- a step held (step mode: EDIT held a second) locks nothing there either
+press EDIT
+wait 1100
+release EDIT
+wait 30
+expect seq 1
+key w0 down
+wait 30
+turn K1 2
+wait 30
+said ONLY ON A LEAD SOUND
+key w0 up
+wait 60
+expect locks 0
+press EDIT
+wait 1100
+release EDIT
+wait 30
+expect seq 0
+# ---- a lead sound on track 3 (SELECT, past the left hand's: MIJWIZ): the row is its own again, track 1's as it was
+turn SELECT 7
+wait 30
+expect tfam2 0
+expect sndn2 0
+where
+unsaid HOW OFTEN --
+turn K1 -2
+wait 30
+expect sndp2_18 <45
+expect sndp0_18 45

@@ -2951,9 +2951,19 @@ static void length_turn(int n)               /* LENGTH: the picked track a bar l
     trk_words(t, b);
 }
 
+static int home_na(int id)               /* the home page's third row (a lead sound's ornaments, vibrato and glide) with a
+                                          * track picked that has no lead sound: it does nothing there (0.22; up to 0.21
+                                          * it changed track 1's sound unseen, as the SOUND and ORNAMENTS pages still
+                                          * show and say it) */
+{
+    return ui.page == PG_HOME && set.tsnd[picked()][0] != SF_LEAD &&
+           (id == P_ORNAMOUNT || id == P_VIBDEPTH || id == P_GLIDE || id == CH(C_ORN));
+}
 static const char *knob_na(int id)       /* a knob that does nothing where it is now: why (RAGA MEOW's "--" with a reason,
                                           * said when it is turned); 0: it does something */
 {
+    if (home_na(id))
+        return "ONLY ON A LEAD SOUND";
     switch (id) {
     case P_ECHOTIME: return set.ch[C_DSYNC] ? "DELAY SYNC SETS THE TIME" : 0;
     case K_TCHORUS: return trk_drum(picked()) ? "ONLY ON A NOTE SOUND" : 0;
@@ -2990,7 +3000,10 @@ static void knob_step(int id, int n)
         say(b);
         return;
     }
-    if (knob_na(id) && !step_held()) {      /* (it does nothing here: said why, nothing changes) */
+    if (knob_na(id) && (!step_held() || home_na(id))) {   /* (it does nothing here: said why, nothing changes; the home
+                                              * page's third row, a step held: no lock either, it would hold track 1's) */
+        if (step_held())
+            ui.wused |= (uint16_t)(1u << ui.skey);
         say(knob_na(id));
         return;
     }
@@ -6050,8 +6063,8 @@ static void knob_value(int id, char *b, const char **label)   /* a knob's name a
     b[0] = 0;
     kv_locked = 0;
     if (knob_na(id)) {
-        *label = id == P_ECHOTIME ? PAR[id].word : id == K_BDSEND ? "DELAY SEND" : id == K_BRSEND ? "REVERB SEND"
-                 : id == K_TCHORUS ? "CHORUS" : "SPACE";
+        *label = id == K_BDSEND ? "DELAY SEND" : id == K_BRSEND ? "REVERB SEND" : id == K_TCHORUS ? "CHORUS"
+                 : id == K_BSPACE ? "SPACE" : id >= K_CH && id < K_CH + NCH ? CHOICE[id - K_CH].label : PAR[id].word;
         text_cat(b, "--");
         return;
     }
