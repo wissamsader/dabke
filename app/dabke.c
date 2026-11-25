@@ -1738,13 +1738,41 @@ static int arp_keys(int m)              /* a manual whose keys go into the arpeg
 }
 static void hold_off(int m, int n);
 static void held_count(void);
-static void hold_move(int m, int from, int to);
+static void hold_move(int m, int from, int to, int slide);
 #define FZTRK(m) ((m) < DAB_NTRK ? (m) : PART_LEAD)   /* the track a manual's notes freeze with (the left keys as set:
                                          * track 1's, whose split they are) */
 static int frz_one(int m)               /* a frozen track that plays one note at a time: a lead sound's, not POLY, no
                                          * arpeggio (a key moves its held note) */
 {
     return m < DAB_NTRK && (frz >> m & 1u) && tfam[m] == SF_LEAD && (int)tpar[m][S_PLAY] != 2 && !arp_keys(m);
+}
+static int frz_legato(int m)            /* (and LEGATO, not plucked: its held note slides with the GLIDE, as its keys do) */
+{
+    return frz_one(m) && (int)tpar[m][S_PLAY] == 0 && !MD_PLUCKED(TT[m].model);
+}
+static uint8_t kOrd[DAB_NTRK][8], nOrd[DAB_NTRK];   /* each track's keys down, in the order pressed (the newest last):
+                                         * where a frozen one-note track goes back to when its newest key is let go */
+static void ord_put(int m, int note)
+{
+    int i;
+    if (m < 0 || m >= DAB_NTRK) return;
+    for (i = 0; i < nOrd[m]; i++)
+        if (kOrd[m][i] == note) { for (; i < nOrd[m] - 1; i++) kOrd[m][i] = kOrd[m][i + 1]; nOrd[m]--; break; }
+    if (nOrd[m] >= 8) { for (i = 0; i < 7; i++) kOrd[m][i] = kOrd[m][i + 1]; nOrd[m] = 7; }
+    kOrd[m][nOrd[m]++] = (uint8_t)note;
+}
+static int ord_drop(int m, int note)    /* (1: it was the newest) */
+{
+    int i;
+    if (m < 0 || m >= DAB_NTRK) return 0;
+    for (i = 0; i < nOrd[m]; i++)
+        if (kOrd[m][i] == note) {
+            int top = i == nOrd[m] - 1;
+            for (; i < nOrd[m] - 1; i++) kOrd[m][i] = kOrd[m][i + 1];
+            nOrd[m]--;
+            return top;
+        }
+    return 0;
 }
 static int held_first(int m)            /* the lowest note held on a manual, -1: none */
 {
@@ -1757,6 +1785,7 @@ static void key_on(int manual, int note, int vel, int norec)   /* (norec: heard,
     int t;
     if (note < 0 || note > 127 || manual < 0 || manual >= NMAN) return;
     t = KTRK(manual);
+    if (!norec) ord_put(manual, note);
     if (BGET(heldK[manual], note) && !norec && !BGET(keyDn[manual], note)) {   /* HOLD: a held note's key pressed again
                                          * lets it go, now, as letting go of its key would; that press plays nothing
                                          * (and is not recorded), its letting go does nothing */
@@ -1767,12 +1796,14 @@ static void key_on(int manual, int note, int vel, int norec)   /* (norec: heard,
     }
     BCLR(eatK[manual], note);
     if (!norec && frz_one(manual)) {    /* REC: a frozen track of one note at a time: its held note moves to this key's
-                                         * (no new attack, held still); the key's letting go does nothing */
+                                         * (no new attack, held still; LEGATO: a slide with its GLIDE, 0.22, as RAGA
+                                         * MEOW's frozen note slides); the key's letting go does nothing, or, on LEGATO,
+                                         * with another of its keys still down, takes it back there (key_off) */
         int from = held_first(manual);
         if (from >= 0) {
             st.notes++;
             trk_first_key();
-            hold_move(manual, from, note);
+            hold_move(manual, from, note, frz_legato(manual));
             BSET(eatK[manual], note);
             held_count();
             st.hold_ver++;
@@ -1844,11 +1875,23 @@ static void orn_settle(int t, int note)  /* a held note: its ornament was at its
 }
 static void key_off(int manual, int note)
 {
-    int t;
+    int t, top;
     if (note < 0 || note > 127 || manual < 0 || manual >= NMAN) return;
     t = KTRK(manual);
-    if (BGET(eatK[manual], note)) {     /* (its press let a held note go: nothing more) */
+    top = ord_drop(manual, note);
+    if (BGET(eatK[manual], note)) {     /* (its press let a held note go, or moved it there: nothing more. A frozen
+                                         * one-note LEGATO track whose held note this key moved, its newest key, with
+                                         * another of its keys still down: back to that key's note, sliding, as RAGA
+                                         * MEOW's frozen note goes back to the key under it) */
         BCLR(eatK[manual], note);
+        if (top && nOrd[manual] > 0 && BGET(heldK[manual], note) && frz_legato(manual)) {
+            int back = kOrd[manual][nOrd[manual] - 1];
+            hold_move(manual, note, back, 1);
+            BSET(eatK[manual], back);   /* (as if it moved it there: its letting go does nothing more) */
+            BCLR(keyDn[manual], back);
+            held_count();
+            st.hold_ver++;
+        }
         return;
     }
     BCLR(keyDn[manual], note);
@@ -2656,8 +2699,10 @@ static void hold_off(int m, int n)      /* a held note's own key pressed again: 
     held_count();
     st.hold_ver++;
 }
-static void hold_move(int m, int from, int to)   /* a held note to another note (the octave changed under its key): its
-                                         * voice moves there as it sounds (no new attack), held still, its key's note */
+static void hold_move(int m, int from, int to, int slide)   /* a held note to another note (the octave changed under its
+                                         * key, a key of a frozen one-note track): its voice moves there as it sounds (no
+                                         * new attack), held still, its key's note. slide: from where it sounds, with
+                                         * its track's GLIDE (LEGATO, as move_voice), else at once */
 {
     int t, i;
     if (m < 0 || m >= DAB_NTRK || from < 0 || from > 127 || to < 0 || to > 127 || from == to) return;
@@ -2686,8 +2731,15 @@ static void hold_move(int m, int from, int to)   /* a held note to another note 
     }
     for (i = 0; i < NV; i++)            /* its voices (a DOUBLE's octave too): the new note, from the next block */
         if (vo[i].used && vo[i].m == R_KEY && vo[i].tr == t && vo[i].n == from && vo[i].gate) {
-            vo[i].n = (uint8_t)to;
-            vo[i].up = step_up(to, t); vo[i].down = step_down(to, t);
+            voice_t *v = &vo[i];
+            if (slide) {                /* (its ornament and its loudness as they are: a held note's) */
+                float now = v->base + v->gl, nb = key_pitch(to) + (float)v->oct + KT[t].tune;
+                v->base = nb; v->gl = KT[t].glideK < 1.0f ? now - nb : 0.0f;
+                if (v->gl > 24.0f || v->gl < -24.0f) v->gl = 0.0f;
+                if (v->oct == 0) lastPitch = nb;
+            }
+            v->n = (uint8_t)to;
+            v->up = step_up(to, t); v->down = step_down(to, t);
         }
     if (tfam[t] == SF_LEAD && t == leadTr && !lead_poly()) {   /* (one note at a time: the note under its key) */
         for (i = 0; i < nms; i++) if (mstack[i] == from) mstack[i] = (uint8_t)to;
@@ -2936,7 +2988,7 @@ static void take(const msg_t *m)
     case M_MEQ: eqT[0] = m->f; eqT[1] = m->g; eqT[2] = m->h; break;
     case M_MASTER: mgT = clampf(m->f, 0.0f, 1.0f); break;
     case M_HOLDMV:
-        hold_move(m->a >> 8 & 15, m->a & 255, m->b);
+        hold_move(m->a >> 8 & 15, m->a & 255, m->b, 0);
         if (m->f != 0.0f) st.hold_ver++;   /* (the last of them: the panel's lights may look again) */
         break;
     default:                                                /* panic */
@@ -2945,6 +2997,7 @@ static void take(const msg_t *m)
         for (i = 0; i < DAB_NTRK; i++) for (k = 0; k < DAB_LOOP_N / 8; k++) kt[i].snd[k] = 0;
         drnV[0] = drnV[1] = -1;
         for (k = 0; k < NMAN; k++) for (i = 0; i < 4; i++) { keyDn[k][i] = 0; heldK[k][i] = 0; eatK[k][i] = 0; }
+        for (i = 0; i < DAB_NTRK; i++) nOrd[i] = 0;
         for (i = 0; i < 4; i++) heldArp[i] = 0;
         if (recWait) { recTrk = -1; recWait = 0; }
         st.held_n = 0; st.hold = 0; frz = 0; st.frozen = 0; st.holds = 0;
@@ -3967,6 +4020,7 @@ void dabke_init(void)
         for (m = 0; m < NMAN; m++) { keyDn[m][i] = 0; heldK[m][i] = 0; eatK[m][i] = 0; }
         heldArp[i] = 0;
     }
+    for (i = 0; i < DAB_NTRK; i++) nOrd[i] = 0;
     st.hold = 0; st.held_n = 0; droneIdle = 0x7FFFFFFFu;
     /* a start: nothing waits, nothing sounds, nothing runs, nothing records, no track has anything yet. (The FM-1's
      * memory is empty at power-on; the simulator's reboot keeps it, so it is said here) */

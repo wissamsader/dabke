@@ -1,0 +1,108 @@
+# A frozen one-note track on LEGATO (0.22, as RAGA MEOW's frozen note): a key moves the held note there with the
+# sound's GLIDE, a slide (up to 0.21 it jumped), and when that key, the newest, is let go while another key of the
+# track is still down, it goes back to that key's note, sliding; the last key let go leaves it where it is, frozen.
+# MONO as before: at once, and it stays where the last key put it. From the repository's root:
+#   app/build/host/dabke_host app/tests/frozen_legato.txt OUTDIR
+# (pitch_x10: what sounds, tenths of a hertz, over the last 93 ms: C4 2616, D4 2937, E4 a quarter flat (BAYATI) about
+# 3202; fz_note0_0: track 1's frozen note; starts0: its notes started. Keys: 7 C4, 9 D4, 11 E4)
+wait 900
+expect track 1
+# the ORGAN (an even sound to measure: sound page, row 1, K1), LEGATO (K2), the longest GLIDE (row 3, K3: 500 ms); no
+# vibrato, no ornaments (ornaments page, row 1, K2 and K4), the drone off (row 3, K1)
+tap ENV
+wait 30
+turn K1 7
+wait 30
+expect ch0 7
+turn K2 -2
+wait 30
+expect ch1 0
+tap ENV
+tap ENV
+wait 30
+expect row 2
+spin K3 100
+wait 30
+expect par13 100
+tap LFO
+wait 30
+spin K2 -20
+spin K4 -6
+wait 30
+expect par15 0
+expect ch3 0
+tap LFO
+tap LFO
+wait 30
+turn K1 -5
+wait 30
+expect ch6 0
+tap HOME
+wait 30
+# ---- frozen on C; D pressed: the held note slides to D, no new note
+key 7 down
+wait 300
+tap REC
+wait 60
+key 7 up
+wait 600
+expect held_n 1
+expect fz_note0_0 60
+expect pitch_x10 >2580
+expect pitch_x10 <2650
+expect starts0 1
+key 9 down
+wait 110
+expect pitch_x10 <2860
+wait 900
+expect pitch_x10 >2900
+expect pitch_x10 <2970
+expect fz_note0_0 62
+expect starts0 1
+expect voices0 1
+# ---- E with D still down: there; E let go, D still down: back to D, sliding
+key 11 down
+wait 900
+expect fz_note0_0 64
+expect pitch_x10 >3150
+key 11 up
+wait 110
+expect pitch_x10 >2990
+wait 900
+expect fz_note0_0 62
+expect pitch_x10 >2900
+expect pitch_x10 <2970
+expect held_n 1
+# D let go, the last key: it stays on D, frozen
+key 9 up
+wait 400
+expect fz_note0_0 62
+expect held_n 1
+expect voices0 1
+expect starts0 1
+# ---- MONO as before: a key moves it at once (C), and E let go with C still down leaves it on E
+tap ENV
+wait 30
+turn SELECT -2
+wait 30
+expect row 0
+turn K2 1
+wait 30
+expect ch1 1
+tap HOME
+wait 30
+expect held_n 1
+key 7 down
+wait 110
+expect pitch_x10 <2650
+key 11 down
+wait 400
+key 11 up
+wait 400
+expect fz_note0_0 64
+expect pitch_x10 >3150
+key 7 up
+wait 100
+tap REC
+wait 300
+expect held_n 0
