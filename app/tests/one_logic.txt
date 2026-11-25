@@ -207,7 +207,8 @@ wait 50
 tap FX
 wait 50
 expect page 2
-turn K1 5
+# (K3 DELAY MIX, K4 REVERB MIX: 0.22, as RAGA MEOW's DELAY row has them)
+turn K3 5
 turn K4 -5
 wait 50
 expect par19 10

@@ -87,10 +87,11 @@ static const par_t PAR[P_COUNT] = {
     [P_VIBDELAY] = {"VIB DELAY", 0, 150, 25, 1000, 2, U_MS, 0},
     [P_ORNSPEED] = {"ORN SPEED", 40, 240, 120, 10, 1, U_HZ, 0},
     [P_ORNAMOUNT] = {"HOW OFTEN", 0, 100, 40, 100, 0, U_PCT, 0},
-    [P_ECHO] = {"DELAY", 0, 100, 30, 100, 0, U_NONE, 0},
+    [P_ECHO] = {"DELAY MIX", 0, 100, 30, 100, 0, U_NONE, 0},   /* (0.22: RAGA MEOW's name, the whole delay's level, not
+                                                                * a track's; up to 0.21 "DELAY") */
     [P_ECHOTIME] = {"DELAY TIME", 6, 70, 30, 1000, 2, U_MS, 0},
     [P_ECHOFB] = {"REPEATS", 0, 90, 45, 100, 0, U_NONE, 0},
-    [P_REVERB] = {"REVERB", 0, 100, 25, 100, 0, U_NONE, 0},
+    [P_REVERB] = {"REVERB MIX", 0, 100, 25, 100, 0, U_NONE, 0},   /* (0.22: as RAGA MEOW's; up to 0.21 "REVERB") */
     [P_DRIVE] = {"DRIVE", 0, 100, 0, 100, 0, U_NONE, 0},
     [P_CHORUS] = {"CHORUS", 0, 100, 0, 100, 0, U_NONE, 0},
     [P_PA] = {"WEDDING PA", 0, 100, 0, 100, 0, U_NONE, 0},
@@ -296,7 +297,7 @@ static const uint8_t ROWS[NPG][MAXROWS][4] = {
     [PG_HOME] = {{K_TPITCH, K_TFILT, K_TCHORUS, K_TVOL}, {K_TSEND, K_TRSEND, K_TBASS, K_TSOUND},
                  {P_ORNAMOUNT, P_VIBDEPTH, P_GLIDE, CH(C_ORN)}},
     [PG_SEL] = {{CH(C_MAQAM), CH(C_ROOT), K_QDEPTH, CH(C_PSTEPS)}, {K_NOTE, K_CENTS, CH(C_TOUCH), CH(C_USB)}},
-    [PG_FX] = {{P_ECHO, P_ECHOTIME, P_ECHOFB, P_REVERB}, {P_DRIVE, P_CHORUS, P_PA, P_BRIGHT}, {P_WOW, P_AGE, P_HISS, CH(C_DSYNC)},
+    [PG_FX] = {{P_ECHOTIME, P_ECHOFB, P_ECHO, P_REVERB}, {P_DRIVE, P_CHORUS, P_PA, P_BRIGHT}, {P_WOW, P_AGE, P_HISS, CH(C_DSYNC)},
                {K_TSEND, K_TRSEND, K_TSPACE, K_TCHORUS}, {K_TFILT, K_TBASS, K_TPITCH, K_TVOL}, {K_EQLOW, K_EQMID, K_EQHIGH, K_NONE}},
     [PG_ENV] = {{CH(C_MODEL), CH(C_PLAY), P_TONE, P_BUZZ}, {P_DETUNE, P_BREATH, P_BODY, CH(C_DOUBLE)},
                 {P_ATTACK, P_RELEASE, P_GLIDE, P_TRANSPOSE}, {P_TUNE, P_VELAMT, CH(C_BEND), CH(C_PICK)},
